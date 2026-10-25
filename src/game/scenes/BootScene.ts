@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { t } from '../../i18n/i18n';
 import { CSS, TITLE_FONT } from '../palette';
 
 export class BootScene extends Phaser.Scene {
@@ -8,7 +9,7 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.add
-      .text(this.scale.width / 2, 200, 'Ramayana Snakes & Ladders', {
+      .text(this.scale.width / 2, 200, t('ui.title'), {
         fontFamily: TITLE_FONT,
         fontSize: '64px',
         color: CSS.gold,
@@ -18,7 +19,7 @@ export class BootScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const play = this.add
-      .text(this.scale.width / 2, 440, 'Play', {
+      .text(this.scale.width / 2, 440, t('ui.play'), {
         fontFamily: TITLE_FONT,
         fontSize: '40px',
         color: CSS.ink,

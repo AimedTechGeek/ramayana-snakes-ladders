@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { Level } from '../../core/types';
+import { t } from '../../i18n/i18n';
 import { HEROES } from '../heroes';
 import { BODY_FONT, COLORS, CSS, TITLE_FONT } from '../palette';
 import {
@@ -16,15 +17,16 @@ import {
 
 const SEAT_COUNT = 4;
 const COLUMN = { x: 24, y: 104, w: 296, h: 456, step: 312 };
-const CONTROLLER_OPTIONS: readonly { value: SeatController; label: string }[] = [
-  { value: 'human', label: 'Human' },
-  { value: 'bot', label: 'Bot' },
-  { value: 'empty', label: 'Empty' },
+// Labels are i18n keys, resolved with t() when the scene is built (after the locale is restored).
+const CONTROLLER_OPTIONS: readonly { value: SeatController; labelKey: string }[] = [
+  { value: 'human', labelKey: 'ui.human' },
+  { value: 'bot', labelKey: 'ui.bot' },
+  { value: 'empty', labelKey: 'ui.empty' },
 ];
-const LEVEL_OPTIONS: readonly { value: Level; label: string }[] = [
-  { value: 'easy', label: 'Easy' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'hard', label: 'Hard' },
+const LEVEL_OPTIONS: readonly { value: Level; labelKey: string }[] = [
+  { value: 'easy', labelKey: 'ui.easy' },
+  { value: 'medium', labelKey: 'ui.medium' },
+  { value: 'hard', labelKey: 'ui.hard' },
 ];
 const EMPTY_SEAT_ALPHA = 0.6;
 const DISABLED_START_ALPHA = 0.55;
@@ -78,7 +80,7 @@ export class SetupScene extends Phaser.Scene {
 
   private createHeader(): void {
     this.add
-      .text(640, 56, 'Ramayana Snakes & Ladders', {
+      .text(640, 56, t('ui.title'), {
         fontFamily: TITLE_FONT,
         fontSize: '40px',
         color: CSS.gold,
@@ -94,7 +96,7 @@ export class SetupScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     box.on('pointerup', () => this.scene.start('Boot'));
     this.add
-      .text(84, 52, 'Menu', {
+      .text(84, 52, t('ui.menu'), {
         fontFamily: BODY_FONT,
         fontSize: '20px',
         fontStyle: 'bold',
@@ -116,7 +118,7 @@ export class SetupScene extends Phaser.Scene {
     column.add(panel);
 
     column.add(
-      this.add.text(16, 12, `Seat ${k + 1}`, {
+      this.add.text(16, 12, t('ui.seat', { n: k + 1 }), {
         fontFamily: BODY_FONT,
         fontSize: '18px',
         color: CSS.indigo,
@@ -124,7 +126,7 @@ export class SetupScene extends Phaser.Scene {
     );
 
     const controllerSegments = CONTROLLER_OPTIONS.map((option, i) => {
-      const segment = this.makeSegment(16 + 88 * i, 40, 88, option.label, () => {
+      const segment = this.makeSegment(16 + 88 * i, 40, 88, t(option.labelKey), () => {
         this.seats = setController(this.seats, k, option.value);
         this.refresh();
       });
@@ -153,7 +155,7 @@ export class SetupScene extends Phaser.Scene {
     const caption = this.add.text(148, 290, '', { fontFamily: TITLE_FONT, fontSize: '22px' }).setOrigin(0.5);
     column.add(caption);
     column.add(
-      this.add.text(16, 316, 'Name', {
+      this.add.text(16, 316, t('ui.name'), {
         fontFamily: BODY_FONT,
         fontSize: '14px',
         color: CSS.ink,
@@ -198,7 +200,7 @@ export class SetupScene extends Phaser.Scene {
       .text(24, 620, 'Board', { fontFamily: BODY_FONT, fontSize: '14px', color: CSS.parchment })
       .setOrigin(0, 0.5);
     this.levelSegments = LEVEL_OPTIONS.map((option, i) =>
-      this.makeSegment(72 + 120 * i, 592, 120, option.label, () => {
+      this.makeSegment(72 + 120 * i, 592, 120, t(option.labelKey), () => {
         this.level = option.value;
         this.refresh();
       }),
@@ -209,7 +211,7 @@ export class SetupScene extends Phaser.Scene {
       .setOrigin(0)
       .setStrokeStyle(3, COLORS.ink);
     const startText = this.add
-      .text(148, 36, 'Start Game', {
+      .text(148, 36, t('ui.start'), {
         fontFamily: TITLE_FONT,
         fontSize: '28px',
         color: CSS.ink,
