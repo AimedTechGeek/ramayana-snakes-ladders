@@ -8,6 +8,7 @@ import { createRandomDice, type Dice } from '../../core/dice';
 import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
 import type { GameConfig, GameState } from '../../core/types';
+import { getAudio, type Audio } from '../audio';
 import { BOARD_BACKGROUND_KEY, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey, tokenKey } from '../assets';
 import { HEROES } from '../heroes';
 import { BOARD, PANEL, SEAT, fanOffset, seatTokenSpot, seatTop, squareCenter, type Point } from '../layout';
@@ -51,6 +52,7 @@ export class BoardScene extends Phaser.Scene {
   private fastChip!: Chip;
   private muteChip!: Chip;
   private busy = false;
+  private audio!: Audio;
 
   constructor() {
     super('Board');
@@ -75,6 +77,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.audio = getAudio(this.game.registry.get('muted') === true);
     this.drawBoard();
     this.drawJumps();
     this.drawSeats();
@@ -87,6 +90,11 @@ export class BoardScene extends Phaser.Scene {
     keys?.on('keydown-F', () => this.toggleFast());
     keys?.on('keydown-M', () => this.toggleMute());
     keys?.on('keydown-ESC', () => this.openMenu());
+    const unlock = () => this.audio.unlock();
+    this.input.once('pointerdown', unlock);
+    keys?.once('keydown', unlock);
+    this.events.once('shutdown', () => this.audio.drone(false));
+    this.audio.drone(true);
 
     this.game.registry.set('board', this);
     this.game.registry.set('board-ready', true);
@@ -115,6 +123,7 @@ export class BoardScene extends Phaser.Scene {
 
   /** Rolls for the human whose turn it is. A no-op on bot turns, while busy, or after the game ends. */
   async requestRoll(): Promise<void> {
+    this.audio.unlock();
     if (this.busy || this.engine.isOver || this.isBotTurn()) return;
     await this.takeTurn();
   }
@@ -123,6 +132,7 @@ export class BoardScene extends Phaser.Scene {
   async continuePlay(): Promise<void> {
     if (this.busy || !this.engine.canContinue) return;
     this.busy = true;
+    this.audio.drone(true);
     this.dieButton.setEnabled(false);
     this.setHint('');
     await this.play(this.engine.continuePlay());
@@ -180,27 +190,36 @@ export class BoardScene extends Phaser.Scene {
         this.setBanner(event.player);
         return;
       case 'Rolled':
+        this.audio.dice();
         await this.dieButton.roll(event.value);
         return;
       case 'Moved':
         for (const square of event.path) await this.stepTo(event.player, square);
         return;
       case 'Laddered':
+        this.audio.ladder();
         await this.slideTo(event.player, event.jump.to, 'ladder');
         return;
       case 'Bitten':
+        this.audio.snake();
         await this.slideTo(event.player, event.jump.to, 'snake');
         return;
       case 'TripleSixVoid':
+        this.audio.tripleSix();
         this.setHint(t('ui.tripleSix'));
         await this.slideTo(event.player, event.restoredTo, 'ladder');
         return;
       case 'Won':
+        this.audio.win();
         this.setHint(t('ui.winner', { name: this.playerName(event.player) }));
         return;
       case 'Bounced':
-      case 'ExtraRoll':
+        this.audio.bounce();
+        return;
       case 'GameOver':
+        this.audio.drone(false);
+        return;
+      case 'ExtraRoll':
         return;
     }
   }
@@ -333,6 +352,7 @@ export class BoardScene extends Phaser.Scene {
 
   private applyMute(): void {
     const muted = this.game.registry.get('muted') === true;
+    this.audio.setMuted(muted);
     this.muteChip.setActive(muted);
     this.muteChip.setLabel(muted ? `\u2715 ${t('ui.muted')}` : `\u266a ${t('ui.mute')}`);
   }
@@ -351,6 +371,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private async stepTo(player: number, square: number): Promise<void> {
+    this.audio.step();
     const token = this.tokenAt(player);
     this.shownSquare[player] = square;
     const target = this.restingPoint(player);

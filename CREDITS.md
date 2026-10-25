@@ -60,7 +60,7 @@ Licences are the `license` field of each package.
 
 ## 5. Audio
 
-No audio assets are included yet.
+All sounds are synthesized at runtime with the Web Audio API (`src/game/audio.ts`); no audio files are included.
 
 ## 6. Story
 
