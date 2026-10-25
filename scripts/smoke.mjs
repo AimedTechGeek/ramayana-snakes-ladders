@@ -75,7 +75,20 @@ async function runSmoke(page, errors) {
   await page.screenshot({ path: SHOT_PATH });
 }
 
+/** A server already answering on the port would be tested instead of this build, so refuse to run. */
+async function assertPortFree() {
+  try {
+    await fetch(APP_URL);
+  } catch {
+    return; // nothing listening: the port is free
+  }
+  console.error(`${APP_URL} is already serving (a stale vite preview?). Stop it and rerun.`);
+  console.error('SMOKE FAILED');
+  process.exit(1);
+}
+
 async function main() {
+  await assertPortFree();
   const errors = [];
   const server = startPreviewServer();
   let browser;
