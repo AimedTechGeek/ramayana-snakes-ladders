@@ -37,7 +37,7 @@ jobs:
 
   deploy:
     needs: check
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_PAGES == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
