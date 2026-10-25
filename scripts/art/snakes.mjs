@@ -12,7 +12,7 @@ export const SNAKES = {
   viradha: { body: P.ochre, belly: P.blood, pattern: 'bands' },
   shurpanakha: { body: P.blood, belly: shade(P.blood), pattern: 'bands' },
   'golden-deer': { body: P.gold, belly: P.blood, pattern: 'spots' },
-  abduction: { body: P.deepIndigo, belly: P.blood, pattern: 'spots' },
+  abduction: { body: shade(P.blood), belly: P.parchment, pattern: 'spots' },
   kabandha: { body: shade(P.leaf), belly: P.blood, pattern: 'bands' },
   'indrajit-arrows': { body: P.indigo, belly: tint(P.indigo), pattern: 'diamonds' },
   prahasta: { body: P.ochre, belly: P.blood, pattern: 'bands' },
@@ -135,11 +135,10 @@ const motifs = {
 
   abduction: (c) =>
     [
-      // Pushpaka chariot wheel behind the head
-      `<circle cx="32" cy="26" r="24" fill="${shade(P.gold)}" ${L2}/>`,
-      `<circle cx="32" cy="26" r="24" fill="none" stroke="${P.gold}" stroke-width="4"/>`,
-      `<path d="M32 2 L32 50 M8 26 L56 26 M15 9 L49 43 M49 9 L15 43" fill="none" stroke="${P.gold}" stroke-width="3"/>`,
-      `<path d="M32 2 L32 50 M8 26 L56 26 M15 9 L49 43 M49 9 L15 43" fill="none" ${line(1)}/>`,
+      // Ravana's wooden chariot wheel, small and off to one side so it never reads as a halo
+      `<circle cx="50" cy="16" r="11" fill="${P.ochre}" ${L2}/>`,
+      `<circle cx="50" cy="16" r="3" fill="${shade(P.ochre)}" ${L15}/>`,
+      `<path d="M50 5 L50 27 M39 16 L61 16 M42 8 L58 24 M58 8 L42 24" fill="none" ${line(1)}/>`,
       baseHead(c.body, c.belly),
       // Jatayu feathers at the neck
       `<path d="M14 50 Q8 40 16 34 Q20 42 14 50Z" fill="${P.parchment}" ${L15}/>`,
