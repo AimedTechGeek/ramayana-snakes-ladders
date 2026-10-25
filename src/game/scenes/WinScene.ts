@@ -3,6 +3,7 @@ import { t } from '../../i18n/i18n';
 import type { GameConfig, GameState, PlayerState } from '../../core/types';
 import { Character } from '../../characters/Character';
 import { reactionFor } from '../../characters/reactions';
+import { tokenKey } from '../assets';
 import { BODY_FONT, COLORS, CSS, TITLE_FONT } from '../palette';
 import { clearSave } from '../save';
 import type { BoardScene } from './BoardScene';
@@ -61,11 +62,12 @@ export class WinScene extends Phaser.Scene {
     const cheer = () => void figure.feel(reactionFor(winner.hero, 'self', 'win'));
     cheer();
     this.time.addEvent({ delay: WIN_LOOP_MS, loop: true, callback: cheer });
-    this.add.text(470, 140, t('ui.winner', { name: winner.name }), {
+    this.add.image(486, 160, tokenKey(winner.hero)).setDisplaySize(48, 48);
+    this.add.text(526, 140, t('ui.winner', { name: winner.name }), {
       fontFamily: TITLE_FONT,
       fontSize: '36px',
       color: CSS.ink,
-      wordWrap: { width: 560 },
+      wordWrap: { width: 520 },
     });
   }
 

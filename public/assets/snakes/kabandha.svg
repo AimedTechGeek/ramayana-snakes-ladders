@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Snake head: kabandha (points up, neck leaves bottom edge) | palette: docs/design/T02-style-guide.md (hex tokens inlined) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<path d="M4 30 Q2 18 14 20 L22 26 M60 30 Q62 18 50 20 L42 26" fill="none" stroke="#457334" stroke-width="9" stroke-linecap="round"/>
+<path d="M4 30 Q2 18 14 20 L22 26 M60 30 Q62 18 50 20 L42 26" fill="none" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M22 64 L22 30 Q22 14 32 12 Q42 14 42 30 L42 64Z" fill="#457334" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M32 12 Q42 14 42 30 L42 64 L36 64 L36 30 Q38 16 32 12Z" fill="#3F5F2C"/>
+<path d="M27 64 L27 50 Q32 46 37 50 L37 64Z" fill="#8E3B3B" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M20 16 Q32 8 44 16" fill="#3F5F2C" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="26" cy="32" rx="4" ry="5.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M26 28 L26 36" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="38" cy="32" rx="4" ry="5.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M38 28 L38 36" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M27 43 Q32 46 37 43" fill="none" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

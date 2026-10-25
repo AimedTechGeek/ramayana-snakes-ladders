@@ -8,18 +8,9 @@ import { createRandomDice, type Dice } from '../../core/dice';
 import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
 import type { GameConfig, GameState } from '../../core/types';
+import { BOARD_BACKGROUND_KEY, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey, tokenKey } from '../assets';
 import { HEROES } from '../heroes';
-import {
-  BOARD,
-  PANEL,
-  SEAT,
-  fanOffset,
-  rowOf,
-  seatTokenSpot,
-  seatTop,
-  squareCenter,
-  type Point,
-} from '../layout';
+import { BOARD, PANEL, SEAT, fanOffset, seatTokenSpot, seatTop, squareCenter, type Point } from '../layout';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
@@ -33,12 +24,6 @@ interface Chip {
 
 export type BoardSceneData =
   { config: GameConfig; state?: undefined } | { config?: undefined; state: GameState };
-
-/** Rows grouped into the story regions of the design doc, bottom row first. */
-const ROW_COLORS = [
-  0xf3e2b8, 0xf3e2b8, 0xf3e2b8, 0xe9d3a4, 0xcfe0b4, 0xcfe0b4, 0xcfe0b4, 0xe8c99a, 0xe8c99a, 0xe9b8a4,
-  0xe9b8a4, 0xe9b8a4,
-] as const;
 
 // Timing from docs/design/reactions.json.
 const STEP_MS = 120;
@@ -438,19 +423,26 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private drawBoard(): void {
+    this.add
+      .image(BOARD.x, BOARD.y, BOARD_BACKGROUND_KEY)
+      .setOrigin(0)
+      .setDisplaySize(BOARD.size, BOARD.size);
     const g = this.add.graphics();
     for (let square = 1; square <= 144; square++) {
       const c = squareCenter(square);
-      const shade = square % 2 === 0 ? 0 : 0x0a0a0a;
-      g.fillStyle((ROW_COLORS[rowOf(square)] ?? 0xf3e2b8) - shade, 1);
-      g.fillRect(c.x - BOARD.cell / 2, c.y - BOARD.cell / 2, BOARD.cell, BOARD.cell);
+      const left = c.x - BOARD.cell / 2 + 4;
+      const top = c.y - BOARD.cell / 2 + 4;
+      const chipWidth = square > 99 ? 30 : 22;
+      g.fillStyle(COLORS.parchment, 0.55);
+      g.fillRect(left, top, chipWidth, 16);
       this.add
-        .text(c.x - BOARD.cell / 2 + 4, c.y - BOARD.cell / 2 + 2, String(square), {
+        .text(left + chipWidth / 2, top + 8, String(square), {
           fontFamily: BODY_FONT,
-          fontSize: '11px',
+          fontSize: '14px',
+          fontStyle: 'bold',
           color: CSS.ink,
         })
-        .setAlpha(0.8);
+        .setOrigin(0.5);
     }
     g.lineStyle(4, COLORS.gold, 1);
     g.strokeRect(BOARD.x - 2, BOARD.y - 2, BOARD.size + 4, BOARD.size + 4);
@@ -461,44 +453,219 @@ export class BoardScene extends Phaser.Scene {
   private drawJumps(): void {
     const g = this.add.graphics().setDepth(2);
     for (const ladder of this.board.ladders)
-      this.drawLadder(g, squareCenter(ladder.from), squareCenter(ladder.to));
+      this.drawLadder(g, ladder.id, squareCenter(ladder.from), squareCenter(ladder.to));
     for (const snake of this.board.snakes)
-      this.drawSnake(g, squareCenter(snake.from), squareCenter(snake.to));
+      this.drawSnake(g, snake.id, squareCenter(snake.from), squareCenter(snake.to));
   }
 
-  private drawLadder(g: Phaser.GameObjects.Graphics, foot: Point, top: Point): void {
-    const along = new Phaser.Math.Vector2(top.x - foot.x, top.y - foot.y);
-    const length = along.length();
-    const side = new Phaser.Math.Vector2(-along.y, along.x).normalize().scale(9);
-    g.lineStyle(4, 0x8a5a1c, 1);
-    g.lineBetween(foot.x + side.x, foot.y + side.y, top.x + side.x, top.y + side.y);
-    g.lineBetween(foot.x - side.x, foot.y - side.y, top.x - side.x, top.y - side.y);
-    g.lineStyle(3, 0xc08a3a, 1);
-    const rungs = Math.max(2, Math.floor(length / 22));
-    for (let i = 1; i < rungs; i++) {
-      const t = i / rungs;
-      const x = foot.x + along.x * t;
-      const y = foot.y + along.y * t;
-      g.lineBetween(x + side.x, y + side.y, x - side.x, y - side.y);
+  /** Points of a line from foot to top, bowed sideways by `bow` and shifted by `offset` plus a sine `wave`. */
+  private ladderLine(foot: Point, top: Point, offset: number, bow = 0, wave = 0): Phaser.Math.Vector2[] {
+    const a = new Phaser.Math.Vector2(foot.x, foot.y);
+    const b = new Phaser.Math.Vector2(top.x, top.y);
+    const length = a.distance(b);
+    const side = new Phaser.Math.Vector2(-(b.y - a.y), b.x - a.x).normalize();
+    const steps = Math.max(8, Math.ceil(length / 5));
+    const points: Phaser.Math.Vector2[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const lateral = offset + bow * 4 * t * (1 - t) + wave * Math.sin((t * length) / 5);
+      points.push(a.clone().lerp(b, t).add(side.clone().scale(lateral)));
+    }
+    return points;
+  }
+
+  /** A stroked polyline with an ink outline underneath. */
+  private strokeLine(
+    g: Phaser.GameObjects.Graphics,
+    points: readonly Phaser.Math.Vector2[],
+    width: number,
+    color: number,
+  ): void {
+    for (const [w, c] of [
+      [width + 3, COLORS.ink],
+      [width, color],
+    ] as const) {
+      g.lineStyle(w, c, 1);
+      g.beginPath();
+      points.forEach((p, i) => (i === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y)));
+      g.strokePath();
     }
   }
 
-  private drawSnake(g: Phaser.GameObjects.Graphics, head: Point, tail: Point): void {
+  private drawLadder(g: Phaser.GameObjects.Graphics, id: string, foot: Point, top: Point): void {
+    const look = LADDER_LOOKS[id];
+    if (!look) throw new Error(`No ladder look for ${id}`);
+    const rail = Phaser.Display.Color.HexStringToColor(look.rail).color;
+    const rung = Phaser.Display.Color.HexStringToColor(look.rung).color;
+    const length = Phaser.Math.Distance.Between(foot.x, foot.y, top.x, top.y);
+    const rungCount = Math.max(2, Math.floor(length / 22));
+    const half = 9;
+
+    /** Rungs span between two rails sampled at the same parameter. */
+    const drawRungs = (left: readonly Phaser.Math.Vector2[], right: readonly Phaser.Math.Vector2[]): void => {
+      for (let i = 1; i < rungCount; i++) {
+        const k = Math.round((i / rungCount) * (left.length - 1));
+        const p = left[k]!;
+        const q = right[k]!;
+        g.lineStyle(5, COLORS.ink, 1);
+        g.lineBetween(p.x, p.y, q.x, q.y);
+        g.lineStyle(3, rung, 1);
+        g.lineBetween(p.x, p.y, q.x, q.y);
+      }
+    };
+
+    switch (look.style) {
+      case 'wood':
+      case 'bow': {
+        const bow = look.style === 'bow' ? 14 : 0;
+        const left = this.ladderLine(foot, top, -half, bow);
+        const right = this.ladderLine(foot, top, half, bow);
+        this.strokeLine(g, left, 4, rail);
+        this.strokeLine(g, right, 4, rail);
+        drawRungs(left, right);
+        break;
+      }
+      case 'rope':
+      case 'vine': {
+        const wave = look.style === 'rope' ? 1.6 : 2.2;
+        const left = this.ladderLine(foot, top, -half, 0, wave);
+        const right = this.ladderLine(foot, top, half, 0, -wave);
+        this.strokeLine(g, left, 3, rail);
+        this.strokeLine(g, right, 3, rail);
+        drawRungs(left, right);
+        if (look.style === 'rope') {
+          // Knots where the rungs tie onto the ropes.
+          for (let i = 1; i < rungCount; i++) {
+            const k = Math.round((i / rungCount) * (left.length - 1));
+            for (const p of [left[k]!, right[k]!]) {
+              g.fillStyle(COLORS.ink, 1);
+              g.fillCircle(p.x, p.y, 3.5);
+              g.fillStyle(rail, 1);
+              g.fillCircle(p.x, p.y, 2.2);
+            }
+          }
+        } else {
+          // Leaf dots along the vines.
+          g.fillStyle(0x6fb35c, 1);
+          for (let k = 4; k < left.length; k += 6) {
+            g.fillCircle(left[k]!.x, left[k]!.y, 3);
+            g.fillCircle(right[k]!.x, right[k]!.y, 3);
+          }
+        }
+        break;
+      }
+      case 'stone': {
+        const stones = Math.max(2, Math.floor(length / 24));
+        for (let i = 0; i <= stones; i++) {
+          const t = i / stones;
+          const x = foot.x + (top.x - foot.x) * t + (i % 2 === 0 ? -3 : 3);
+          const y = foot.y + (top.y - foot.y) * t;
+          g.fillStyle(COLORS.ink, 1);
+          g.fillEllipse(x, y, 22, 15);
+          g.fillStyle(rail, 1);
+          g.fillEllipse(x, y, 18, 11);
+          g.fillStyle(rung, 1);
+          g.fillEllipse(x - 3, y - 2, 7, 3);
+        }
+        break;
+      }
+      case 'tail': {
+        // An orange tail with an ink outline, short fur ticks and a tuft at the top.
+        const body = this.ladderLine(foot, top, 0, 22);
+        this.strokeLine(g, body, 9, COLORS.saffron);
+        g.lineStyle(1.5, COLORS.ink, 1);
+        for (let k = 3; k < body.length - 2; k += 4) {
+          const p = body[k]!;
+          const q = body[k + 1]!;
+          const dir = new Phaser.Math.Vector2(q.x - p.x, q.y - p.y).normalize();
+          g.lineBetween(p.x, p.y, p.x - dir.y * 5 + dir.x * 2, p.y + dir.x * 5 + dir.y * 2);
+        }
+        const tip = body[body.length - 1]!;
+        const before = body[body.length - 4]!;
+        const heading = Math.atan2(tip.y - before.y, tip.x - before.x);
+        for (const spread of [-0.6, -0.2, 0.2, 0.6]) {
+          const dx = Math.cos(heading + spread) * 12;
+          const dy = Math.sin(heading + spread) * 12;
+          g.lineStyle(5, COLORS.ink, 1);
+          g.lineBetween(tip.x, tip.y, tip.x + dx, tip.y + dy);
+          g.lineStyle(3, COLORS.saffron, 1);
+          g.lineBetween(tip.x, tip.y, tip.x + dx, tip.y + dy);
+        }
+        break;
+      }
+    }
+
+    // Foot and top squares: a dot in the rail colour, ringed in ink.
+    for (const p of [foot, top]) {
+      g.fillStyle(COLORS.ink, 1);
+      g.fillCircle(p.x, p.y, 7);
+      g.fillStyle(rail, 1);
+      g.fillCircle(p.x, p.y, 4.5);
+    }
+  }
+
+  private drawSnake(g: Phaser.GameObjects.Graphics, id: string, head: Point, tail: Point): void {
+    const look = SNAKE_LOOKS[id];
+    if (!look) throw new Error(`No snake look for ${id}`);
+    const body = Phaser.Display.Color.HexStringToColor(look.body).color;
+    const belly = Phaser.Display.Color.HexStringToColor(look.belly).color;
     const a = new Phaser.Math.Vector2(head.x, head.y);
     const b = new Phaser.Math.Vector2(tail.x, tail.y);
     const curve = new Phaser.Curves.CubicBezier(a, this.bend(a, b, 0.25), this.bend(a, b, -0.25), b);
-    const points = curve.getPoints(40);
-    for (let i = 0; i < points.length - 1; i++) {
-      const p = points[i]!;
-      const q = points[i + 1]!;
-      g.lineStyle(10 - (6 * i) / points.length, 0x3f7a3a, 1);
-      g.lineBetween(p.x, p.y, q.x, q.y);
+    const points = curve.getSpacedPoints(60);
+    const widthAt = (u: number): number => 13 - 7 * u;
+
+    // Ink outline first, then the body, so the outline never cuts across the body.
+    g.fillStyle(COLORS.ink, 1);
+    points.forEach((p, i) => g.fillCircle(p.x, p.y, widthAt(i / 60) / 2 + 1.5));
+    g.fillStyle(body, 1);
+    points.forEach((p, i) => g.fillCircle(p.x, p.y, widthAt(i / 60) / 2));
+    g.fillStyle(belly, 1);
+    points.forEach((p, i) => g.fillCircle(p.x, p.y, widthAt(i / 60) * 0.14));
+
+    // Pattern every ~14px of body, skipping the part hidden under the head.
+    const length = curve.getLength();
+    for (let d = 26, n = 0; d < length - 6; d += 14, n++) {
+      const u = d / length;
+      const p = curve.getPointAt(u);
+      const tangent = curve.getTangentAt(u);
+      const w = widthAt(u);
+      const normal = new Phaser.Math.Vector2(-tangent.y, tangent.x);
+      g.fillStyle(belly, 1);
+      g.lineStyle(2, belly, 1);
+      if (look.pattern === 'bands') {
+        g.lineBetween(
+          p.x - normal.x * w * 0.4,
+          p.y - normal.y * w * 0.4,
+          p.x + normal.x * w * 0.4,
+          p.y + normal.y * w * 0.4,
+        );
+      } else if (look.pattern === 'spots') {
+        const sign = n % 2 === 0 ? 1 : -1;
+        g.fillCircle(
+          p.x + normal.x * w * 0.22 * sign,
+          p.y + normal.y * w * 0.22 * sign,
+          Math.max(1.5, w * 0.16),
+        );
+      } else {
+        const r = Math.max(2, w * 0.22);
+        const angle = Math.atan2(tangent.y, tangent.x);
+        const corners = [0, 1, 2, 3].map((k) => ({
+          x: p.x + Math.cos(angle + (k * Math.PI) / 2) * r,
+          y: p.y + Math.sin(angle + (k * Math.PI) / 2) * r,
+        }));
+        g.fillPoints(corners, true);
+      }
     }
-    g.fillStyle(0x2c5a28, 1);
-    g.fillCircle(head.x, head.y, 9);
-    g.fillStyle(0xf2e6c8, 1);
-    g.fillCircle(head.x - 3, head.y - 3, 2);
-    g.fillCircle(head.x + 3, head.y - 3, 2);
+
+    // The head image looks "up" with the neck at the bottom: turn it to face away from the body.
+    const start = curve.getTangentAt(0);
+    const size = id === 'ravana' ? 60 : 44;
+    this.add
+      .image(head.x - start.x * 3, head.y - start.y * 3, snakeHeadKey(id))
+      .setDisplaySize(size, size)
+      .setRotation(Math.atan2(-start.y, -start.x) + Math.PI / 2)
+      .setDepth(3);
   }
 
   private drawSeats(): void {
@@ -559,13 +726,9 @@ export class BoardScene extends Phaser.Scene {
     const state = this.snapshot();
     this.shownSquare = state.players.map((p) => p.position);
     state.players.forEach((player, seat) => {
-      const hero = HEROES[player.hero];
-      const disc = this.add.circle(0, 0, 13, hero.color).setStrokeStyle(2, COLORS.ink);
-      const letter = this.add
-        .text(0, 0, hero.label.charAt(0), { fontFamily: TITLE_FONT, fontSize: '15px', color: '#ffffff' })
-        .setOrigin(0.5);
+      const image = this.add.image(0, 0, tokenKey(player.hero)).setDisplaySize(40, 40);
       const at = this.restingPoint(seat);
-      this.tokens.push(this.add.container(at.x, at.y, [disc, letter]).setDepth(5));
+      this.tokens.push(this.add.container(at.x, at.y, [image]).setDepth(5));
     });
   }
 }
