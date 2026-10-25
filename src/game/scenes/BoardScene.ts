@@ -211,7 +211,7 @@ export class BoardScene extends Phaser.Scene {
       case 'TripleSixVoid':
         this.audio.tripleSix();
         this.setHint(t('ui.tripleSix'));
-        await this.slideTo(event.player, event.restoredTo, 'ladder');
+        await this.slideTo(event.player, event.restoredTo, 'void'); // a penalty: plain slide, no celebration
         return;
       case 'Won':
         this.audio.win();
@@ -390,7 +390,7 @@ export class BoardScene extends Phaser.Scene {
     await this.relayout(player);
   }
 
-  private async slideTo(player: number, square: number, kind: 'ladder' | 'snake'): Promise<void> {
+  private async slideTo(player: number, square: number, kind: 'ladder' | 'snake' | 'void'): Promise<void> {
     const token = this.tokenAt(player);
     const start = new Phaser.Math.Vector2(token.x, token.y);
     this.shownSquare[player] = square;
