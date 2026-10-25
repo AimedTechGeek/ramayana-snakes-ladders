@@ -1,6 +1,14 @@
-// SMOKE_SCRIPT step: start a game from Boot and play turns until a ladder or snake has happened or 40 rolls.
+// SMOKE_SCRIPT step: start a game via Boot and Setup and play turns until a ladder or snake has happened or 40 rolls.
 export default async function playSomeTurns(page) {
   await page.mouse.click(640, 440); // Boot: Play
+  await page.waitForFunction(
+    () => window.__game?.scene.isActive('Setup') && window.__game.registry.get('setup'),
+    null,
+    {
+      timeout: 10_000,
+    },
+  );
+  await page.mouse.click(1108, 620); // Setup: Start
   await page.waitForFunction(() => window.__game?.registry.get('board-ready') === true, null, {
     timeout: 10_000,
   });

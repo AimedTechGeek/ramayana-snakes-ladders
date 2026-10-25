@@ -1,16 +1,5 @@
 import Phaser from 'phaser';
-import type { GameConfig } from '../../core/types';
 import { CSS, TITLE_FONT } from '../palette';
-
-/** Until the Setup screen exists, Play starts a two-seat Easy game. */
-const DEFAULT_GAME: GameConfig = {
-  level: 'easy',
-  playOn: false,
-  players: [
-    { hero: 'rama', controller: 'human', name: 'Rama' },
-    { hero: 'hanuman', controller: 'bot', name: 'Hanuman' },
-  ],
-};
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -38,7 +27,7 @@ export class BootScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    play.on('pointerup', () => this.scene.start('Board', { config: DEFAULT_GAME }));
+    play.on('pointerup', () => this.scene.start('Setup'));
 
     this.game.registry.set('ready', true);
   }
