@@ -165,6 +165,28 @@ describe('Winning', () => {
     const game = at(newGame(scripted(), { playOn: true }), [140, 10], scripted(4));
     expect(types(game.roll())).toContain('GameOver');
   });
+
+  it('ContinuePlay_AfterFirstWinner_Should_StartNextUnrankedPlayersTurn', () => {
+    const sita: PlayerConfig = { hero: 'sita', controller: 'bot', name: 'Sita' };
+    const game = at(
+      Game.create({ level: 'easy', players: [rama, hanuman, sita], playOn: false }, board, scripted()),
+      [140, 10, 20],
+      scripted(4),
+    );
+    game.roll();
+    expect(game.isOver).toBe(true);
+    expect(game.canContinue).toBe(true);
+    expect(game.continuePlay()).toEqual([{ type: 'TurnStarted', player: 1, position: 10 }]);
+    expect(game.isOver).toBe(false);
+    expect(game.currentPlayer).toBe(1);
+  });
+
+  it('ContinuePlay_WithOneUnrankedPlayer_Should_Throw', () => {
+    const game = at(newGame(scripted()), [140, 10], scripted(4));
+    game.roll();
+    expect(game.canContinue).toBe(false);
+    expect(() => game.continuePlay()).toThrow();
+  });
 });
 
 describe('Setup and saving', () => {
