@@ -189,3 +189,119 @@ describe('Setup and saving', () => {
     expect(game.positionOf(0)).toBe(0);
   });
 });
+
+describe('Derived events', () => {
+  const nearMissBoard: Board = {
+    level: 'easy',
+    ladders: [{ from: 40, to: 48, name: 'ladder 40' }],
+    snakes: [
+      { from: 50, to: 48, name: 'snake 50' },
+      { from: 49, to: 1, name: 'snake 49' },
+    ],
+  };
+
+  function onBoard(b: Board, positions: number[], dice: Dice): Game {
+    const s = Game.create(
+      { level: 'easy', players: [rama, hanuman], playOn: false },
+      b,
+      scripted(),
+    ).snapshot();
+    positions.forEach((pos, i) => (s.players[i]!.position = pos));
+    s.turnStartPosition = positions[0]!;
+    return Game.restore(s, b, dice);
+  }
+
+  it('Overtook_AfterAPlainMove_Should_ListThePlayersPassed', () => {
+    const game = at(newGame(scripted()), [3, 5], scripted(4)); // 3 -> 7 passes the token on 5
+    const events = game.roll();
+    expect(types(events)).toEqual(['Rolled', 'Moved', 'Overtook', 'TurnStarted']);
+    expect(events.find((e) => e.type === 'Overtook')).toEqual({
+      type: 'Overtook',
+      player: 0,
+      overtaken: [1],
+    });
+  });
+
+  it('Overtook_WhenPassingViaALadder_Should_ListThePlayersPassed', () => {
+    const game = at(newGame(scripted()), [2, 10], scripted(2)); // 2 -> 4 -> ladder to 25
+    const events = game.roll();
+    expect(types(events)).toEqual(['Rolled', 'Moved', 'Laddered', 'Overtook', 'TurnStarted']);
+    expect(events.find((e) => e.type === 'Overtook')).toMatchObject({ overtaken: [1] });
+  });
+
+  it('Overtook_WhenStartingLevelWithAnotherPlayer_Should_NotBeEmitted', () => {
+    const game = at(newGame(scripted()), [5, 5], scripted(3));
+    expect(types(game.roll())).not.toContain('Overtook');
+  });
+
+  it('Overtook_WhenPassingAFinishedPlayer_Should_NotBeEmitted', () => {
+    const three = [rama, hanuman, { ...rama, hero: 'sita' as const, name: 'Mira' }];
+    const s = Game.create({ level: 'easy', players: three, playOn: true }, board, scripted()).snapshot();
+    s.players[1]!.position = 5;
+    s.players[1]!.rank = 1;
+    s.players[2]!.position = 20;
+    s.players[0]!.position = 3;
+    s.turnStartPosition = 3;
+    const game = Game.restore(s, board, scripted(4)); // 3 -> 7 passes finished player on 5
+    expect(types(game.roll())).not.toContain('Overtook');
+  });
+
+  it('Overtook_WhenASnakeDropsTheMoverBelowOthers_Should_NotBeEmitted', () => {
+    const game = at(newGame(scripted()), [14, 10], scripted(3)); // 17 -> snake to 6, below the token on 10
+    expect(types(game.roll())).not.toContain('Overtook');
+  });
+
+  it('NearMiss_OnTheSquareBelowASnakeHead_Should_NameTheHead', () => {
+    const game = onBoard(nearMissBoard, [45, 0], scripted(4)); // 49 is a head; 48 is not reachable here
+    const events = onBoard(nearMissBoard, [44, 0], scripted(4)).roll(); // lands on 48, one below head 49
+    expect(events.find((e) => e.type === 'NearMiss')).toEqual({ type: 'NearMiss', player: 0, snakeHead: 49 });
+    expect(game.roll().some((e) => e.type === 'NearMiss')).toBe(false); // 45 -> 49 is bitten, final 1
+  });
+
+  it('NearMiss_AfterALadderEndsBelowASnakeHead_Should_BeEmitted', () => {
+    const game = onBoard(nearMissBoard, [36, 0], scripted(4)); // 40 -> ladder to 48, one below head 49
+    expect(types(game.roll())).toEqual(['Rolled', 'Moved', 'Laddered', 'NearMiss', 'TurnStarted']);
+  });
+
+  it('NearMiss_WhenBittenToASquareBelowAnotherHead_Should_NotBeEmitted', () => {
+    const game = onBoard(nearMissBoard, [46, 0], scripted(4)); // 50 -> snake to 48, one below head 49
+    const events = game.roll();
+    expect(types(events)).toEqual(['Rolled', 'Moved', 'Bitten', 'TurnStarted']);
+    expect(game.positionOf(0)).toBe(48);
+  });
+
+  it('NearEnd_WhenTheNextPlayerStartsOn132_Should_FollowTurnStarted', () => {
+    const game = at(newGame(scripted()), [10, 132], scripted(1));
+    const events = game.roll();
+    expect(types(events)).toEqual(['Rolled', 'Moved', 'TurnStarted', 'NearEnd']);
+    expect(events.at(-1)).toEqual({ type: 'NearEnd', player: 1, position: 132 });
+  });
+
+  it('NearEnd_WhenTheNextPlayerStartsOn131_Should_NotBeEmitted', () => {
+    const game = at(newGame(scripted()), [10, 131], scripted(1));
+    expect(types(game.roll())).not.toContain('NearEnd');
+  });
+
+  it('NearEnd_OnBegin_Should_FollowTurnStartedWhenResumingNearTheEnd', () => {
+    const game = at(newGame(scripted()), [140, 0], scripted());
+    expect(types(game.begin())).toEqual(['TurnStarted', 'NearEnd']);
+  });
+
+  it('Roll_WithEveryDerivedEvent_Should_EmitThemInTheDocumentedOrder', () => {
+    const endBoard: Board = {
+      level: 'easy',
+      ladders: [{ from: 137, to: 140, name: 'ladder 137' }],
+      snakes: [{ from: 141, to: 100, name: 'snake 141' }],
+    };
+    const game = onBoard(endBoard, [133, 138], scripted(4)); // 137 -> ladder 140, passes 138
+    expect(types(game.roll())).toEqual([
+      'Rolled',
+      'Moved',
+      'Laddered',
+      'Overtook',
+      'NearMiss',
+      'TurnStarted',
+      'NearEnd',
+    ]);
+  });
+});

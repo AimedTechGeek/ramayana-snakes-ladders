@@ -1,6 +1,14 @@
 import type { Dice } from './dice';
 import type { GameEvent } from './events';
-import { BIG_JUMP, FINAL_SQUARE, type Board, type GameConfig, type GameState, type Jump } from './types';
+import {
+  BIG_JUMP,
+  FINAL_SQUARE,
+  NEAR_END_SQUARE,
+  type Board,
+  type GameConfig,
+  type GameState,
+  type Jump,
+} from './types';
 
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 4;
@@ -29,9 +37,7 @@ export function resolveMove(board: Board, from: number, roll: number): MoveResul
 }
 
 export function findJump(board: Board, square: number): Jump | null {
-  return (
-    board.ladders.find((j) => j.from === square) ?? board.snakes.find((j) => j.from === square) ?? null
-  );
+  return board.ladders.find((j) => j.from === square) ?? board.snakes.find((j) => j.from === square) ?? null;
 }
 
 export class Game {
@@ -79,7 +85,7 @@ export class Game {
   /** Event that opens the first turn (or the resumed turn). */
   begin(): GameEvent[] {
     const player = this.state.current;
-    return [{ type: 'TurnStarted', player, position: this.positionOf(player) }];
+    return this.turnStarted(player);
   }
 
   /** Roll for the current player and apply every consequence of that roll. */
@@ -108,6 +114,12 @@ export class Game {
       events.push({ type, player, jump: move.jump, big });
     }
     this.setPosition(player, move.final);
+
+    const overtaken = this.overtakenBy(player, from, move.final);
+    if (overtaken.length > 0) events.push({ type: 'Overtook', player, overtaken });
+    const bitten = move.jump !== null && move.jump.to < move.jump.from;
+    const snakeHead = this.board.snakes.find((j) => j.from === move.final + 1);
+    if (!bitten && snakeHead) events.push({ type: 'NearMiss', player, snakeHead: snakeHead.from });
 
     if (move.final === FINAL_SQUARE) {
       events.push(...this.finish(player));
@@ -152,7 +164,23 @@ export class Game {
     this.state.current = next;
     this.state.sixesThisTurn = 0;
     this.state.turnStartPosition = this.positionOf(next);
-    return [{ type: 'TurnStarted', player: next, position: this.positionOf(next) }];
+    return this.turnStarted(next);
+  }
+
+  private turnStarted(player: number): GameEvent[] {
+    const position = this.positionOf(player);
+    const events: GameEvent[] = [{ type: 'TurnStarted', player, position }];
+    if (position >= NEAR_END_SQUARE) events.push({ type: 'NearEnd', player, position });
+    return events;
+  }
+
+  /** Unfinished players the mover jumped past: strictly between the start square and the final square. */
+  private overtakenBy(player: number, from: number, final: number): number[] {
+    const overtaken: number[] = [];
+    this.state.players.forEach((p, i) => {
+      if (i !== player && p.rank === null && p.position > from && p.position < final) overtaken.push(i);
+    });
+    return overtaken;
   }
 
   positionOf(player: number): number {
