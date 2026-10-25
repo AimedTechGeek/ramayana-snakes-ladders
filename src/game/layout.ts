@@ -34,7 +34,7 @@ export function seatTop(seat: number): number {
 
 /** Where a token waits on its seat card before entering the board (square 0). */
 export function seatTokenSpot(seat: number): Point {
-  return { x: PANEL.x + 40, y: seatTop(seat) + SEAT.height - 28 };
+  return { x: PANEL.x + PANEL.width - 28, y: seatTop(seat) + 58 };
 }
 
 const FAN: readonly (readonly Point[])[] = [

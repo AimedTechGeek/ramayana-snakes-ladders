@@ -20,25 +20,81 @@ const HARD: readonly Level[] = ['hard'];
 export const STORY_JUMPS: readonly StoryJump[] = [
   { seq: 1, id: 'vishwamitra', from: 4, to: 25, name: "Vishwamitra's training", kind: 'ladder', levels: ALL },
   { seq: 2, id: 'tataka', from: 17, to: 6, name: 'Tataka the demoness', kind: 'snake', levels: MEDIUM_HARD },
-  { seq: 3, id: 'shiva-bow', from: 20, to: 43, name: "Breaking Shiva's bow", kind: 'ladder', levels: EASY_MEDIUM },
+  {
+    seq: 3,
+    id: 'shiva-bow',
+    from: 20,
+    to: 43,
+    name: "Breaking Shiva's bow",
+    kind: 'ladder',
+    levels: EASY_MEDIUM,
+  },
   { seq: 4, id: 'wedding', from: 26, to: 52, name: 'Wedding of Rama and Sita', kind: 'ladder', levels: ALL },
   { seq: 5, id: 'manthara', from: 37, to: 19, name: "Manthara's whisper", kind: 'snake', levels: ALL },
   { seq: 6, id: 'kaikeyi', from: 46, to: 28, name: "Kaikeyi's two boons", kind: 'snake', levels: ALL },
-  { seq: 7, id: 'guha', from: 49, to: 74, name: 'Guha ferries them across the Ganga', kind: 'ladder', levels: EASY },
+  {
+    seq: 7,
+    id: 'guha',
+    from: 49,
+    to: 74,
+    name: 'Guha ferries them across the Ganga',
+    kind: 'ladder',
+    levels: EASY,
+  },
   { seq: 8, id: 'viradha', from: 58, to: 40, name: 'Viradha seizes Sita', kind: 'snake', levels: HARD },
   { seq: 9, id: 'shurpanakha', from: 64, to: 47, name: "Shurpanakha's revenge", kind: 'snake', levels: ALL },
   { seq: 10, id: 'golden-deer', from: 70, to: 56, name: 'The golden deer', kind: 'snake', levels: ALL },
   { seq: 11, id: 'abduction', from: 76, to: 55, name: "Sita's abduction", kind: 'snake', levels: ALL },
-  { seq: 12, id: 'kabandha', from: 82, to: 68, name: 'Kabandha the headless', kind: 'snake', levels: MEDIUM_HARD },
+  {
+    seq: 12,
+    id: 'kabandha',
+    from: 82,
+    to: 68,
+    name: 'Kabandha the headless',
+    kind: 'snake',
+    levels: MEDIUM_HARD,
+  },
   { seq: 13, id: 'shabari', from: 85, to: 108, name: "Shabari's devotion", kind: 'ladder', levels: ALL },
   { seq: 14, id: 'hanuman-meeting', from: 88, to: 113, name: 'Meeting Hanuman', kind: 'ladder', levels: ALL },
   { seq: 15, id: 'sugriva', from: 92, to: 118, name: 'Alliance with Sugriva', kind: 'ladder', levels: EASY },
-  { seq: 16, id: 'hanuman-leap', from: 95, to: 122, name: "Hanuman's leap to Lanka", kind: 'ladder', levels: ALL },
+  {
+    seq: 16,
+    id: 'hanuman-leap',
+    from: 95,
+    to: 122,
+    name: "Hanuman's leap to Lanka",
+    kind: 'ladder',
+    levels: ALL,
+  },
   { seq: 17, id: 'rama-setu', from: 101, to: 127, name: 'Building Rama Setu', kind: 'ladder', levels: ALL },
-  { seq: 18, id: 'indrajit-arrows', from: 114, to: 96, name: "Indrajit's serpent arrows", kind: 'snake', levels: ALL },
+  {
+    seq: 18,
+    id: 'indrajit-arrows',
+    from: 114,
+    to: 96,
+    name: "Indrajit's serpent arrows",
+    kind: 'snake',
+    levels: ALL,
+  },
   { seq: 19, id: 'prahasta', from: 120, to: 110, name: "Prahasta's charge", kind: 'snake', levels: HARD },
-  { seq: 20, id: 'kumbhakarna', from: 124, to: 106, name: 'Kumbhakarna awakens', kind: 'snake', levels: MEDIUM_HARD },
-  { seq: 21, id: 'brahmastra', from: 130, to: 119, name: "Indrajit's Brahmastra", kind: 'snake', levels: HARD },
+  {
+    seq: 20,
+    id: 'kumbhakarna',
+    from: 124,
+    to: 106,
+    name: 'Kumbhakarna awakens',
+    kind: 'snake',
+    levels: MEDIUM_HARD,
+  },
+  {
+    seq: 21,
+    id: 'brahmastra',
+    from: 130,
+    to: 119,
+    name: "Indrajit's Brahmastra",
+    kind: 'snake',
+    levels: HARD,
+  },
   { seq: 22, id: 'ravana', from: 138, to: 78, name: "Ravana's pride", kind: 'snake', levels: HARD },
 ];
 
@@ -102,7 +158,9 @@ function checkLevel(level: Level, table: readonly StoryJump[]): string[] {
   for (const start of heads) {
     const inWindow = heads.filter((h) => h >= start && h < start + WINDOW_SIZE);
     if (inWindow.length > MAX_SNAKE_HEADS_PER_WINDOW) {
-      problems.push(`${level}: ${inWindow.length} snake heads within squares ${start}-${start + WINDOW_SIZE - 1}`);
+      problems.push(
+        `${level}: ${inWindow.length} snake heads within squares ${start}-${start + WINDOW_SIZE - 1}`,
+      );
     }
   }
 

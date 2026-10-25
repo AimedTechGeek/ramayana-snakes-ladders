@@ -9,6 +9,9 @@ export type GameEvent =
   | { type: 'Bounced'; player: number; overshoot: number }
   | { type: 'Laddered'; player: number; jump: Jump; big: boolean }
   | { type: 'Bitten'; player: number; jump: Jump; big: boolean }
+  | { type: 'Overtook'; player: number; overtaken: number[] }
+  | { type: 'NearMiss'; player: number; snakeHead: number }
+  | { type: 'NearEnd'; player: number; position: number }
   | { type: 'ExtraRoll'; player: number }
   | { type: 'Won'; player: number; rank: number }
   | { type: 'GameOver'; ranking: number[] };

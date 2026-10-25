@@ -1,4 +1,8 @@
 import Phaser from 'phaser';
+import { Character } from '../../characters/Character';
+import { pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
+import { reactionFor, scaled, TIMING } from '../../characters/reactions';
+import { speech, t } from '../../i18n/i18n';
 import { boardFor, type StoryBoard } from '../../core/boards';
 import { createRandomDice, type Dice } from '../../core/dice';
 import type { GameEvent } from '../../core/events';
@@ -20,6 +24,7 @@ import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
 import { DiceButton } from '../ui/DiceButton';
+import { SpeechBubble } from '../ui/SpeechBubble';
 
 interface Chip {
   setLabel(text: string): Chip;
@@ -40,7 +45,6 @@ const STEP_MS = 120;
 const FAST_STEP_MS = 40;
 const BOT_DELAY_MS = 1000;
 const FAST_BOT_DELAY_MS = 400;
-const ROLL_HINT = 'Tap the dice to roll';
 
 export class BoardScene extends Phaser.Scene {
   private engine!: Game;
@@ -51,6 +55,10 @@ export class BoardScene extends Phaser.Scene {
   private shownSquare: number[] = [];
   private seatPositionText: Phaser.GameObjects.Text[] = [];
   private seatFrames: Phaser.GameObjects.Rectangle[] = [];
+  private characters: Character[] = [];
+  private bubbles: SpeechBubble[] = [];
+  /** Last line shown per speech key, so a bubble does not repeat itself. */
+  private lastLines = new Map<string, string>();
   private dieButton!: DiceButton;
   private bannerText!: Phaser.GameObjects.Text;
   private bannerDot!: Phaser.GameObjects.Arc;
@@ -75,6 +83,9 @@ export class BoardScene extends Phaser.Scene {
     this.shownSquare = [];
     this.seatPositionText = [];
     this.seatFrames = [];
+    this.characters = [];
+    this.bubbles = [];
+    this.lastLines = new Map();
     this.busy = false;
   }
 
@@ -165,13 +176,15 @@ export class BoardScene extends Phaser.Scene {
     }
     this.busy = false;
     this.dieButton.setEnabled(true);
-    this.setHint(ROLL_HINT);
+    this.setHint(t('ui.rollHint'));
   }
 
   private async play(events: GameEvent[]): Promise<void> {
     for (const event of events) {
       this.events.emit('game-event', event, this.engine);
+      const reactions = this.react(event);
       await this.animate(event);
+      if (event.type === 'Won' || event.type === 'GameOver') await reactions;
     }
   }
 
@@ -194,11 +207,11 @@ export class BoardScene extends Phaser.Scene {
         await this.slideTo(event.player, event.jump.to, 'snake');
         return;
       case 'TripleSixVoid':
-        this.setHint('Three sixes! The turn is void.');
+        this.setHint(t('ui.tripleSix'));
         await this.slideTo(event.player, event.restoredTo, 'ladder');
         return;
       case 'Won':
-        this.setHint(`${this.playerName(event.player)} reaches Ayodhya's throne!`);
+        this.setHint(t('ui.winner', { name: this.playerName(event.player) }));
         return;
       case 'Bounced':
       case 'ExtraRoll':
@@ -207,13 +220,64 @@ export class BoardScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Starts every seated hero's reaction to an event without blocking movement (T05 section 1).
+   * Resolves when the last reaction has finished, so Won and GameOver can wait for it.
+   */
+  private react(event: GameEvent): Promise<void> {
+    const players = this.snapshot().players;
+    const cues = reactionsFor(event, players);
+    const speakers = pickSpeakers(cues);
+    const fast = this.fastMode;
+    const [minStagger, maxStagger] = TIMING.bystanderStaggerMs;
+    const runs = cues.map((cue) => {
+      const delay = cue.role === 'self' ? 0 : Phaser.Math.Between(minStagger, maxStagger);
+      const hero = players[cue.seat]?.hero;
+      if (!hero) return Promise.resolve();
+      const reaction = reactionFor(hero, cue.role, cue.event);
+      const speaks = speakers.includes(cue);
+      const start = () => {
+        if (speaks) this.showLine(cue, hero, reaction.intensity, fast);
+        return this.characterAt(cue.seat).feel(reaction, fast);
+      };
+      if (delay === 0) return start();
+      return new Promise<void>((resolve) => this.time.delayedCall(delay, () => void start().then(resolve)));
+    });
+    // A reaction cut short by a newer one never resolves, so do not wait on it forever.
+    const longest = Math.max(0, ...cues.map((cue) => this.maxDuration(cue, players)));
+    const timeout = new Promise<void>((resolve) =>
+      this.time.delayedCall(longest + maxStagger + 100, resolve),
+    );
+    return Promise.race([Promise.all(runs).then(() => undefined), timeout]);
+  }
+
+  private maxDuration(cue: Cue, players: GameState['players']): number {
+    const hero = players[cue.seat]?.hero;
+    return hero ? scaled(reactionFor(hero, cue.role, cue.event), this.fastMode).durationMs : 0;
+  }
+
+  private showLine(cue: Cue, hero: string, intensity: number, fast: boolean): void {
+    const key = `${hero}.${cue.role}.${cue.event}`;
+    let line = speech(hero, cue.role, cue.event);
+    if (line !== null && line === this.lastLines.get(key)) line = speech(hero, cue.role, cue.event);
+    if (line === null) return;
+    this.lastLines.set(key, line);
+    this.bubbles[cue.seat]?.say(line, intensity, fast);
+  }
+
+  private characterAt(seat: number): Character {
+    const character = this.characters[seat];
+    if (!character) throw new Error(`No character for seat ${seat}`);
+    return character;
+  }
+
   private playerName(player: number): string {
     return this.snapshot().players[player]?.name ?? '';
   }
 
   private setBanner(player: number): void {
     const hero = HEROES[this.snapshot().players[player]?.hero ?? 'rama'];
-    this.bannerText.setText(`${this.playerName(player)}'s turn`);
+    this.bannerText.setText(t('ui.yourTurn', { name: this.playerName(player) }));
     this.bannerDot.setFillStyle(hero.color);
   }
 
@@ -237,7 +301,7 @@ export class BoardScene extends Phaser.Scene {
 
     this.fastChip = this.createChip(864, 624, 128, () => this.toggleFast());
     this.muteChip = this.createChip(1000, 624, 128, () => this.toggleMute());
-    this.createChip(1136, 624, 120, () => this.openMenu()).setLabel('Menu');
+    this.createChip(1136, 624, 120, () => this.openMenu()).setLabel(t('ui.menu'));
     this.applyFast();
     this.applyMute();
     this.setBanner(this.snapshot().current);
@@ -274,7 +338,7 @@ export class BoardScene extends Phaser.Scene {
 
   private applyFast(): void {
     this.fastChip?.setActive(this.fastMode);
-    this.fastChip?.setLabel(this.fastMode ? '\u00bb\u00bb Fast' : '\u00bb Fast');
+    this.fastChip?.setLabel(this.fastMode ? `\u00bb\u00bb ${t('ui.fast')}` : `\u00bb ${t('ui.fast')}`);
   }
 
   private toggleMute(): void {
@@ -285,7 +349,7 @@ export class BoardScene extends Phaser.Scene {
   private applyMute(): void {
     const muted = this.game.registry.get('muted') === true;
     this.muteChip.setActive(muted);
-    this.muteChip.setLabel(muted ? '\u2715 Muted' : '\u266a Mute');
+    this.muteChip.setLabel(muted ? `\u2715 ${t('ui.muted')}` : `\u266a ${t('ui.mute')}`);
   }
 
   private openMenu(): void {
@@ -446,15 +510,17 @@ export class BoardScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setStrokeStyle(2, COLORS.ink);
       this.seatFrames.push(frame);
-      this.add.text(PANEL.x + 80, top + 18, player.name, {
+      this.characters.push(new Character(this, PANEL.x + 48, top + 116, player.hero));
+      this.bubbles.push(new SpeechBubble(this, PANEL.x + 96, top + 70).setDepth(12));
+      this.add.text(PANEL.x + 100, top + 12, player.name, {
         fontFamily: TITLE_FONT,
         fontSize: '24px',
         color: CSS.ink,
       });
       this.add.text(
-        PANEL.x + 80,
-        top + 52,
-        `${hero.label} · ${player.controller === 'bot' ? 'Bot' : 'Human'}`,
+        PANEL.x + 100,
+        top + 44,
+        `${hero.label} · ${t(player.controller === 'bot' ? 'ui.bot' : 'ui.human')}`,
         {
           fontFamily: BODY_FONT,
           fontSize: '16px',
@@ -477,7 +543,9 @@ export class BoardScene extends Phaser.Scene {
 
   private refreshSeatPositions(): void {
     this.snapshot().players.forEach((p, seat) =>
-      this.seatPositionText[seat]?.setText(p.position === 0 ? 'Start' : `Square ${p.position}`),
+      this.seatPositionText[seat]?.setText(
+        p.position === 0 ? t('ui.atStart') : t('ui.square', { n: p.position }),
+      ),
     );
   }
 

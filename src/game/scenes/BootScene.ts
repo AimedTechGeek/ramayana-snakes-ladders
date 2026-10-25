@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getLocale, setLocale, t } from '../../i18n/i18n';
 import { CSS, COLORS, TITLE_FONT } from '../palette';
 import { loadGame } from '../save';
 
@@ -9,7 +10,7 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.add
-      .text(this.scale.width / 2, 200, 'Ramayana Snakes & Ladders', {
+      .text(this.scale.width / 2, 200, t('ui.title'), {
         fontFamily: TITLE_FONT,
         fontSize: '64px',
         color: CSS.gold,
@@ -20,13 +21,15 @@ export class BootScene extends Phaser.Scene {
 
     const saved = loadGame();
     if (saved) {
-      this.createButton(480, 380, 320, 80, 'Resume', COLORS.saffron, () =>
+      this.createButton(480, 380, 320, 80, t('ui.resume'), COLORS.saffron, () =>
         this.scene.start('Board', { state: saved }),
       );
-      this.createButton(480, 476, 320, 64, 'New Game', COLORS.parchment, () => this.scene.start('Setup'));
+      this.createButton(480, 476, 320, 64, t('ui.newGame'), COLORS.parchment, () =>
+        this.scene.start('Setup'),
+      );
     } else {
       const play = this.add
-        .text(this.scale.width / 2, 440, 'Play', {
+        .text(this.scale.width / 2, 440, t('ui.play'), {
           fontFamily: TITLE_FONT,
           fontSize: '40px',
           color: CSS.ink,
@@ -37,6 +40,13 @@ export class BootScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       play.on('pointerup', () => this.scene.start('Setup'));
     }
+
+    // The chip names the language it switches to, in that language.
+    const other = getLocale() === 'en' ? 'hi' : 'en';
+    this.createButton(1112, 640, 144, 56, other === 'hi' ? 'हिंदी' : 'English', COLORS.parchment, () => {
+      setLocale(other);
+      this.scene.restart();
+    });
 
     this.game.registry.set('ready', true);
   }
