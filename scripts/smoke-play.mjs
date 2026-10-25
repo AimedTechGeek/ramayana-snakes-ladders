@@ -1,4 +1,5 @@
-// SMOKE_SCRIPT step: start a game via Boot and Setup and play turns until a ladder or snake has happened or 40 rolls.
+// SMOKE_SCRIPT step: start a game via Boot and Setup, play turns until a ladder or snake has happened or 40 rolls,
+// then roll in fast mode until the game is over and the Win overlay is up.
 export default async function playSomeTurns(page) {
   await page.mouse.click(640, 440); // Boot: Play
   await page.waitForFunction(
@@ -25,4 +26,18 @@ export default async function playSomeTurns(page) {
     return count;
   });
   if (rolls === 0) throw new Error('no rolls happened');
+
+  // Keep playing in fast mode until the game is over (bots roll themselves), then wait for the Win overlay.
+  await page.evaluate(async () => {
+    const board = window.__game.registry.get('board');
+    const idle = () => new Promise((r) => setTimeout(r, 30));
+    board.fastMode = true;
+    let count = 0;
+    while (!board.snapshot().over && count < 400) {
+      while (board.isBusy) await idle();
+      await board.requestRoll();
+      count++;
+    }
+  });
+  await page.waitForFunction(() => window.__game?.registry.get('win'), null, { timeout: 60_000 });
 }

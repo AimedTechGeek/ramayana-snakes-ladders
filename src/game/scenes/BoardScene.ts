@@ -123,6 +123,16 @@ export class BoardScene extends Phaser.Scene {
     await this.takeTurn();
   }
 
+  /** Play On: lets the remaining players continue after the first winner, then plays the events. */
+  async continuePlay(): Promise<void> {
+    if (this.busy || !this.engine.canContinue) return;
+    this.busy = true;
+    this.dieButton.setEnabled(false);
+    this.setHint('');
+    await this.play(this.engine.continuePlay());
+    this.afterEvents();
+  }
+
   private isBotTurn(): boolean {
     const state = this.snapshot();
     return state.players[state.current]?.controller === 'bot';
@@ -142,6 +152,8 @@ export class BoardScene extends Phaser.Scene {
       clearSave();
       this.busy = false;
       this.dieButton.setEnabled(false);
+      this.scene.launch('Win', { state: this.snapshot(), canContinue: this.engine.canContinue });
+      this.scene.pause();
       return;
     }
     saveGame(this.snapshot());
