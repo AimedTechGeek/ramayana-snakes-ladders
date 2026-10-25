@@ -13,6 +13,7 @@ import { BOARD_BACKGROUND_KEY, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey, tokenKey
 import { HEROES } from '../heroes';
 import { BOARD, PANEL, SEAT, fanOffset, seatTokenSpot, seatTop, squareCenter, type Point } from '../layout';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
+import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
 import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
 import { DiceButton } from '../ui/DiceButton';
@@ -78,6 +79,7 @@ export class BoardScene extends Phaser.Scene {
 
   create(): void {
     this.audio = getAudio(this.game.registry.get('muted') === true);
+    ensureFxTextures(this);
     this.drawBoard();
     this.drawJumps();
     this.drawSeats();
@@ -192,6 +194,7 @@ export class BoardScene extends Phaser.Scene {
       case 'Rolled':
         this.audio.dice();
         await this.dieButton.roll(event.value);
+        if (event.value === 6) ringPulse(this, this.dieButton.x, this.dieButton.y, 56, this.fastMode);
         return;
       case 'Moved':
         for (const square of event.path) await this.stepTo(event.player, square);
@@ -202,6 +205,7 @@ export class BoardScene extends Phaser.Scene {
         return;
       case 'Bitten':
         this.audio.snake();
+        this.biteEffects(event.jump.from);
         await this.slideTo(event.player, event.jump.to, 'snake');
         return;
       case 'TripleSixVoid':
@@ -215,6 +219,7 @@ export class BoardScene extends Phaser.Scene {
         return;
       case 'Bounced':
         this.audio.bounce();
+        this.bounceEffect();
         return;
       case 'GameOver':
         this.audio.drone(false);
@@ -396,6 +401,8 @@ export class BoardScene extends Phaser.Scene {
         ? new Phaser.Curves.QuadraticBezier(start, this.bend(start, end, 0.35), end)
         : new Phaser.Curves.Line(start, end);
     const progress = { t: 0 };
+    const trail = kind === 'ladder' ? sparkleTrail(this, this.fastMode) : undefined;
+    let lastSparkle = 0;
     await tweenAsync(this, {
       targets: progress,
       t: 1,
@@ -404,9 +411,28 @@ export class BoardScene extends Phaser.Scene {
       onUpdate: () => {
         const p = curve.getPoint(progress.t);
         token.setPosition(p.x, p.y);
+        if (trail && progress.t - lastSparkle >= 0.04) {
+          lastSparkle = progress.t;
+          trail.emit(p.x, p.y);
+        }
       },
     });
+    trail?.stop();
+    if (kind === 'ladder') goldBurst(this, end.x, end.y, this.fastMode);
+    else dustPuff(this, end.x, end.y, this.fastMode);
     await this.relayout(player);
+  }
+
+  /** Dust at the snake's head and a brief camera shake when a token is bitten. */
+  private biteEffects(headSquare: number): void {
+    const head = squareCenter(headSquare);
+    dustPuff(this, head.x, head.y, this.fastMode);
+    shake(this, this.fastMode);
+  }
+
+  private bounceEffect(): void {
+    const c = squareCenter(144);
+    bouncePuff(this, c.x, c.y, this.fastMode);
   }
 
   /** Re-fan every token sharing the square the given player just reached. */
