@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import en from '../src/i18n/en.json';
-import { registerLocale, setLocale, speech, t } from '../src/i18n/i18n';
+import hi from '../src/i18n/hi.json';
+import { registerLocale, setLocale, speech, t, type LocaleTable } from '../src/i18n/i18n';
+
+const enTable: LocaleTable = en;
+const hiTable: LocaleTable = hi;
+
+function placeholdersOf(value: string | string[]): string[] {
+  const text = Array.isArray(value) ? value.join(' ') : value;
+  return [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
+}
 
 const HEROES = ['rama', 'sita', 'lakshmana', 'hanuman'];
 const ROLES = ['self', 'other'] as const;
@@ -61,6 +70,31 @@ describe('i18n', () => {
             `${hero}.${role}.${event}`,
           ).not.toBeNull();
         }
+      }
+    }
+  });
+
+  it('HindiTable_Should_HaveExactlyTheEnglishKeysAndPlaceholders', () => {
+    expect(Object.keys(hiTable).sort()).toEqual(Object.keys(enTable).sort());
+
+    for (const [key, enValue] of Object.entries(enTable)) {
+      const hiValue = hiTable[key];
+      expect(hiValue, key).toBeDefined();
+      if (hiValue === undefined) continue;
+
+      expect(Array.isArray(hiValue), key).toBe(Array.isArray(enValue));
+      if (Array.isArray(enValue) && Array.isArray(hiValue)) {
+        expect(hiValue.length, key).toBe(enValue.length);
+      }
+      expect(placeholdersOf(hiValue), key).toEqual(placeholdersOf(enValue));
+    }
+  });
+
+  it('HindiSpeech_Lines_Should_BeAtMost48Chars', () => {
+    for (const [key, value] of Object.entries(hiTable)) {
+      if (key.startsWith('ui.')) continue;
+      for (const line of Array.isArray(value) ? value : [value]) {
+        expect(line.length, `${key}: ${line}`).toBeLessThanOrEqual(48);
       }
     }
   });

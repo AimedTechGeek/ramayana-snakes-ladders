@@ -1,11 +1,12 @@
 import en from './en.json';
+import hi from './hi.json';
 
 export type Locale = 'en' | 'hi';
 export type LocaleTable = Record<string, string | string[]>;
 
 const STORAGE_KEY = 'rsl.locale';
 
-const tables: Partial<Record<Locale, LocaleTable>> = { en };
+const tables: Partial<Record<Locale, LocaleTable>> = { en, hi };
 let current: Locale = 'en';
 
 export function registerLocale(locale: Locale, table: LocaleTable): void {
