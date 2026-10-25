@@ -125,5 +125,9 @@
   "ui.fast": "Fast",
   "ui.speed": "Speed",
   "ui.mute": "Mute",
-  "ui.menu": "Menu"
+  "ui.menu": "Menu",
+  "ui.tripleSix": "Three sixes! The turn is void.",
+  "ui.atStart": "Start",
+  "ui.square": "Square {n}",
+  "ui.muted": "Muted"
 }

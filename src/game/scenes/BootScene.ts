@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { t } from '../../i18n/i18n';
+import { getLocale, setLocale, t } from '../../i18n/i18n';
 import { CSS, COLORS, TITLE_FONT } from '../palette';
 import { loadGame } from '../save';
 
@@ -40,6 +40,13 @@ export class BootScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       play.on('pointerup', () => this.scene.start('Setup'));
     }
+
+    // The chip names the language it switches to, in that language.
+    const other = getLocale() === 'en' ? 'hi' : 'en';
+    this.createButton(1112, 640, 144, 56, other === 'hi' ? 'हिंदी' : 'English', COLORS.parchment, () => {
+      setLocale(other);
+      this.scene.restart();
+    });
 
     this.game.registry.set('ready', true);
   }

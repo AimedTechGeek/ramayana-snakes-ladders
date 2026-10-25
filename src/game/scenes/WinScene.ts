@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { t } from '../../i18n/i18n';
 import type { GameConfig, GameState, PlayerState } from '../../core/types';
 import { Character } from '../../characters/Character';
 import { reactionFor } from '../../characters/reactions';
@@ -45,11 +46,11 @@ export class WinScene extends Phaser.Scene {
     this.drawWinner(winner);
     this.drawOthers(this.state.players.filter((p) => p !== winner));
 
-    this.createButton(470, 560, 240, 72, 'Play Again', COLORS.saffron, () => this.playAgain());
+    this.createButton(470, 560, 240, 72, t('ui.playAgain'), COLORS.saffron, () => this.playAgain());
     if (this.canContinue) {
-      this.createButton(726, 560, 200, 72, 'Play On', COLORS.parchment, () => this.playOn());
+      this.createButton(726, 560, 200, 72, t('ui.playOn'), COLORS.parchment, () => this.playOn());
     }
-    this.createButton(942, 560, 120, 72, 'Menu', COLORS.parchment, () => this.menu());
+    this.createButton(942, 560, 120, 72, t('ui.menu'), COLORS.parchment, () => this.menu());
 
     this.game.registry.set('win', this);
   }
@@ -60,7 +61,7 @@ export class WinScene extends Phaser.Scene {
     const cheer = () => void figure.feel(reactionFor(winner.hero, 'self', 'win'));
     cheer();
     this.time.addEvent({ delay: WIN_LOOP_MS, loop: true, callback: cheer });
-    this.add.text(470, 140, `${winner.name} reaches Ayodhya's throne!`, {
+    this.add.text(470, 140, t('ui.winner', { name: winner.name }), {
       fontFamily: TITLE_FONT,
       fontSize: '36px',
       color: CSS.ink,

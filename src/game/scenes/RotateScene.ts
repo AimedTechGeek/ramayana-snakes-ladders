@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { t } from '../../i18n/i18n';
 import { BODY_FONT, COLORS } from '../palette';
 
 const ROTATE_KEY = 'Rotate';
@@ -31,7 +32,7 @@ export class RotateScene extends Phaser.Scene {
     const icon = this.add.graphics();
     drawPhoneIcon(icon);
     const text = this.add
-      .text(640, 420, 'Please rotate your device', {
+      .text(640, 420, t('ui.rotate'), {
         fontFamily: BODY_FONT,
         fontSize: '28px',
         color: '#F3E3B8',

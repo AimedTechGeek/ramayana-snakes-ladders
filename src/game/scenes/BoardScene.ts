@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { Character } from '../../characters/Character';
 import { pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
 import { reactionFor, scaled, TIMING } from '../../characters/reactions';
-import { speech } from '../../i18n/i18n';
+import { speech, t } from '../../i18n/i18n';
 import { boardFor, type StoryBoard } from '../../core/boards';
 import { createRandomDice, type Dice } from '../../core/dice';
 import type { GameEvent } from '../../core/events';
@@ -45,7 +45,6 @@ const STEP_MS = 120;
 const FAST_STEP_MS = 40;
 const BOT_DELAY_MS = 1000;
 const FAST_BOT_DELAY_MS = 400;
-const ROLL_HINT = 'Tap the dice to roll';
 
 export class BoardScene extends Phaser.Scene {
   private engine!: Game;
@@ -177,7 +176,7 @@ export class BoardScene extends Phaser.Scene {
     }
     this.busy = false;
     this.dieButton.setEnabled(true);
-    this.setHint(ROLL_HINT);
+    this.setHint(t('ui.rollHint'));
   }
 
   private async play(events: GameEvent[]): Promise<void> {
@@ -208,11 +207,11 @@ export class BoardScene extends Phaser.Scene {
         await this.slideTo(event.player, event.jump.to, 'snake');
         return;
       case 'TripleSixVoid':
-        this.setHint('Three sixes! The turn is void.');
+        this.setHint(t('ui.tripleSix'));
         await this.slideTo(event.player, event.restoredTo, 'ladder');
         return;
       case 'Won':
-        this.setHint(`${this.playerName(event.player)} reaches Ayodhya's throne!`);
+        this.setHint(t('ui.winner', { name: this.playerName(event.player) }));
         return;
       case 'Bounced':
       case 'ExtraRoll':
@@ -278,7 +277,7 @@ export class BoardScene extends Phaser.Scene {
 
   private setBanner(player: number): void {
     const hero = HEROES[this.snapshot().players[player]?.hero ?? 'rama'];
-    this.bannerText.setText(`${this.playerName(player)}'s turn`);
+    this.bannerText.setText(t('ui.yourTurn', { name: this.playerName(player) }));
     this.bannerDot.setFillStyle(hero.color);
   }
 
@@ -302,7 +301,7 @@ export class BoardScene extends Phaser.Scene {
 
     this.fastChip = this.createChip(864, 624, 128, () => this.toggleFast());
     this.muteChip = this.createChip(1000, 624, 128, () => this.toggleMute());
-    this.createChip(1136, 624, 120, () => this.openMenu()).setLabel('Menu');
+    this.createChip(1136, 624, 120, () => this.openMenu()).setLabel(t('ui.menu'));
     this.applyFast();
     this.applyMute();
     this.setBanner(this.snapshot().current);
@@ -339,7 +338,7 @@ export class BoardScene extends Phaser.Scene {
 
   private applyFast(): void {
     this.fastChip?.setActive(this.fastMode);
-    this.fastChip?.setLabel(this.fastMode ? '\u00bb\u00bb Fast' : '\u00bb Fast');
+    this.fastChip?.setLabel(this.fastMode ? `\u00bb\u00bb ${t('ui.fast')}` : `\u00bb ${t('ui.fast')}`);
   }
 
   private toggleMute(): void {
@@ -350,7 +349,7 @@ export class BoardScene extends Phaser.Scene {
   private applyMute(): void {
     const muted = this.game.registry.get('muted') === true;
     this.muteChip.setActive(muted);
-    this.muteChip.setLabel(muted ? '\u2715 Muted' : '\u266a Mute');
+    this.muteChip.setLabel(muted ? `\u2715 ${t('ui.muted')}` : `\u266a ${t('ui.mute')}`);
   }
 
   private openMenu(): void {
@@ -521,7 +520,7 @@ export class BoardScene extends Phaser.Scene {
       this.add.text(
         PANEL.x + 100,
         top + 44,
-        `${hero.label} · ${player.controller === 'bot' ? 'Bot' : 'Human'}`,
+        `${hero.label} · ${t(player.controller === 'bot' ? 'ui.bot' : 'ui.human')}`,
         {
           fontFamily: BODY_FONT,
           fontSize: '16px',
@@ -544,7 +543,9 @@ export class BoardScene extends Phaser.Scene {
 
   private refreshSeatPositions(): void {
     this.snapshot().players.forEach((p, seat) =>
-      this.seatPositionText[seat]?.setText(p.position === 0 ? 'Start' : `Square ${p.position}`),
+      this.seatPositionText[seat]?.setText(
+        p.position === 0 ? t('ui.atStart') : t('ui.square', { n: p.position }),
+      ),
     );
   }
 
