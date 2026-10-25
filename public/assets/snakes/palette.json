@@ -1,0 +1,67 @@
+{
+  "tataka": {
+    "body": "#457334",
+    "belly": "#8E3B3B",
+    "pattern": "bands"
+  },
+  "manthara": {
+    "body": "#1C1F4D",
+    "belly": "#8E3B3B",
+    "pattern": "diamonds"
+  },
+  "kaikeyi": {
+    "body": "#7B3B6E",
+    "belly": "#8E3B3B",
+    "pattern": "spots"
+  },
+  "viradha": {
+    "body": "#C98B4B",
+    "belly": "#8E3B3B",
+    "pattern": "bands"
+  },
+  "shurpanakha": {
+    "body": "#8E3B3B",
+    "belly": "#783431",
+    "pattern": "bands"
+  },
+  "golden-deer": {
+    "body": "#E9C12F",
+    "belly": "#8E3B3B",
+    "pattern": "spots"
+  },
+  "abduction": {
+    "body": "#1C1F4D",
+    "belly": "#8E3B3B",
+    "pattern": "spots"
+  },
+  "kabandha": {
+    "body": "#457334",
+    "belly": "#8E3B3B",
+    "pattern": "bands"
+  },
+  "indrajit-arrows": {
+    "body": "#3A3F9E",
+    "belly": "#5D62AF",
+    "pattern": "diamonds"
+  },
+  "prahasta": {
+    "body": "#C98B4B",
+    "belly": "#8E3B3B",
+    "pattern": "bands"
+  },
+  "kumbhakarna": {
+    "body": "#A6723E",
+    "belly": "#F3E3B8",
+    "pattern": "bands"
+  },
+  "brahmastra": {
+    "body": "#F39C2B",
+    "belly": "#8E3B3B",
+    "pattern": "diamonds"
+  },
+  "ravana": {
+    "body": "#1C1F4D",
+    "belly": "#8E3B3B",
+    "pattern": "diamonds"
+  }
+}

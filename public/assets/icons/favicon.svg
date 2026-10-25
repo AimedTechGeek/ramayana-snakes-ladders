@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Favicon: lotus | palette: docs/design/T02-style-guide.md (hex tokens inlined) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<rect x="2" y="2" width="60" height="60" rx="14" fill="#1C1F4D" stroke="#2A1A0F" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="7" y="7" width="50" height="50" rx="10" fill="none" stroke="#E9C12F" stroke-width="2.5"/>
+<path d="M10 46 Q32 58 54 46 Q32 52 10 46Z" fill="#4C8C3F" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path transform="rotate(-56 32 40)" d="M32 40 Q20 30 24 12 Q32 2 40 12 Q44 30 32 40Z" fill="#AC486D" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path transform="rotate(56 32 40)" d="M32 40 Q20 30 24 12 Q32 2 40 12 Q44 30 32 40Z" fill="#AC486D" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path transform="rotate(-28 32 40)" d="M32 40 Q20 30 24 12 Q32 2 40 12 Q44 30 32 40Z" fill="#D15587" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path transform="rotate(28 32 40)" d="M32 40 Q20 30 24 12 Q32 2 40 12 Q44 30 32 40Z" fill="#D15587" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path transform="rotate(0 32 40)" d="M32 40 Q20 30 24 12 Q32 2 40 12 Q44 30 32 40Z" fill="#D9749D" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="32" cy="38" r="4" fill="#E9C12F" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

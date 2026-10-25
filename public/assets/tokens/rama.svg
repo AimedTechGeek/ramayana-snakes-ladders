@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Token: Rama (blue face, gold crown band, bow tip at left) | palette: docs/design/T02-style-guide.md (hex tokens inlined) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<circle cx="32" cy="32" r="29.5" fill="#3F6FC2" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M51.5 12.5 A29.5 29.5 0 0 1 12.5 51.5 A33 33 0 0 0 51.5 12.5Z" fill="#3A5C9B"/>
+<circle cx="32" cy="32" r="26" fill="none" stroke="#E9C12F" stroke-width="4"/>
+<path d="M14 18 A24 24 0 0 1 24 10" fill="none" stroke="#EDCC54" stroke-width="1.5" stroke-linecap="round"/>
+<g transform="translate(13 15) scale(0.4)">
+<path d="M-14 10 Q-30 50 -14 95" fill="none" stroke="#E9C12F" stroke-width="7" stroke-linecap="round"/><path d="M-14 10 Q-30 50 -14 95" fill="none" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M-14 10 L-14 95" fill="none" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="9" cy="54" r="7" fill="#3F6FC2" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="91" cy="54" r="7" fill="#3A5C9B" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="9" cy="64" r="3.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="91" cy="64" r="3.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="50" cy="50" r="42" fill="#3F6FC2"/><path d="M74 16 A42 42 0 0 1 74 84 A30 42 0 0 0 74 16Z" fill="#3A5C9B"/><circle cx="50" cy="50" r="42" fill="none" stroke="#2A1A0F" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><path d="M8 40 Q10 8 50 6 Q90 8 92 40 Q75 24 50 22 Q25 24 8 40Z" fill="#2A1A0F"/><circle cx="50" cy="2" r="12" fill="#2A1A0F"/><path d="M14 30 Q50 14 86 30 L86 38 Q50 24 14 38Z" fill="#E9C12F" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 31 Q40 22 50 21" fill="none" stroke="#EDCC54" stroke-width="2.5" stroke-linecap="round"/><circle cx="50" cy="26" r="5" fill="#F39C2B" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="36" cy="46" rx="8" ry="5.5" fill="#F3E3B8" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="64" cy="46" rx="8" ry="5.5" fill="#F3E3B8" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="36" cy="46" r="4" fill="#2A1A0F"/>
+<circle cx="64" cy="46" r="4" fill="#2A1A0F"/>
+<circle cx="34.5" cy="44.5" r="1.5" fill="#F3E3B8"/>
+<circle cx="62.5" cy="44.5" r="1.5" fill="#F3E3B8"/>
+<path d="M26 34 Q36 30 46 32" fill="none" stroke="#2A1A0F" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M54 32 Q64 30 74 34" fill="none" stroke="#2A1A0F" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M38 66 Q50 72 62 66" fill="none" stroke="#2A1A0F" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+</svg>
