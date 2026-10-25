@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { GameConfig, GameState, PlayerState } from '../../core/types';
-import { HEROES } from '../heroes';
+import { Character } from '../../characters/Character';
+import { reactionFor } from '../../characters/reactions';
 import { BODY_FONT, COLORS, CSS, TITLE_FONT } from '../palette';
 import { clearSave } from '../save';
 import type { BoardScene } from './BoardScene';
@@ -12,6 +13,8 @@ export interface WinSceneData {
 
 const PANEL = { x: 200, y: 80, width: 880, height: 560 };
 const OTHERS = { x: 470, y: 300, spacing: 140 };
+const WINNER_SCALE = 2.2;
+const WIN_LOOP_MS = 2500;
 const ORDINALS = ['1st', '2nd', '3rd', '4th'];
 
 /** Win overlay launched over the Board when the game is over (T04 section 5). */
@@ -52,17 +55,11 @@ export class WinScene extends Phaser.Scene {
   }
 
   private drawWinner(winner: PlayerState): void {
-    const hero = HEROES[winner.hero];
-    this.add.circle(340, 290, 100, hero.color).setStrokeStyle(4, COLORS.ink);
-    this.add
-      .text(340, 290, hero.label.charAt(0), {
-        fontFamily: TITLE_FONT,
-        fontSize: '120px',
-        color: CSS.parchment,
-        stroke: CSS.ink,
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
+    const figure = new Character(this, 340, 430, winner.hero).setScale(WINNER_SCALE);
+    figure.setEmotion('excited');
+    const cheer = () => void figure.feel(reactionFor(winner.hero, 'self', 'win'));
+    cheer();
+    this.time.addEvent({ delay: WIN_LOOP_MS, loop: true, callback: cheer });
     this.add.text(470, 140, `${winner.name} reaches Ayodhya's throne!`, {
       fontFamily: TITLE_FONT,
       fontSize: '36px',
@@ -74,15 +71,7 @@ export class WinScene extends Phaser.Scene {
   private drawOthers(others: PlayerState[]): void {
     others.forEach((player, i) => {
       const x = OTHERS.x + OTHERS.spacing * i;
-      const hero = HEROES[player.hero];
-      this.add.circle(x + 40, OTHERS.y + 40, 36, hero.color).setStrokeStyle(3, COLORS.ink);
-      this.add
-        .text(x + 40, OTHERS.y + 40, hero.label.charAt(0), {
-          fontFamily: TITLE_FONT,
-          fontSize: '40px',
-          color: CSS.parchment,
-        })
-        .setOrigin(0.5);
+      new Character(this, x + 40, OTHERS.y + 84, player.hero).feel(reactionFor(player.hero, 'self', 'lose'));
       this.add.text(x, OTHERS.y + 92, player.name, {
         fontFamily: BODY_FONT,
         fontSize: '20px',
