@@ -55,7 +55,8 @@ async function waitForServer(timeoutMs) {
 }
 
 async function runSmoke(page, errors) {
-  await page.goto(APP_URL, { waitUntil: 'load' });
+  // SMOKE_PATH opens a sub-page such as #gallery.
+  await page.goto(APP_URL + (process.env.SMOKE_PATH ?? ''), { waitUntil: 'load' });
 
   try {
     await page.waitForFunction(() => window.__game?.registry.get('ready') === true, null, {

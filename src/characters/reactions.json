@@ -1,0 +1,130 @@
+{
+  "timing": {
+    "stepMs": 120,
+    "fastStepMs": 40,
+    "botDelayMs": 1000,
+    "bystanderStaggerMs": [80, 150],
+    "bubbleMs": 1800,
+    "faceHoldMs": 1200
+  },
+  "rama": {
+    "self": {
+      "roll6": { "emotion": "happy", "intensity": 0.5, "tween": "nod", "durationMs": 600 },
+      "ladder": { "emotion": "happy", "intensity": 0.6, "tween": "bless", "durationMs": 800 },
+      "ladderBig": { "emotion": "excited", "intensity": 0.7, "tween": "leap", "durationMs": 900 },
+      "snake": { "emotion": "sad", "intensity": 0.4, "tween": "sigh", "durationMs": 700 },
+      "snakeBig": { "emotion": "sad", "intensity": 0.6, "tween": "sigh", "durationMs": 900 },
+      "overtake": { "emotion": "happy", "intensity": 0.5, "tween": "salute", "durationMs": 600 },
+      "overtaken": { "emotion": "idle", "intensity": 0.3, "tween": "nod", "durationMs": 500 },
+      "nearMiss": { "emotion": "happy", "intensity": 0.4, "tween": "nod", "durationMs": 500 },
+      "waiting": { "emotion": "idle", "intensity": 0.3, "tween": "none", "durationMs": 500 },
+      "tripleSix": { "emotion": "sad", "intensity": 0.3, "tween": "sigh", "durationMs": 700 },
+      "win": { "emotion": "excited", "intensity": 0.9, "tween": "bless", "durationMs": 1200 },
+      "lose": { "emotion": "happy", "intensity": 0.6, "tween": "clap", "durationMs": 1000 }
+    },
+    "other": {
+      "roll6": { "emotion": "happy", "intensity": 0.3, "tween": "nod", "durationMs": 500 },
+      "ladder": { "emotion": "happy", "intensity": 0.4, "tween": "nod", "durationMs": 500 },
+      "ladderBig": { "emotion": "excited", "intensity": 0.6, "tween": "clap", "durationMs": 800 },
+      "snake": { "emotion": "sad", "intensity": 0.3, "tween": "sigh", "durationMs": 600 },
+      "snakeBig": { "emotion": "sad", "intensity": 0.4, "tween": "bless", "durationMs": 800 },
+      "overtake": { "emotion": "happy", "intensity": 0.4, "tween": "salute", "durationMs": 600 },
+      "overtaken": { "emotion": "idle", "intensity": 0.3, "tween": "nod", "durationMs": 500 },
+      "nearMiss": { "emotion": "happy", "intensity": 0.3, "tween": "nod", "durationMs": 500 },
+      "waiting": { "emotion": "idle", "intensity": 0.2, "tween": "none", "durationMs": 400 },
+      "tripleSix": { "emotion": "idle", "intensity": 0.3, "tween": "sigh", "durationMs": 600 },
+      "win": { "emotion": "happy", "intensity": 0.8, "tween": "clap", "durationMs": 1200 },
+      "lose": { "emotion": "happy", "intensity": 0.5, "tween": "bless", "durationMs": 900 }
+    }
+  },
+  "sita": {
+    "self": {
+      "roll6": { "emotion": "happy", "intensity": 0.5, "tween": "nod", "durationMs": 600 },
+      "ladder": { "emotion": "happy", "intensity": 0.6, "tween": "bounce", "durationMs": 700 },
+      "ladderBig": { "emotion": "excited", "intensity": 0.8, "tween": "clap", "durationMs": 900 },
+      "snake": { "emotion": "sad", "intensity": 0.4, "tween": "sigh", "durationMs": 700 },
+      "snakeBig": { "emotion": "sad", "intensity": 0.6, "tween": "sigh", "durationMs": 900 },
+      "overtake": { "emotion": "happy", "intensity": 0.5, "tween": "nod", "durationMs": 600 },
+      "overtaken": { "emotion": "happy", "intensity": 0.3, "tween": "nod", "durationMs": 500 },
+      "nearMiss": { "emotion": "happy", "intensity": 0.4, "tween": "sigh", "durationMs": 600 },
+      "waiting": { "emotion": "idle", "intensity": 0.3, "tween": "none", "durationMs": 500 },
+      "tripleSix": { "emotion": "sad", "intensity": 0.3, "tween": "sigh", "durationMs": 600 },
+      "win": { "emotion": "excited", "intensity": 0.9, "tween": "clap", "durationMs": 1200 },
+      "lose": { "emotion": "happy", "intensity": 0.6, "tween": "clap", "durationMs": 1000 }
+    },
+    "other": {
+      "roll6": { "emotion": "happy", "intensity": 0.3, "tween": "nod", "durationMs": 500 },
+      "ladder": { "emotion": "happy", "intensity": 0.4, "tween": "clap", "durationMs": 600 },
+      "ladderBig": { "emotion": "excited", "intensity": 0.6, "tween": "clap", "durationMs": 800 },
+      "snake": { "emotion": "sad", "intensity": 0.3, "tween": "sigh", "durationMs": 600 },
+      "snakeBig": { "emotion": "sad", "intensity": 0.4, "tween": "bless", "durationMs": 800 },
+      "overtake": { "emotion": "happy", "intensity": 0.4, "tween": "nod", "durationMs": 500 },
+      "overtaken": { "emotion": "idle", "intensity": 0.3, "tween": "nod", "durationMs": 500 },
+      "nearMiss": { "emotion": "happy", "intensity": 0.3, "tween": "sigh", "durationMs": 500 },
+      "waiting": { "emotion": "idle", "intensity": 0.2, "tween": "none", "durationMs": 400 },
+      "tripleSix": { "emotion": "sad", "intensity": 0.2, "tween": "sigh", "durationMs": 500 },
+      "win": { "emotion": "happy", "intensity": 0.8, "tween": "clap", "durationMs": 1200 },
+      "lose": { "emotion": "happy", "intensity": 0.5, "tween": "bless", "durationMs": 900 }
+    }
+  },
+  "lakshmana": {
+    "self": {
+      "roll6": { "emotion": "excited", "intensity": 0.7, "tween": "stomp", "durationMs": 600 },
+      "ladder": { "emotion": "happy", "intensity": 0.6, "tween": "bounce", "durationMs": 700 },
+      "ladderBig": { "emotion": "excited", "intensity": 0.9, "tween": "leap", "durationMs": 900 },
+      "snake": { "emotion": "scared", "intensity": 0.6, "tween": "shake", "durationMs": 700 },
+      "snakeBig": { "emotion": "sad", "intensity": 0.8, "tween": "stomp", "durationMs": 900 },
+      "overtake": { "emotion": "excited", "intensity": 0.7, "tween": "salute", "durationMs": 600 },
+      "overtaken": { "emotion": "sad", "intensity": 0.5, "tween": "stomp", "durationMs": 600 },
+      "nearMiss": { "emotion": "happy", "intensity": 0.5, "tween": "stomp", "durationMs": 500 },
+      "waiting": { "emotion": "idle", "intensity": 0.5, "tween": "fidget", "durationMs": 800 },
+      "tripleSix": { "emotion": "sad", "intensity": 0.7, "tween": "stomp", "durationMs": 800 },
+      "win": { "emotion": "excited", "intensity": 1.0, "tween": "leap", "durationMs": 1200 },
+      "lose": { "emotion": "sad", "intensity": 0.5, "tween": "fidget", "durationMs": 900 }
+    },
+    "other": {
+      "roll6": { "emotion": "idle", "intensity": 0.3, "tween": "fidget", "durationMs": 500 },
+      "ladder": { "emotion": "happy", "intensity": 0.4, "tween": "nod", "durationMs": 500 },
+      "ladderBig": { "emotion": "excited", "intensity": 0.6, "tween": "stomp", "durationMs": 600 },
+      "snake": { "emotion": "happy", "intensity": 0.5, "tween": "clap", "durationMs": 600 },
+      "snakeBig": { "emotion": "scared", "intensity": 0.5, "tween": "shake", "durationMs": 700 },
+      "overtake": { "emotion": "sad", "intensity": 0.4, "tween": "stomp", "durationMs": 500 },
+      "overtaken": { "emotion": "idle", "intensity": 0.4, "tween": "fidget", "durationMs": 500 },
+      "nearMiss": { "emotion": "scared", "intensity": 0.4, "tween": "shake", "durationMs": 500 },
+      "waiting": { "emotion": "idle", "intensity": 0.6, "tween": "fidget", "durationMs": 900 },
+      "tripleSix": { "emotion": "happy", "intensity": 0.6, "tween": "clap", "durationMs": 700 },
+      "win": { "emotion": "happy", "intensity": 0.5, "tween": "salute", "durationMs": 1000 },
+      "lose": { "emotion": "happy", "intensity": 0.4, "tween": "salute", "durationMs": 800 }
+    }
+  },
+  "hanuman": {
+    "self": {
+      "roll6": { "emotion": "excited", "intensity": 0.8, "tween": "bounce", "durationMs": 700 },
+      "ladder": { "emotion": "excited", "intensity": 0.7, "tween": "leap", "durationMs": 800 },
+      "ladderBig": { "emotion": "excited", "intensity": 1.0, "tween": "somersault", "durationMs": 1100 },
+      "snake": { "emotion": "scared", "intensity": 0.6, "tween": "cower", "durationMs": 700 },
+      "snakeBig": { "emotion": "scared", "intensity": 0.9, "tween": "somersault", "durationMs": 1000 },
+      "overtake": { "emotion": "excited", "intensity": 0.8, "tween": "leap", "durationMs": 700 },
+      "overtaken": { "emotion": "sad", "intensity": 0.4, "tween": "fidget", "durationMs": 600 },
+      "nearMiss": { "emotion": "happy", "intensity": 0.6, "tween": "bounce", "durationMs": 600 },
+      "waiting": { "emotion": "excited", "intensity": 0.7, "tween": "fidget", "durationMs": 900 },
+      "tripleSix": { "emotion": "sad", "intensity": 0.5, "tween": "slump", "durationMs": 800 },
+      "win": { "emotion": "excited", "intensity": 1.0, "tween": "somersault", "durationMs": 1400 },
+      "lose": { "emotion": "happy", "intensity": 0.6, "tween": "clap", "durationMs": 1000 }
+    },
+    "other": {
+      "roll6": { "emotion": "excited", "intensity": 0.6, "tween": "bounce", "durationMs": 600 },
+      "ladder": { "emotion": "excited", "intensity": 0.6, "tween": "clap", "durationMs": 600 },
+      "ladderBig": { "emotion": "excited", "intensity": 0.9, "tween": "leap", "durationMs": 900 },
+      "snake": { "emotion": "scared", "intensity": 0.5, "tween": "cower", "durationMs": 600 },
+      "snakeBig": { "emotion": "scared", "intensity": 0.7, "tween": "shake", "durationMs": 800 },
+      "overtake": { "emotion": "excited", "intensity": 0.6, "tween": "bounce", "durationMs": 600 },
+      "overtaken": { "emotion": "happy", "intensity": 0.5, "tween": "clap", "durationMs": 600 },
+      "nearMiss": { "emotion": "happy", "intensity": 0.5, "tween": "bounce", "durationMs": 500 },
+      "waiting": { "emotion": "excited", "intensity": 0.6, "tween": "fidget", "durationMs": 900 },
+      "tripleSix": { "emotion": "happy", "intensity": 0.6, "tween": "clap", "durationMs": 700 },
+      "win": { "emotion": "excited", "intensity": 0.9, "tween": "somersault", "durationMs": 1200 },
+      "lose": { "emotion": "happy", "intensity": 0.6, "tween": "bounce", "durationMs": 900 }
+    }
+  }
+}
