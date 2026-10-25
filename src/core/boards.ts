@@ -37,7 +37,7 @@ export const STORY_JUMPS: readonly StoryJump[] = [
     id: 'guha',
     from: 49,
     to: 74,
-    name: 'Guha ferries them across the Ganga',
+    name: "Guha's boat across the Ganga",
     kind: 'ladder',
     levels: EASY,
   },

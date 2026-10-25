@@ -86,13 +86,13 @@
       "roll6": { "emotion": "idle", "intensity": 0.3, "tween": "fidget", "durationMs": 500 },
       "ladder": { "emotion": "happy", "intensity": 0.4, "tween": "nod", "durationMs": 500 },
       "ladderBig": { "emotion": "excited", "intensity": 0.6, "tween": "stomp", "durationMs": 600 },
-      "snake": { "emotion": "happy", "intensity": 0.5, "tween": "clap", "durationMs": 600 },
+      "snake": { "emotion": "sad", "intensity": 0.4, "tween": "stomp", "durationMs": 600 },
       "snakeBig": { "emotion": "scared", "intensity": 0.5, "tween": "shake", "durationMs": 700 },
       "overtake": { "emotion": "sad", "intensity": 0.4, "tween": "stomp", "durationMs": 500 },
       "overtaken": { "emotion": "idle", "intensity": 0.4, "tween": "fidget", "durationMs": 500 },
       "nearMiss": { "emotion": "scared", "intensity": 0.4, "tween": "shake", "durationMs": 500 },
       "waiting": { "emotion": "idle", "intensity": 0.6, "tween": "fidget", "durationMs": 900 },
-      "tripleSix": { "emotion": "happy", "intensity": 0.6, "tween": "clap", "durationMs": 700 },
+      "tripleSix": { "emotion": "idle", "intensity": 0.4, "tween": "stomp", "durationMs": 600 },
       "win": { "emotion": "happy", "intensity": 0.5, "tween": "salute", "durationMs": 1000 },
       "lose": { "emotion": "happy", "intensity": 0.4, "tween": "salute", "durationMs": 800 }
     }
@@ -122,7 +122,7 @@
       "overtaken": { "emotion": "happy", "intensity": 0.5, "tween": "clap", "durationMs": 600 },
       "nearMiss": { "emotion": "happy", "intensity": 0.5, "tween": "bounce", "durationMs": 500 },
       "waiting": { "emotion": "excited", "intensity": 0.6, "tween": "fidget", "durationMs": 900 },
-      "tripleSix": { "emotion": "happy", "intensity": 0.6, "tween": "clap", "durationMs": 700 },
+      "tripleSix": { "emotion": "happy", "intensity": 0.5, "tween": "nod", "durationMs": 600 },
       "win": { "emotion": "excited", "intensity": 0.9, "tween": "somersault", "durationMs": 1200 },
       "lose": { "emotion": "happy", "intensity": 0.6, "tween": "bounce", "durationMs": 900 }
     }
