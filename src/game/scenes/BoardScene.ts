@@ -7,7 +7,6 @@ import type { GameConfig, GameState } from '../../core/types';
 import { HEROES } from '../heroes';
 import {
   BOARD,
-  CONTROLS_Y,
   PANEL,
   SEAT,
   fanOffset,
@@ -18,7 +17,14 @@ import {
   type Point,
 } from '../layout';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
+import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
+import { DiceButton } from '../ui/DiceButton';
+
+interface Chip {
+  setLabel(text: string): Chip;
+  setActive(on: boolean): void;
+}
 
 export type BoardSceneData =
   { config: GameConfig; state?: undefined } | { config?: undefined; state: GameState };
@@ -29,7 +35,12 @@ const ROW_COLORS = [
   0xe9b8a4, 0xe9b8a4,
 ] as const;
 
+// Timing from docs/design/reactions.json.
 const STEP_MS = 120;
+const FAST_STEP_MS = 40;
+const BOT_DELAY_MS = 1000;
+const FAST_BOT_DELAY_MS = 400;
+const ROLL_HINT = 'Tap the dice to roll';
 
 export class BoardScene extends Phaser.Scene {
   private engine!: Game;
@@ -40,7 +51,12 @@ export class BoardScene extends Phaser.Scene {
   private shownSquare: number[] = [];
   private seatPositionText: Phaser.GameObjects.Text[] = [];
   private seatFrames: Phaser.GameObjects.Rectangle[] = [];
-  private statusText!: Phaser.GameObjects.Text;
+  private dieButton!: DiceButton;
+  private bannerText!: Phaser.GameObjects.Text;
+  private bannerDot!: Phaser.GameObjects.Arc;
+  private hintText!: Phaser.GameObjects.Text;
+  private fastChip!: Chip;
+  private muteChip!: Chip;
   private busy = false;
 
   constructor() {
@@ -67,16 +83,20 @@ export class BoardScene extends Phaser.Scene {
     this.drawJumps();
     this.drawSeats();
     this.createTokens();
-    this.statusText = this.add
-      .text(PANEL.x + 144, CONTROLS_Y, '', { fontFamily: TITLE_FONT, fontSize: '26px', color: CSS.parchment })
-      .setDepth(10);
+    this.createHud();
 
-    this.input.keyboard?.on('keydown-SPACE', () => void this.requestRoll());
-    this.input.on('pointerdown', () => void this.requestRoll());
+    const keys = this.input.keyboard;
+    keys?.on('keydown-SPACE', () => void this.requestRoll());
+    keys?.on('keydown-ENTER', () => void this.requestRoll());
+    keys?.on('keydown-F', () => this.toggleFast());
+    keys?.on('keydown-M', () => this.toggleMute());
+    keys?.on('keydown-ESC', () => this.openMenu());
 
     this.game.registry.set('board', this);
     this.game.registry.set('board-ready', true);
-    void this.play(this.engine.begin());
+    saveGame(this.snapshot());
+    this.busy = true;
+    void this.play(this.engine.begin()).then(() => this.afterEvents());
   }
 
   /** The engine state for tests and saving. */
@@ -88,14 +108,64 @@ export class BoardScene extends Phaser.Scene {
     return this.busy;
   }
 
+  get fastMode(): boolean {
+    return this.game.registry.get('fast') === true;
+  }
+
+  set fastMode(on: boolean) {
+    this.game.registry.set('fast', on);
+    this.applyFast();
+  }
+
+  /** Rolls for the human whose turn it is. A no-op on bot turns, while busy, or after the game ends. */
   async requestRoll(): Promise<void> {
-    if (this.busy || this.engine.isOver) return;
+    if (this.busy || this.engine.isOver || this.isBotTurn()) return;
+    await this.takeTurn();
+  }
+
+  /** Play On: lets the remaining players continue after the first winner, then plays the events. */
+  async continuePlay(): Promise<void> {
+    if (this.busy || !this.engine.canContinue) return;
     this.busy = true;
-    try {
-      await this.play(this.engine.roll());
-    } finally {
+    this.dieButton.setEnabled(false);
+    this.setHint('');
+    await this.play(this.engine.continuePlay());
+    this.afterEvents();
+  }
+
+  private isBotTurn(): boolean {
+    const state = this.snapshot();
+    return state.players[state.current]?.controller === 'bot';
+  }
+
+  private async takeTurn(): Promise<void> {
+    this.busy = true;
+    this.dieButton.setEnabled(false);
+    this.setHint('');
+    await this.play(this.engine.roll());
+    this.afterEvents();
+  }
+
+  /** Hands control back: a bot schedules its own roll (staying busy), a human gets the dice. */
+  private afterEvents(): void {
+    if (this.engine.isOver) {
+      clearSave();
       this.busy = false;
+      this.dieButton.setEnabled(false);
+      this.scene.launch('Win', { state: this.snapshot(), canContinue: this.engine.canContinue });
+      this.scene.pause();
+      return;
     }
+    saveGame(this.snapshot());
+    if (this.isBotTurn()) {
+      this.dieButton.setEnabled(false);
+      this.setHint('');
+      this.time.delayedCall(this.fastMode ? FAST_BOT_DELAY_MS : BOT_DELAY_MS, () => void this.takeTurn());
+      return;
+    }
+    this.busy = false;
+    this.dieButton.setEnabled(true);
+    this.setHint(ROLL_HINT);
   }
 
   private async play(events: GameEvent[]): Promise<void> {
@@ -109,10 +179,10 @@ export class BoardScene extends Phaser.Scene {
     switch (event.type) {
       case 'TurnStarted':
         this.highlightSeat(event.player);
-        this.setStatus(`${this.playerName(event.player)}'s turn`);
+        this.setBanner(event.player);
         return;
       case 'Rolled':
-        this.setStatus(`${this.playerName(event.player)} rolled ${event.value}`);
+        await this.dieButton.roll(event.value);
         return;
       case 'Moved':
         for (const square of event.path) await this.stepTo(event.player, square);
@@ -124,11 +194,11 @@ export class BoardScene extends Phaser.Scene {
         await this.slideTo(event.player, event.jump.to, 'snake');
         return;
       case 'TripleSixVoid':
-        this.setStatus('Three sixes! The turn is void.');
+        this.setHint('Three sixes! The turn is void.');
         await this.slideTo(event.player, event.restoredTo, 'ladder');
         return;
       case 'Won':
-        this.setStatus(`${this.playerName(event.player)} reaches Ayodhya's throne!`);
+        this.setHint(`${this.playerName(event.player)} reaches Ayodhya's throne!`);
         return;
       case 'Bounced':
       case 'ExtraRoll':
@@ -141,8 +211,94 @@ export class BoardScene extends Phaser.Scene {
     return this.snapshot().players[player]?.name ?? '';
   }
 
-  private setStatus(text: string): void {
-    this.statusText.setText(text);
+  private setBanner(player: number): void {
+    const hero = HEROES[this.snapshot().players[player]?.hero ?? 'rama'];
+    this.bannerText.setText(`${this.playerName(player)}'s turn`);
+    this.bannerDot.setFillStyle(hero.color);
+  }
+
+  private setHint(text: string): void {
+    this.hintText.setText(text).setVisible(text !== '');
+  }
+
+  private createHud(): void {
+    this.dieButton = new DiceButton(this, PANEL.x + 64, 552 + 64).setDepth(10);
+    this.dieButton.on('press', () => void this.requestRoll());
+
+    this.bannerDot = this.add.circle(864 + 6, 548 + 16, 6, COLORS.parchment).setDepth(10);
+    this.bannerText = this.add
+      .text(864 + 24, 548, '', { fontFamily: TITLE_FONT, fontSize: '26px', color: CSS.parchment })
+      .setDepth(10);
+    this.hintText = this.add
+      .text(864, 584, '', { fontFamily: BODY_FONT, fontSize: '16px', color: CSS.parchment })
+      .setAlpha(0.7)
+      .setDepth(10)
+      .setVisible(false);
+
+    this.fastChip = this.createChip(864, 624, 128, () => this.toggleFast());
+    this.muteChip = this.createChip(1000, 624, 128, () => this.toggleMute());
+    this.createChip(1136, 624, 120, () => this.openMenu()).setLabel('Menu');
+    this.applyFast();
+    this.applyMute();
+    this.setBanner(this.snapshot().current);
+  }
+
+  private createChip(x: number, y: number, width: number, onClick: () => void): Chip {
+    const box = this.add
+      .rectangle(x, y, width, 56, COLORS.parchment)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, COLORS.ink)
+      .setDepth(10)
+      .setInteractive({ useHandCursor: true });
+    const label = this.add
+      .text(x + width / 2, y + 28, '', { fontFamily: BODY_FONT, fontSize: '20px', color: CSS.ink })
+      .setOrigin(0.5)
+      .setDepth(11);
+    box.on('pointerdown', onClick);
+    const chip: Chip = {
+      setLabel: (text) => {
+        label.setText(text);
+        return chip;
+      },
+      setActive: (on) => {
+        box.setFillStyle(on ? COLORS.indigo : COLORS.parchment);
+        label.setColor(on ? CSS.parchment : CSS.ink);
+      },
+    };
+    return chip;
+  }
+
+  private toggleFast(): void {
+    this.fastMode = !this.fastMode;
+  }
+
+  private applyFast(): void {
+    this.fastChip?.setActive(this.fastMode);
+    this.fastChip?.setLabel(this.fastMode ? '\u00bb\u00bb Fast' : '\u00bb Fast');
+  }
+
+  private toggleMute(): void {
+    this.game.registry.set('muted', this.game.registry.get('muted') !== true);
+    this.applyMute();
+  }
+
+  private applyMute(): void {
+    const muted = this.game.registry.get('muted') === true;
+    this.muteChip.setActive(muted);
+    this.muteChip.setLabel(muted ? '\u2715 Muted' : '\u266a Mute');
+  }
+
+  private openMenu(): void {
+    this.scene.start('Boot');
+  }
+
+  private get stepMs(): number {
+    return this.fastMode ? FAST_STEP_MS : STEP_MS;
+  }
+
+  /** Slide and settle durations are halved in fast mode. */
+  private scaled(ms: number): number {
+    return this.fastMode ? ms / 2 : ms;
   }
 
   private async stepTo(player: number, square: number): Promise<void> {
@@ -153,7 +309,7 @@ export class BoardScene extends Phaser.Scene {
       targets: token,
       x: target.x,
       y: target.y,
-      duration: STEP_MS,
+      duration: this.stepMs,
       ease: 'Sine.easeOut',
     });
     await this.relayout(player);
@@ -173,7 +329,7 @@ export class BoardScene extends Phaser.Scene {
     await tweenAsync(this, {
       targets: progress,
       t: 1,
-      duration: kind === 'snake' ? 700 : 500,
+      duration: this.scaled(kind === 'snake' ? 700 : 500),
       ease: kind === 'snake' ? 'Quad.easeIn' : 'Sine.easeInOut',
       onUpdate: () => {
         const p = curve.getPoint(progress.t);
@@ -191,7 +347,7 @@ export class BoardScene extends Phaser.Scene {
     await Promise.all(
       sharing.map((i) => {
         const p = this.restingPoint(i);
-        return tweenAsync(this, { targets: this.tokenAt(i), x: p.x, y: p.y, duration: 80 });
+        return tweenAsync(this, { targets: this.tokenAt(i), x: p.x, y: p.y, duration: this.scaled(80) });
       }),
     );
   }

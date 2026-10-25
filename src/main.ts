@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 import { BoardScene } from './game/scenes/BoardScene';
 import { BootScene } from './game/scenes/BootScene';
 import { GalleryScene } from './game/scenes/GalleryScene';
+import { RotateScene } from './game/scenes/RotateScene';
 import { SetupScene } from './game/scenes/SetupScene';
+import { WinScene } from './game/scenes/WinScene';
 import { CSS } from './game/palette';
 import { initLocale } from './i18n/i18n';
 
@@ -32,7 +34,11 @@ async function startGame(): Promise<void> {
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     // #gallery opens the hero expression sheet instead of the title screen.
-    scene: location.hash === '#gallery' ? [GalleryScene] : [BootScene, SetupScene, BoardScene],
+    // RotateScene is listed last and starts active (see its constructor), so it stays above the others.
+    scene:
+      location.hash === '#gallery'
+        ? [GalleryScene]
+        : [BootScene, SetupScene, BoardScene, WinScene, RotateScene],
   });
 
   // Exposed for end-to-end tests and the smoke script.

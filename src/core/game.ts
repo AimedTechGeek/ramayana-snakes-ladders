@@ -82,6 +82,11 @@ export class Game {
     return this.state.over;
   }
 
+  /** True when the game is over but at least two players are still unranked, so play can go on. */
+  get canContinue(): boolean {
+    return this.state.over && this.unrankedCount() >= 2;
+  }
+
   /** Event that opens the first turn (or the resumed turn). */
   begin(): GameEvent[] {
     const player = this.state.current;
@@ -131,6 +136,20 @@ export class Game {
     }
     events.push(...this.endTurn());
     return events;
+  }
+
+  /** After a game ends with places still open ("Play On"), play the remaining players for the next ranks. */
+  continuePlay(): GameEvent[] {
+    if (!this.canContinue) {
+      throw new Error('Cannot continue: the game is not over or fewer than 2 players are unranked');
+    }
+    this.state.playOn = true;
+    this.state.over = false;
+    return this.endTurn();
+  }
+
+  private unrankedCount(): number {
+    return this.state.players.filter((p) => p.rank === null).length;
   }
 
   private finish(player: number): GameEvent[] {
