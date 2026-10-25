@@ -17,6 +17,7 @@ import {
   type Point,
 } from '../layout';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
+import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
 import { DiceButton } from '../ui/DiceButton';
 
@@ -93,6 +94,7 @@ export class BoardScene extends Phaser.Scene {
 
     this.game.registry.set('board', this);
     this.game.registry.set('board-ready', true);
+    saveGame(this.snapshot());
     this.busy = true;
     void this.play(this.engine.begin()).then(() => this.afterEvents());
   }
@@ -137,10 +139,12 @@ export class BoardScene extends Phaser.Scene {
   /** Hands control back: a bot schedules its own roll (staying busy), a human gets the dice. */
   private afterEvents(): void {
     if (this.engine.isOver) {
+      clearSave();
       this.busy = false;
       this.dieButton.setEnabled(false);
       return;
     }
+    saveGame(this.snapshot());
     if (this.isBotTurn()) {
       this.dieButton.setEnabled(false);
       this.setHint('');
