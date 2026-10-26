@@ -61,3 +61,18 @@ All Hindi lines stay <= 48 chars and keep the English key set and placeholders (
 | Gallery                     | `t30-gallery.png`                     | Five faces x four heroes. Rama and Sita keep calm brows and no tear on `sad`; Lakshmana and Hanuman get the sweat, sparkles and tear. Matches T02 section 4.                                                                                                                                                                 |
 
 Nothing culturally off was found in the UI chrome, the board scenery (Ayodhya gate, Mithila, the sea, Lanka) or the token art.
+
+## Resolution of the minors (2026-10-26)
+
+| Minor                        | Resolution                                                                                                      | Commit    |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | --------- |
+| Hero labels, Board, ordinals | `hero.*`, `ui.board`, `ui.seatName`, `ui.rank1-4` keys in English and Hindi; default seat names follow language | `340e9a8` |
+| `-` on the Win screen        | Every player gets a place: finishers by rank, the rest by board position (`rankingOf`)                          | `898511f` |
+| Bubble order race            | `orderedDelay` keeps each seat's reactions and bubbles in event order                                           | `8a852f6` |
+| Unused `other.*` lines       | Overtake bystanders cheer the mover or comfort the passed player; the winner consoles the losers at game over   | `183ddd8` |
+| Hard board crowding          | Snake swing capped to two-thirds of a cell, longest drawn on top, tokens slide along the drawn body             | `d1ace6f` |
+| Indrajit knot, Tataka stump  | Knot redrawn as a two-loop bow-knot; stump marks removed                                                        | `c1e4725` |
+| "Jai Shri Ram" on sixes      | Six line is now "Six! Watch me hop!"; the chant stays on Hanuman's win                                          | `3297708` |
+| T01 40 vs 48 characters      | T01 states aim 40, hard limit 48; tests enforce 48 for English and Hindi                                        | `4a1be93` |
+
+Still open, needing a decision rather than a fix: the Hindi bystander lines that address the mover as तुम (see the major above).
