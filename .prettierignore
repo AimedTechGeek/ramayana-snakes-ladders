@@ -1,0 +1,4 @@
+# Hand-aligned data tables: keep their one-line-per-key layout.
+src/i18n/*.json
+docs/design/*.json
+src/characters/reactions.json
