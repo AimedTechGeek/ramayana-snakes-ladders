@@ -14,7 +14,9 @@
     "verify": "npm run lint && npm test && npm run sim && npm run build && npm run smoke",
     "sim": "tsx sim/simulate.ts",
     "art": "node scripts/art/gen.mjs public/assets",
-    "art:check": "node scripts/art/check.mjs public/assets"
+    "art:check": "node scripts/art/check.mjs public/assets",
+    "devices": "node scripts/devices.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

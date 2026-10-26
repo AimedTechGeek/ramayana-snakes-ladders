@@ -3,7 +3,8 @@ export type Hero = 'rama' | 'sita' | 'lakshmana' | 'hanuman';
 export type Controller = 'human' | 'bot';
 
 export const FINAL_SQUARE = 144;
-export const BIG_JUMP = 30;
+/** Jumps this long play the big reactions; 25 makes the long ladders (incl. Hanuman's leap) and Ravana's snake big. */
+export const BIG_JUMP = 25;
 /** A player starting a turn on or beyond this square triggers NearEnd. */
 export const NEAR_END_SQUARE = 132;
 

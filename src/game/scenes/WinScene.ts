@@ -5,6 +5,7 @@ import { Character } from '../../characters/Character';
 import { reactionFor } from '../../characters/reactions';
 import { tokenKey } from '../assets';
 import { BODY_FONT, COLORS, CSS, TITLE_FONT } from '../palette';
+import { confettiRain, ensureFxTextures, petalBurst } from '../fx';
 import { clearSave } from '../save';
 import type { BoardScene } from './BoardScene';
 
@@ -35,6 +36,8 @@ export class WinScene extends Phaser.Scene {
 
   create(): void {
     this.add.rectangle(0, 0, 1280, 720, COLORS.deepIndigo, 0.7).setOrigin(0).setInteractive();
+    ensureFxTextures(this);
+    confettiRain(this, 1280);
 
     const panel = this.add.graphics();
     panel.fillStyle(COLORS.parchment, 1);
@@ -45,6 +48,7 @@ export class WinScene extends Phaser.Scene {
     const winner = this.state.players.find((p) => p.rank === 1);
     if (!winner) throw new Error('The game is over but no player has rank 1');
     this.drawWinner(winner);
+    petalBurst(this, 340, 330);
     this.drawOthers(this.state.players.filter((p) => p !== winner));
 
     this.createButton(470, 560, 240, 72, t('ui.playAgain'), COLORS.saffron, () => this.playAgain());

@@ -8,10 +8,12 @@ import { createRandomDice, type Dice } from '../../core/dice';
 import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
 import type { GameConfig, GameState } from '../../core/types';
+import { getAudio, type Audio } from '../audio';
 import { BOARD_BACKGROUND_KEY, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey, tokenKey } from '../assets';
 import { HEROES } from '../heroes';
 import { BOARD, PANEL, SEAT, fanOffset, seatTokenSpot, seatTop, squareCenter, type Point } from '../layout';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
+import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
 import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
 import { DiceButton } from '../ui/DiceButton';
@@ -51,6 +53,7 @@ export class BoardScene extends Phaser.Scene {
   private fastChip!: Chip;
   private muteChip!: Chip;
   private busy = false;
+  private audio!: Audio;
 
   constructor() {
     super('Board');
@@ -75,6 +78,8 @@ export class BoardScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.audio = getAudio(this.game.registry.get('muted') === true);
+    ensureFxTextures(this);
     this.drawBoard();
     this.drawJumps();
     this.drawSeats();
@@ -87,6 +92,11 @@ export class BoardScene extends Phaser.Scene {
     keys?.on('keydown-F', () => this.toggleFast());
     keys?.on('keydown-M', () => this.toggleMute());
     keys?.on('keydown-ESC', () => this.openMenu());
+    const unlock = () => this.audio.unlock();
+    this.input.once('pointerdown', unlock);
+    keys?.once('keydown', unlock);
+    this.events.once('shutdown', () => this.audio.drone(false));
+    this.audio.drone(true);
 
     this.game.registry.set('board', this);
     this.game.registry.set('board-ready', true);
@@ -115,6 +125,7 @@ export class BoardScene extends Phaser.Scene {
 
   /** Rolls for the human whose turn it is. A no-op on bot turns, while busy, or after the game ends. */
   async requestRoll(): Promise<void> {
+    this.audio.unlock();
     if (this.busy || this.engine.isOver || this.isBotTurn()) return;
     await this.takeTurn();
   }
@@ -123,6 +134,7 @@ export class BoardScene extends Phaser.Scene {
   async continuePlay(): Promise<void> {
     if (this.busy || !this.engine.canContinue) return;
     this.busy = true;
+    this.audio.drone(true);
     this.dieButton.setEnabled(false);
     this.setHint('');
     await this.play(this.engine.continuePlay());
@@ -180,27 +192,39 @@ export class BoardScene extends Phaser.Scene {
         this.setBanner(event.player);
         return;
       case 'Rolled':
+        this.audio.dice();
         await this.dieButton.roll(event.value);
+        if (event.value === 6) ringPulse(this, this.dieButton.x, this.dieButton.y, 56, this.fastMode);
         return;
       case 'Moved':
         for (const square of event.path) await this.stepTo(event.player, square);
         return;
       case 'Laddered':
+        this.audio.ladder();
         await this.slideTo(event.player, event.jump.to, 'ladder');
         return;
       case 'Bitten':
+        this.audio.snake();
+        this.biteEffects(event.jump.from);
         await this.slideTo(event.player, event.jump.to, 'snake');
         return;
       case 'TripleSixVoid':
+        this.audio.tripleSix();
         this.setHint(t('ui.tripleSix'));
-        await this.slideTo(event.player, event.restoredTo, 'ladder');
+        await this.slideTo(event.player, event.restoredTo, 'void'); // a penalty: plain slide, no celebration
         return;
       case 'Won':
+        this.audio.win();
         this.setHint(t('ui.winner', { name: this.playerName(event.player) }));
         return;
       case 'Bounced':
-      case 'ExtraRoll':
+        this.audio.bounce();
+        this.bounceEffect();
+        return;
       case 'GameOver':
+        this.audio.drone(false);
+        return;
+      case 'ExtraRoll':
         return;
     }
   }
@@ -333,6 +357,7 @@ export class BoardScene extends Phaser.Scene {
 
   private applyMute(): void {
     const muted = this.game.registry.get('muted') === true;
+    this.audio.setMuted(muted);
     this.muteChip.setActive(muted);
     this.muteChip.setLabel(muted ? `\u2715 ${t('ui.muted')}` : `\u266a ${t('ui.mute')}`);
   }
@@ -351,6 +376,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private async stepTo(player: number, square: number): Promise<void> {
+    this.audio.step();
     const token = this.tokenAt(player);
     this.shownSquare[player] = square;
     const target = this.restingPoint(player);
@@ -364,7 +390,7 @@ export class BoardScene extends Phaser.Scene {
     await this.relayout(player);
   }
 
-  private async slideTo(player: number, square: number, kind: 'ladder' | 'snake'): Promise<void> {
+  private async slideTo(player: number, square: number, kind: 'ladder' | 'snake' | 'void'): Promise<void> {
     const token = this.tokenAt(player);
     const start = new Phaser.Math.Vector2(token.x, token.y);
     this.shownSquare[player] = square;
@@ -375,6 +401,8 @@ export class BoardScene extends Phaser.Scene {
         ? new Phaser.Curves.QuadraticBezier(start, this.bend(start, end, 0.35), end)
         : new Phaser.Curves.Line(start, end);
     const progress = { t: 0 };
+    const trail = kind === 'ladder' ? sparkleTrail(this, this.fastMode) : undefined;
+    let lastSparkle = 0;
     await tweenAsync(this, {
       targets: progress,
       t: 1,
@@ -383,9 +411,28 @@ export class BoardScene extends Phaser.Scene {
       onUpdate: () => {
         const p = curve.getPoint(progress.t);
         token.setPosition(p.x, p.y);
+        if (trail && progress.t - lastSparkle >= 0.04) {
+          lastSparkle = progress.t;
+          trail.emit(p.x, p.y);
+        }
       },
     });
+    trail?.stop();
+    if (kind === 'ladder') goldBurst(this, end.x, end.y, this.fastMode);
+    else dustPuff(this, end.x, end.y, this.fastMode);
     await this.relayout(player);
+  }
+
+  /** Dust at the snake's head and a brief camera shake when a token is bitten. */
+  private biteEffects(headSquare: number): void {
+    const head = squareCenter(headSquare);
+    dustPuff(this, head.x, head.y, this.fastMode);
+    shake(this, this.fastMode);
+  }
+
+  private bounceEffect(): void {
+    const c = squareCenter(144);
+    bouncePuff(this, c.x, c.y, this.fastMode);
   }
 
   /** Re-fan every token sharing the square the given player just reached. */
