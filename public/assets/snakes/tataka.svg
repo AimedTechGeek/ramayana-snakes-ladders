@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Snake head: tataka (points up, neck leaves bottom edge) | palette: docs/design/T02-style-guide.md (hex tokens inlined) -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-<path d="M30 54 L34 60 L38 54" fill="#A6723E" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
 <path d="M14 24 Q4 20 8 10 Q12 16 16 10 Q18 2 24 6 Q28 -2 32 4 Q38 -2 42 6 Q48 2 50 10 Q54 16 58 10 Q62 20 52 24Z" fill="#2A1A0F"/>
 <path d="M22 64 L22 44 Q14 36 16 24 Q18 8 32 6 Q46 8 48 24 Q50 36 42 44 L42 64Z" fill="#457334" stroke="#2A1A0F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
 <path d="M32 6 Q46 8 48 24 Q50 36 42 44 L42 64 L35 64 L35 44 Q40 36 38 24 Q37 12 32 6Z" fill="#3F5F2C"/>
@@ -14,5 +13,4 @@
 <path d="M25 22 L25 30" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
 <path d="M39 22 L39 30" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
 <path d="M16 22 Q10 14 16 8 M24 14 Q22 6 30 4 M40 14 Q42 6 36 4 M48 22 Q54 14 48 8" fill="none" stroke="#2A1A0F" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-<path d="M50 50 L54 58 L58 50 M52 60 L56 60" fill="none" stroke="#A6723E" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
 </svg>

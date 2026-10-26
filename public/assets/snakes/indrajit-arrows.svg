@@ -6,7 +6,7 @@
 <ellipse cx="17" cy="12" rx="2.5" ry="3.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <ellipse cx="47" cy="12" rx="2.5" ry="3.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <circle cx="21" cy="8" r="1" fill="#2A1A0F"/><circle cx="43" cy="8" r="1" fill="#2A1A0F"/>
-<path d="M24 40 Q32 30 40 40 Q32 50 24 40Z" fill="#E9C12F" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="32" cy="40" r="3" fill="#BF9C28" stroke="#2A1A0F" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
-<path d="M28 36 Q32 33 36 36" fill="none" stroke="#EDCC54" stroke-width="1.5"/>
+<circle cx="26" cy="40" r="4.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="38" cy="40" r="4.5" fill="#E9C12F" stroke="#2A1A0F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="29" y="36" width="6" height="8" rx="1" fill="#BF9C28" stroke="#2A1A0F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
 </svg>
