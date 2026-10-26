@@ -404,10 +404,7 @@ export class BoardScene extends Phaser.Scene {
     this.shownSquare[player] = square;
     const rest = this.restingPoint(player);
     const end = new Phaser.Math.Vector2(rest.x, rest.y);
-    const curve =
-      kind === 'snake'
-        ? new Phaser.Curves.QuadraticBezier(start, this.bend(start, end, 0.35), end)
-        : new Phaser.Curves.Line(start, end);
+    const curve = kind === 'snake' ? this.snakeCurve(start, end) : new Phaser.Curves.Line(start, end);
     const progress = { t: 0 };
     const trail = kind === 'ladder' ? sparkleTrail(this, this.fastMode) : undefined;
     let lastSparkle = 0;
@@ -465,10 +462,16 @@ export class BoardScene extends Phaser.Scene {
     return { x: centre.x + offset.x, y: centre.y + offset.y };
   }
 
-  private bend(a: Phaser.Math.Vector2, b: Phaser.Math.Vector2, amount: number): Phaser.Math.Vector2 {
-    const mid = a.clone().lerp(b, 0.5);
-    const normal = new Phaser.Math.Vector2(-(b.y - a.y), b.x - a.x).scale(amount);
-    return mid.add(normal);
+  /**
+   * The S-shaped body of a snake from head to tail. The sideways swing is a quarter of the length but
+   * capped at two-thirds of a cell, so long flat snakes stay in their own lane instead of sweeping
+   * across neighbouring rows. Tokens slide along this same curve.
+   */
+  private snakeCurve(head: Phaser.Math.Vector2, tail: Phaser.Math.Vector2): Phaser.Curves.CubicBezier {
+    const swing = Math.min(head.distance(tail) * 0.25, BOARD.cell * 0.66);
+    const side = new Phaser.Math.Vector2(-(tail.y - head.y), tail.x - head.x).normalize().scale(swing);
+    const mid = head.clone().lerp(tail, 0.5);
+    return new Phaser.Curves.CubicBezier(head, mid.clone().add(side), mid.clone().subtract(side), tail);
   }
 
   private tokenAt(player: number): Phaser.GameObjects.Container {
@@ -509,7 +512,9 @@ export class BoardScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(2);
     for (const ladder of this.board.ladders)
       this.drawLadder(g, ladder.id, squareCenter(ladder.from), squareCenter(ladder.to));
-    for (const snake of this.board.snakes)
+    // Shortest first, so the longest bodies (Ravana's) lie on top and can be traced end to end.
+    const byLength = [...this.board.snakes].sort((x, y) => x.from - x.to - (y.from - y.to));
+    for (const snake of byLength)
       this.drawSnake(g, snake.id, squareCenter(snake.from), squareCenter(snake.to));
   }
 
@@ -666,7 +671,7 @@ export class BoardScene extends Phaser.Scene {
     const belly = Phaser.Display.Color.HexStringToColor(look.belly).color;
     const a = new Phaser.Math.Vector2(head.x, head.y);
     const b = new Phaser.Math.Vector2(tail.x, tail.y);
-    const curve = new Phaser.Curves.CubicBezier(a, this.bend(a, b, 0.25), this.bend(a, b, -0.25), b);
+    const curve = this.snakeCurve(a, b);
     const points = curve.getSpacedPoints(60);
     const widthAt = (u: number): number => 13 - 7 * u;
 
