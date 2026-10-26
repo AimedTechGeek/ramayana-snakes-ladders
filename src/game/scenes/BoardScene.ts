@@ -10,7 +10,7 @@ import { Game } from '../../core/game';
 import type { GameConfig, GameState } from '../../core/types';
 import { getAudio, type Audio } from '../audio';
 import { BOARD_BACKGROUND_KEY, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey, tokenKey } from '../assets';
-import { HEROES } from '../heroes';
+import { HEROES, heroName } from '../heroes';
 import { BOARD, PANEL, SEAT, fanOffset, seatTokenSpot, seatTop, squareCenter, type Point } from '../layout';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
@@ -734,7 +734,7 @@ export class BoardScene extends Phaser.Scene {
       this.add.text(
         PANEL.x + 100,
         top + 44,
-        `${hero.label} · ${t(player.controller === 'bot' ? 'ui.bot' : 'ui.human')}`,
+        `${heroName(player.hero)} · ${t(player.controller === 'bot' ? 'ui.bot' : 'ui.human')}`,
         {
           fontFamily: BODY_FONT,
           fontSize: '16px',

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Character } from '../../characters/Character';
 import type { Emotion, TweenName } from '../../characters/reactions';
-import { HERO_ORDER, HEROES } from '../heroes';
+import { HERO_ORDER, HEROES, heroName } from '../heroes';
 import { CSS, TITLE_FONT } from '../palette';
 
 const EMOTIONS: readonly Emotion[] = ['idle', 'happy', 'excited', 'scared', 'sad'];
@@ -50,7 +50,7 @@ export class GalleryScene extends Phaser.Scene {
     HERO_ORDER.forEach((hero, row) => {
       const y = 250 + row * 150;
       this.add
-        .text(60, y - 50, HEROES[hero].label, {
+        .text(60, y - 50, heroName(hero), {
           fontFamily: TITLE_FONT,
           fontSize: '24px',
           color: HEROES[hero].cssColor,

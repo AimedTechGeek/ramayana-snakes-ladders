@@ -129,5 +129,15 @@
   "ui.tripleSix": "तीन छक्के! बारी रद्द।",
   "ui.atStart": "शुरुआत",
   "ui.square": "घर {n}",
-  "ui.muted": "आवाज़ बंद"
+  "ui.muted": "आवाज़ बंद",
+  "hero.rama": "राम",
+  "hero.sita": "सीता",
+  "hero.lakshmana": "लक्ष्मण",
+  "hero.hanuman": "हनुमान",
+  "ui.board": "बोर्ड",
+  "ui.seatName": "सीट {n} का नाम",
+  "ui.rank1": "पहला",
+  "ui.rank2": "दूसरा",
+  "ui.rank3": "तीसरा",
+  "ui.rank4": "चौथा"
 }

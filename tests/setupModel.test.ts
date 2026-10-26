@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { setLocale } from '../src/i18n/i18n';
 import {
   canStart,
   cycleHero,
@@ -79,5 +80,26 @@ describe('setupModel', () => {
   it('ToGameConfig_PaddedName_Should_BeTrimmed', () => {
     const config = toGameConfig(setName(defaultSeats(), 0, '  Asha '), 'easy');
     expect(config.players[0]?.name).toBe('Asha');
+  });
+});
+
+describe('Hero names follow the language', () => {
+  it('DefaultSeats_InHindi_Should_UseHindiHeroNames', () => {
+    setLocale('hi');
+    try {
+      expect(defaultSeats().map((s) => s.name)).toEqual(['राम', 'हनुमान', 'लक्ष्मण', 'सीता']);
+    } finally {
+      setLocale('en');
+    }
+  });
+
+  it('CycleHero_DefaultNameInHindi_Should_FollowTheHero', () => {
+    setLocale('hi');
+    try {
+      const seats = cycleHero(defaultSeats(), 0, 1); // Rama -> Sita
+      expect(seats[0]).toMatchObject({ hero: 'sita', name: 'सीता' });
+    } finally {
+      setLocale('en');
+    }
   });
 });

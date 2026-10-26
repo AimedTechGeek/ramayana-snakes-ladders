@@ -129,5 +129,15 @@
   "ui.tripleSix": "Three sixes! The turn is void.",
   "ui.atStart": "Start",
   "ui.square": "Square {n}",
-  "ui.muted": "Muted"
+  "ui.muted": "Muted",
+  "hero.rama": "Rama",
+  "hero.sita": "Sita",
+  "hero.lakshmana": "Lakshmana",
+  "hero.hanuman": "Hanuman",
+  "ui.board": "Board",
+  "ui.seatName": "Seat {n} name",
+  "ui.rank1": "1st",
+  "ui.rank2": "2nd",
+  "ui.rank3": "3rd",
+  "ui.rank4": "4th"
 }
