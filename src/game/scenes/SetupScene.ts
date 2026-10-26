@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { Level } from '../../core/types';
 import { t } from '../../i18n/i18n';
-import { HEROES } from '../heroes';
+import { HEROES, heroName } from '../heroes';
 import { BODY_FONT, COLORS, CSS, TITLE_FONT } from '../palette';
 import {
   MAX_NAME_LENGTH,
@@ -165,7 +165,7 @@ export class SetupScene extends Phaser.Scene {
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.maxLength = MAX_NAME_LENGTH;
-    nameInput.setAttribute('aria-label', `Seat ${k + 1} name`);
+    nameInput.setAttribute('aria-label', t('ui.seatName', { n: k + 1 }));
     Object.assign(nameInput.style, {
       width: '264px',
       height: '48px',
@@ -197,7 +197,7 @@ export class SetupScene extends Phaser.Scene {
 
   private createBottomBar(): void {
     this.add
-      .text(24, 620, 'Board', { fontFamily: BODY_FONT, fontSize: '14px', color: CSS.parchment })
+      .text(24, 620, t('ui.board'), { fontFamily: BODY_FONT, fontSize: '14px', color: CSS.parchment })
       .setOrigin(0, 0.5);
     this.levelSegments = LEVEL_OPTIONS.map((option, i) =>
       this.makeSegment(72 + 120 * i, 592, 120, t(option.labelKey), () => {
@@ -286,8 +286,8 @@ export class SetupScene extends Phaser.Scene {
       view.arrows.forEach((arrow) => arrow.setVisible(!empty));
       view.arrowTexts.forEach((text) => text.setVisible(!empty));
       view.portrait.setFillStyle(empty ? GREY : look.color);
-      view.initial.setText(look.label.charAt(0));
-      view.caption.setText(look.label).setColor(empty ? CSS.ink : look.cssColor);
+      view.initial.setText(heroName(seat.hero).charAt(0));
+      view.caption.setText(heroName(seat.hero)).setColor(empty ? CSS.ink : look.cssColor);
       view.nameField.setVisible(!empty);
       if (view.nameInput.value !== seat.name) view.nameInput.value = seat.name;
     });

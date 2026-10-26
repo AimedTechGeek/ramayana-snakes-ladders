@@ -90,6 +90,15 @@ describe('i18n', () => {
     }
   });
 
+  it('EnglishSpeech_Lines_Should_BeAtMost48Chars', () => {
+    for (const [key, value] of Object.entries(enTable)) {
+      if (key.startsWith('ui.')) continue;
+      for (const line of Array.isArray(value) ? value : [value]) {
+        expect(line.length, `${key}: ${line}`).toBeLessThanOrEqual(48);
+      }
+    }
+  });
+
   it('HindiSpeech_Lines_Should_BeAtMost48Chars', () => {
     for (const [key, value] of Object.entries(hiTable)) {
       if (key.startsWith('ui.')) continue;

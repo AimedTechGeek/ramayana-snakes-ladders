@@ -1,4 +1,5 @@
 import type { Hero } from '../core/types';
+import { t } from '../i18n/i18n';
 
 export interface HeroLook {
   label: string;
@@ -15,3 +16,8 @@ export const HEROES: Record<Hero, HeroLook> = {
 };
 
 export const HERO_ORDER: readonly Hero[] = ['rama', 'sita', 'lakshmana', 'hanuman'];
+
+/** The hero's name in the current language; `label` stays English for code and saves. */
+export function heroName(hero: Hero): string {
+  return t(`hero.${hero}`);
+}

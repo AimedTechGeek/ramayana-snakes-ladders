@@ -6,6 +6,7 @@ import {
   NEAR_END_SQUARE,
   type Board,
   type GameConfig,
+  type PlayerState,
   type GameState,
   type Jump,
 } from './types';
@@ -38,6 +39,14 @@ export function resolveMove(board: Board, from: number, roll: number): MoveResul
 
 export function findJump(board: Board, square: number): Jump | null {
   return board.ladders.find((j) => j.from === square) ?? board.snakes.find((j) => j.from === square) ?? null;
+}
+
+/** Player indexes in finishing order: finished players by rank, then the rest by board position. */
+export function rankingOf(players: readonly PlayerState[]): number[] {
+  const indexed = players.map((p, i) => ({ p, i }));
+  const finished = indexed.filter((x) => x.p.rank !== null).sort((a, b) => a.p.rank! - b.p.rank!);
+  const rest = indexed.filter((x) => x.p.rank === null).sort((a, b) => b.p.position - a.p.position);
+  return [...finished, ...rest].map((x) => x.i);
 }
 
 export class Game {
@@ -166,12 +175,8 @@ export class Game {
     return events;
   }
 
-  /** Finished players by rank, then the rest by board position (furthest first). */
   ranking(): number[] {
-    const indexed = this.state.players.map((p, i) => ({ p, i }));
-    const finished = indexed.filter((x) => x.p.rank !== null).sort((a, b) => a.p.rank! - b.p.rank!);
-    const rest = indexed.filter((x) => x.p.rank === null).sort((a, b) => b.p.position - a.p.position);
-    return [...finished, ...rest].map((x) => x.i);
+    return rankingOf(this.state.players);
   }
 
   private endTurn(): GameEvent[] {

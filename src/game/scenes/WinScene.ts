@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { t } from '../../i18n/i18n';
+import { rankingOf } from '../../core/game';
 import type { GameConfig, GameState, PlayerState } from '../../core/types';
 import { Character } from '../../characters/Character';
 import { reactionFor } from '../../characters/reactions';
@@ -18,7 +19,6 @@ const PANEL = { x: 200, y: 80, width: 880, height: 560 };
 const OTHERS = { x: 470, y: 300, spacing: 140 };
 const WINNER_SCALE = 2.2;
 const WIN_LOOP_MS = 2500;
-const ORDINALS = ['1st', '2nd', '3rd', '4th'];
 
 /** Win overlay launched over the Board when the game is over (T04 section 5). */
 export class WinScene extends Phaser.Scene {
@@ -49,7 +49,9 @@ export class WinScene extends Phaser.Scene {
     if (!winner) throw new Error('The game is over but no player has rank 1');
     this.drawWinner(winner);
     petalBurst(this, 340, 330);
-    this.drawOthers(this.state.players.filter((p) => p !== winner));
+    // Everyone gets a place: finished players by rank, the rest by how far they got.
+    const places = rankingOf(this.state.players).map((i) => this.state.players[i]);
+    this.drawOthers(places.filter((p): p is PlayerState => p !== undefined && p !== winner));
 
     this.createButton(470, 560, 240, 72, t('ui.playAgain'), COLORS.saffron, () => this.playAgain());
     if (this.canContinue) {
@@ -84,7 +86,7 @@ export class WinScene extends Phaser.Scene {
         fontSize: '20px',
         color: CSS.ink,
       });
-      this.add.text(x, OTHERS.y + 120, player.rank === null ? '-' : (ORDINALS[player.rank - 1] ?? ''), {
+      this.add.text(x, OTHERS.y + 120, t(`ui.rank${i + 2}`), {
         fontFamily: BODY_FONT,
         fontSize: '20px',
         color: CSS.indigo,

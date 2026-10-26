@@ -1,5 +1,5 @@
 import type { Controller, GameConfig, Hero, Level } from '../core/types';
-import { HEROES, HERO_ORDER } from './heroes';
+import { HERO_ORDER, heroName } from './heroes';
 
 export type SeatController = Controller | 'empty';
 
@@ -12,7 +12,7 @@ export interface SeatModel {
 export const MAX_NAME_LENGTH = 12;
 
 function makeSeat(controller: SeatController, hero: Hero): SeatModel {
-  return { controller, hero, name: HEROES[hero].label };
+  return { controller, hero, name: heroName(hero) };
 }
 
 export function defaultSeats(): SeatModel[] {
@@ -24,9 +24,9 @@ export function defaultSeats(): SeatModel[] {
   ];
 }
 
-/** A name still equal to the old hero label is a default, so it follows the hero. */
+/** A name still equal to the old hero's name is a default, so it follows the hero. */
 function withHero(seat: SeatModel, hero: Hero): SeatModel {
-  const name = seat.name === HEROES[seat.hero].label ? HEROES[hero].label : seat.name;
+  const name = seat.name === heroName(seat.hero) ? heroName(hero) : seat.name;
   return { ...seat, hero, name };
 }
 
@@ -69,7 +69,7 @@ export function toGameConfig(seats: readonly SeatModel[], level: Level): GameCon
           {
             hero: seat.hero,
             controller: seat.controller,
-            name: seat.name.trim() || HEROES[seat.hero].label,
+            name: seat.name.trim() || heroName(seat.hero),
           },
         ],
   );

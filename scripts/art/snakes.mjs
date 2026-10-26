@@ -60,12 +60,10 @@ function baseHead(body, belly, opts = {}) {
 const motifs = {
   tataka: (c) =>
     [
-      // wild tangle of ink hair, broken tree stump at the right
-      `<path d="M30 54 L34 60 L38 54" fill="${shade(P.ochre)}" ${L15}/>`,
+      // wild tangle of ink hair
       `<path d="M14 24 Q4 20 8 10 Q12 16 16 10 Q18 2 24 6 Q28 -2 32 4 Q38 -2 42 6 Q48 2 50 10 Q54 16 58 10 Q62 20 52 24Z" fill="${INK}"/>`,
       baseHead(c.body, c.belly),
       `<path d="M16 22 Q10 14 16 8 M24 14 Q22 6 30 4 M40 14 Q42 6 36 4 M48 22 Q54 14 48 8" fill="none" ${line(3)}/>`,
-      `<path d="M50 50 L54 58 L58 50 M52 60 L56 60" fill="none" ${line(2, shade(P.ochre))}/>`,
     ].join('\n'),
 
   manthara: (c) =>
@@ -169,10 +167,10 @@ const motifs = {
       `<ellipse cx="17" cy="12" rx="2.5" ry="3.5" fill="${P.gold}" ${line(1)}/>`,
       `<ellipse cx="47" cy="12" rx="2.5" ry="3.5" fill="${P.gold}" ${line(1)}/>`,
       `<circle cx="21" cy="8" r="1" fill="${INK}"/><circle cx="43" cy="8" r="1" fill="${INK}"/>`,
-      // gold knot
-      `<path d="M24 40 Q32 30 40 40 Q32 50 24 40Z" fill="${P.gold}" ${L2}/>`,
-      `<circle cx="32" cy="40" r="3" fill="${shade(P.gold)}" ${line(1)}/>`,
-      `<path d="M28 36 Q32 33 36 36" fill="none" stroke="${tint(P.gold)}" stroke-width="1.5"/>`,
+      // gold bow-knot: two loops and a square tie, so it can't read as an eye
+      `<circle cx="26" cy="40" r="4.5" fill="${P.gold}" ${L2}/>`,
+      `<circle cx="38" cy="40" r="4.5" fill="${P.gold}" ${L2}/>`,
+      `<rect x="29" y="36" width="6" height="8" rx="1" fill="${shade(P.gold)}" ${L15}/>`,
     ].join('\n'),
 
   prahasta: (c) =>

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Character } from '../../characters/Character';
-import { pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
+import { orderedDelay, pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
 import { reactionFor, scaled, TIMING } from '../../characters/reactions';
 import { speech, t } from '../../i18n/i18n';
 import { boardFor, type StoryBoard } from '../../core/boards';
@@ -10,7 +10,7 @@ import { Game } from '../../core/game';
 import type { GameConfig, GameState } from '../../core/types';
 import { getAudio, type Audio } from '../audio';
 import { BOARD_BACKGROUND_KEY, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey, tokenKey } from '../assets';
-import { HEROES } from '../heroes';
+import { HEROES, heroName } from '../heroes';
 import { BOARD, PANEL, SEAT, fanOffset, seatTokenSpot, seatTop, squareCenter, type Point } from '../layout';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
@@ -46,6 +46,8 @@ export class BoardScene extends Phaser.Scene {
   private bubbles: SpeechBubble[] = [];
   /** Last line shown per speech key, so a bubble does not repeat itself. */
   private lastLines = new Map<string, string>();
+  /** Scene time each seat's latest reaction starts; later events never start before it. */
+  private seatStartAt: number[] = [];
   private dieButton!: DiceButton;
   private bannerText!: Phaser.GameObjects.Text;
   private bannerDot!: Phaser.GameObjects.Arc;
@@ -74,6 +76,7 @@ export class BoardScene extends Phaser.Scene {
     this.characters = [];
     this.bubbles = [];
     this.lastLines = new Map();
+    this.seatStartAt = [];
     this.busy = false;
   }
 
@@ -239,8 +242,13 @@ export class BoardScene extends Phaser.Scene {
     const speakers = pickSpeakers(cues);
     const fast = this.fastMode;
     const [minStagger, maxStagger] = TIMING.bystanderStaggerMs;
+    const now = this.time.now;
+    let latestDelay = 0;
     const runs = cues.map((cue) => {
-      const delay = cue.role === 'self' ? 0 : Phaser.Math.Between(minStagger, maxStagger);
+      const stagger = cue.role === 'self' ? 0 : Phaser.Math.Between(minStagger, maxStagger);
+      // Back-to-back events draw fresh staggers; keep each seat's reactions (and bubbles) in event order.
+      const delay = orderedDelay(this.seatStartAt, cue.seat, stagger, now);
+      latestDelay = Math.max(latestDelay, delay);
       const hero = players[cue.seat]?.hero;
       if (!hero) return Promise.resolve();
       const reaction = reactionFor(hero, cue.role, cue.event);
@@ -255,7 +263,7 @@ export class BoardScene extends Phaser.Scene {
     // A reaction cut short by a newer one never resolves, so do not wait on it forever.
     const longest = Math.max(0, ...cues.map((cue) => this.maxDuration(cue, players)));
     const timeout = new Promise<void>((resolve) =>
-      this.time.delayedCall(longest + maxStagger + 100, resolve),
+      this.time.delayedCall(longest + latestDelay + 100, resolve),
     );
     return Promise.race([Promise.all(runs).then(() => undefined), timeout]);
   }
@@ -396,10 +404,7 @@ export class BoardScene extends Phaser.Scene {
     this.shownSquare[player] = square;
     const rest = this.restingPoint(player);
     const end = new Phaser.Math.Vector2(rest.x, rest.y);
-    const curve =
-      kind === 'snake'
-        ? new Phaser.Curves.QuadraticBezier(start, this.bend(start, end, 0.35), end)
-        : new Phaser.Curves.Line(start, end);
+    const curve = kind === 'snake' ? this.snakeCurve(start, end) : new Phaser.Curves.Line(start, end);
     const progress = { t: 0 };
     const trail = kind === 'ladder' ? sparkleTrail(this, this.fastMode) : undefined;
     let lastSparkle = 0;
@@ -457,10 +462,16 @@ export class BoardScene extends Phaser.Scene {
     return { x: centre.x + offset.x, y: centre.y + offset.y };
   }
 
-  private bend(a: Phaser.Math.Vector2, b: Phaser.Math.Vector2, amount: number): Phaser.Math.Vector2 {
-    const mid = a.clone().lerp(b, 0.5);
-    const normal = new Phaser.Math.Vector2(-(b.y - a.y), b.x - a.x).scale(amount);
-    return mid.add(normal);
+  /**
+   * The S-shaped body of a snake from head to tail. The sideways swing is a quarter of the length but
+   * capped at two-thirds of a cell, so long flat snakes stay in their own lane instead of sweeping
+   * across neighbouring rows. Tokens slide along this same curve.
+   */
+  private snakeCurve(head: Phaser.Math.Vector2, tail: Phaser.Math.Vector2): Phaser.Curves.CubicBezier {
+    const swing = Math.min(head.distance(tail) * 0.25, BOARD.cell * 0.66);
+    const side = new Phaser.Math.Vector2(-(tail.y - head.y), tail.x - head.x).normalize().scale(swing);
+    const mid = head.clone().lerp(tail, 0.5);
+    return new Phaser.Curves.CubicBezier(head, mid.clone().add(side), mid.clone().subtract(side), tail);
   }
 
   private tokenAt(player: number): Phaser.GameObjects.Container {
@@ -501,7 +512,9 @@ export class BoardScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(2);
     for (const ladder of this.board.ladders)
       this.drawLadder(g, ladder.id, squareCenter(ladder.from), squareCenter(ladder.to));
-    for (const snake of this.board.snakes)
+    // Shortest first, so the longest bodies (Ravana's) lie on top and can be traced end to end.
+    const byLength = [...this.board.snakes].sort((x, y) => x.from - x.to - (y.from - y.to));
+    for (const snake of byLength)
       this.drawSnake(g, snake.id, squareCenter(snake.from), squareCenter(snake.to));
   }
 
@@ -658,7 +671,7 @@ export class BoardScene extends Phaser.Scene {
     const belly = Phaser.Display.Color.HexStringToColor(look.belly).color;
     const a = new Phaser.Math.Vector2(head.x, head.y);
     const b = new Phaser.Math.Vector2(tail.x, tail.y);
-    const curve = new Phaser.Curves.CubicBezier(a, this.bend(a, b, 0.25), this.bend(a, b, -0.25), b);
+    const curve = this.snakeCurve(a, b);
     const points = curve.getSpacedPoints(60);
     const widthAt = (u: number): number => 13 - 7 * u;
 
@@ -734,7 +747,7 @@ export class BoardScene extends Phaser.Scene {
       this.add.text(
         PANEL.x + 100,
         top + 44,
-        `${hero.label} · ${t(player.controller === 'bot' ? 'ui.bot' : 'ui.human')}`,
+        `${heroName(player.hero)} · ${t(player.controller === 'bot' ? 'ui.bot' : 'ui.human')}`,
         {
           fontFamily: BODY_FONT,
           fontSize: '16px',

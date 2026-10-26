@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pickSpeakers, reactionsFor, type Cue } from '../src/characters/reactionMapper';
+import { orderedDelay } from '../src/characters/reactionMapper';
 import type { GameEvent } from '../src/core/events';
 
 const PLAYERS = [
@@ -10,8 +11,8 @@ const PLAYERS = [
 ] as const;
 const JUMP = { from: 4, to: 40, name: 'x' };
 
-function cuesOf(event: GameEvent): Cue[] {
-  return reactionsFor(event, PLAYERS);
+function cuesOf(event: GameEvent, random: () => number = () => 0): Cue[] {
+  return reactionsFor(event, PLAYERS, random);
 }
 
 describe('reactionsFor', () => {
@@ -45,8 +46,14 @@ describe('reactionsFor', () => {
     const cues = cuesOf({ type: 'Overtook', player: 0, overtaken: [1] });
     expect(cues.find((c) => c.seat === 0)).toEqual({ seat: 0, role: 'self', event: 'overtake' });
     expect(cues.find((c) => c.seat === 1)).toEqual({ seat: 1, role: 'self', event: 'overtaken' });
-    expect(cues.find((c) => c.seat === 2)).toEqual({ seat: 2, role: 'other', event: 'overtake' });
-    expect(cues.find((c) => c.seat === 3)).toEqual({ seat: 3, role: 'other', event: 'overtake' });
+  });
+
+  it('Overtook_(Bystanders)_Should_EitherCheerTheMoverOrComfortThePassed', () => {
+    const event: GameEvent = { type: 'Overtook', player: 0, overtaken: [1] };
+    const cheer = cuesOf(event, () => 0.2).filter((c) => c.role === 'other');
+    const comfort = cuesOf(event, () => 0.8).filter((c) => c.role === 'other');
+    expect(cheer.map((c) => c.event)).toEqual(['overtake', 'overtake']);
+    expect(comfort.map((c) => c.event)).toEqual(['overtaken', 'overtaken']);
   });
 
   it('NearMiss_(Any_Mover)_Should_PlayNearMissForEverySeat', () => {
@@ -71,10 +78,11 @@ describe('reactionsFor', () => {
     expect(cues.filter((c) => c.role === 'other' && c.event === 'win')).toHaveLength(3);
   });
 
-  it('GameOver_(Winner_Seat_2)_Should_GiveEveryoneElseSelfLoseAndWinnerNothing', () => {
+  it('GameOver_(Winner_Seat_2)_Should_GiveLosersSelfLoseAndTheWinnerOtherLose', () => {
     const cues = cuesOf({ type: 'GameOver', ranking: [2, 0, 1, 3] });
-    expect(cues.map((c) => c.seat).sort()).toEqual([0, 1, 3]);
-    expect(cues.every((c) => c.role === 'self' && c.event === 'lose')).toBe(true);
+    expect(cues.filter((c) => c.role === 'self').map((c) => c.seat)).toEqual([0, 1, 3]);
+    expect(cues.every((c) => c.event === 'lose')).toBe(true);
+    expect(cues.find((c) => c.seat === 2)).toEqual({ seat: 2, role: 'other', event: 'lose' });
   });
 
   it.each<GameEvent>([
@@ -119,13 +127,31 @@ describe('pickSpeakers', () => {
     expect(speakers.filter((c) => c.role === 'other')).toHaveLength(1);
   });
 
-  it('Speakers_(GameOver)_Should_PickExactlyOneLoser', () => {
+  it('Speakers_(GameOver)_Should_BeOneLoserAndTheConsolingWinner', () => {
     const cues = cuesOf({ type: 'GameOver', ranking: [3, 0, 1, 2] });
-    expect(pickSpeakers(cues, last)).toEqual([{ seat: 2, role: 'self', event: 'lose' }]);
-    expect(pickSpeakers(cues, first)).toEqual([{ seat: 0, role: 'self', event: 'lose' }]);
+    const winner = { seat: 3, role: 'other', event: 'lose' };
+    expect(pickSpeakers(cues, last)).toEqual([{ seat: 2, role: 'self', event: 'lose' }, winner]);
+    expect(pickSpeakers(cues, first)).toEqual([{ seat: 0, role: 'self', event: 'lose' }, winner]);
   });
 
   it('Speakers_(No_Cues)_Should_BeEmpty', () => {
     expect(pickSpeakers([], first)).toEqual([]);
+  });
+});
+
+describe('orderedDelay', () => {
+  it('OrderedDelay_LaterEventWithShorterStagger_Should_StartAfterTheEarlierOne', () => {
+    const starts: number[] = [];
+    const first = orderedDelay(starts, 1, 140, 1000); // NearMiss bystander
+    const second = orderedDelay(starts, 1, 90, 1000); // ExtraRoll bystander, same frame
+    expect(first).toBe(140);
+    expect(1000 + second).toBeGreaterThan(1000 + first);
+  });
+
+  it('OrderedDelay_IdleSeat_Should_UseItsOwnStagger', () => {
+    const starts: number[] = [];
+    orderedDelay(starts, 0, 120, 1000);
+    expect(orderedDelay(starts, 2, 90, 1000)).toBe(90);
+    expect(orderedDelay(starts, 0, 90, 5000)).toBe(90); // long after: no carry-over
   });
 });
