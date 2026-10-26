@@ -86,3 +86,14 @@ export function pickSpeakers(cues: readonly Cue[], random: () => number = Math.r
   const bystander = pickOne(bystanders, random);
   return bystander ? [...speakers, bystander] : speakers;
 }
+
+/**
+ * Delay before a seat starts a reaction scheduled at `now`: the random stagger, but never before the
+ * seat's previously scheduled reaction, so back-to-back events play (and speak) in order. Updates
+ * `seatStartAt` with the chosen start time.
+ */
+export function orderedDelay(seatStartAt: number[], seat: number, stagger: number, now: number): number {
+  const delay = Math.max(stagger, (seatStartAt[seat] ?? 0) - now + 1);
+  seatStartAt[seat] = now + delay;
+  return delay;
+}

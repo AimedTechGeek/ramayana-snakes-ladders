@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pickSpeakers, reactionsFor, type Cue } from '../src/characters/reactionMapper';
+import { orderedDelay } from '../src/characters/reactionMapper';
 import type { GameEvent } from '../src/core/events';
 
 const PLAYERS = [
@@ -127,5 +128,22 @@ describe('pickSpeakers', () => {
 
   it('Speakers_(No_Cues)_Should_BeEmpty', () => {
     expect(pickSpeakers([], first)).toEqual([]);
+  });
+});
+
+describe('orderedDelay', () => {
+  it('OrderedDelay_LaterEventWithShorterStagger_Should_StartAfterTheEarlierOne', () => {
+    const starts: number[] = [];
+    const first = orderedDelay(starts, 1, 140, 1000); // NearMiss bystander
+    const second = orderedDelay(starts, 1, 90, 1000); // ExtraRoll bystander, same frame
+    expect(first).toBe(140);
+    expect(1000 + second).toBeGreaterThan(1000 + first);
+  });
+
+  it('OrderedDelay_IdleSeat_Should_UseItsOwnStagger', () => {
+    const starts: number[] = [];
+    orderedDelay(starts, 0, 120, 1000);
+    expect(orderedDelay(starts, 2, 90, 1000)).toBe(90);
+    expect(orderedDelay(starts, 0, 90, 5000)).toBe(90); // long after: no carry-over
   });
 });

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Character } from '../../characters/Character';
-import { pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
+import { orderedDelay, pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
 import { reactionFor, scaled, TIMING } from '../../characters/reactions';
 import { speech, t } from '../../i18n/i18n';
 import { boardFor, type StoryBoard } from '../../core/boards';
@@ -46,6 +46,8 @@ export class BoardScene extends Phaser.Scene {
   private bubbles: SpeechBubble[] = [];
   /** Last line shown per speech key, so a bubble does not repeat itself. */
   private lastLines = new Map<string, string>();
+  /** Scene time each seat's latest reaction starts; later events never start before it. */
+  private seatStartAt: number[] = [];
   private dieButton!: DiceButton;
   private bannerText!: Phaser.GameObjects.Text;
   private bannerDot!: Phaser.GameObjects.Arc;
@@ -74,6 +76,7 @@ export class BoardScene extends Phaser.Scene {
     this.characters = [];
     this.bubbles = [];
     this.lastLines = new Map();
+    this.seatStartAt = [];
     this.busy = false;
   }
 
@@ -239,8 +242,13 @@ export class BoardScene extends Phaser.Scene {
     const speakers = pickSpeakers(cues);
     const fast = this.fastMode;
     const [minStagger, maxStagger] = TIMING.bystanderStaggerMs;
+    const now = this.time.now;
+    let latestDelay = 0;
     const runs = cues.map((cue) => {
-      const delay = cue.role === 'self' ? 0 : Phaser.Math.Between(minStagger, maxStagger);
+      const stagger = cue.role === 'self' ? 0 : Phaser.Math.Between(minStagger, maxStagger);
+      // Back-to-back events draw fresh staggers; keep each seat's reactions (and bubbles) in event order.
+      const delay = orderedDelay(this.seatStartAt, cue.seat, stagger, now);
+      latestDelay = Math.max(latestDelay, delay);
       const hero = players[cue.seat]?.hero;
       if (!hero) return Promise.resolve();
       const reaction = reactionFor(hero, cue.role, cue.event);
@@ -255,7 +263,7 @@ export class BoardScene extends Phaser.Scene {
     // A reaction cut short by a newer one never resolves, so do not wait on it forever.
     const longest = Math.max(0, ...cues.map((cue) => this.maxDuration(cue, players)));
     const timeout = new Promise<void>((resolve) =>
-      this.time.delayedCall(longest + maxStagger + 100, resolve),
+      this.time.delayedCall(longest + latestDelay + 100, resolve),
     );
     return Promise.race([Promise.all(runs).then(() => undefined), timeout]);
   }
