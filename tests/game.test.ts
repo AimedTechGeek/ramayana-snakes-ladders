@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Dice } from '../src/core/dice';
-import { Game, resolveMove } from '../src/core/game';
+import { Game, rankingOf, resolveMove } from '../src/core/game';
 import type { Board, GameConfig, PlayerConfig } from '../src/core/types';
 
 const board: Board = {
@@ -325,5 +325,12 @@ describe('Derived events', () => {
       'TurnStarted',
       'NearEnd',
     ]);
+  });
+});
+
+describe('Standings', () => {
+  it('RankingOf_UnfinishedPlayers_Should_FollowFinishersByBoardPosition', () => {
+    const p = (position: number, rank: number | null) => ({ ...rama, position, rank });
+    expect(rankingOf([p(40, null), p(144, 1), p(90, null), p(12, null)])).toEqual([1, 2, 0, 3]);
   });
 });
