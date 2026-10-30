@@ -1,0 +1,11 @@
+{
+  "azimuth": 45,
+  "elevation": 30,
+  "cell": 56,
+  "columns": 12,
+  "baseHeight": 40,
+  "topZ": 40,
+  "headroom": 90,
+  "rect": { "x": 16, "y": 24, "width": 860, "height": 672 },
+  "pad": 12
+}

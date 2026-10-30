@@ -11,12 +11,17 @@ export interface Point {
   y: number;
 }
 
-/** Centre of a board square (1..144). Row 1 runs left to right from the bottom-left corner, row 2 back. */
-export function squareCenter(square: number): Point {
+/** Serpentine grid cell of a square (1..144): row 0 is the bottom row and runs left to right, row 1 runs back. */
+export function gridOf(square: number): { row: number; column: number } {
   const index = square - 1;
   const row = Math.floor(index / BOARD.columns);
   const offset = index % BOARD.columns;
-  const column = row % 2 === 0 ? offset : BOARD.columns - 1 - offset;
+  return { row, column: row % 2 === 0 ? offset : BOARD.columns - 1 - offset };
+}
+
+/** Centre of a board square (1..144). Row 1 runs left to right from the bottom-left corner, row 2 back. */
+export function squareCenter(square: number): Point {
+  const { row, column } = gridOf(square);
   return {
     x: BOARD.x + column * BOARD.cell + BOARD.cell / 2,
     y: BOARD.y + BOARD.size - row * BOARD.cell - BOARD.cell / 2,

@@ -2,3 +2,7 @@
 src/i18n/*.json
 docs/design/*.json
 src/characters/reactions.json
+
+# Vendored anatomy kit, kept unchanged.
+scripts/art/anatomy/
+src/game/iso/isoKit.ts

@@ -57,6 +57,7 @@ Licences are the `license` field of each package.
 | prettier | 3.9.10 | Code formatting | MIT |
 | playwright-core | 1.64.1 | Browser automation | Apache-2.0 |
 | tsx | 4.23.15 | Run TypeScript scripts | MIT |
+| anatomy kit | vendored | Isometric solids kit (`scripts/art/anatomy/`, `src/game/iso/isoKit.ts`) | MIT |
 
 ## 5. Audio
 
