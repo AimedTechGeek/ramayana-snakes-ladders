@@ -3,7 +3,8 @@
 // part, with its true shape, into the recorded scene; ladders.mjs and snakes.mjs add their pieces to the same scene.
 //
 // Deviations from the spec tables (each also reported in the task notes):
-//   B2/B3  feet are inset 15, not 34: at 50 degrees elevation a foot inset 34 is wholly hidden under the plinth.
+//   B2     the foot flanges are inset 15, not 34: at 50 degrees elevation a flange inset 34 is wholly hidden under the
+//          plinth. B3 (the waisted foot between flange and plinth) is dropped for the same reason: never visible.
 //   B6/B7  dropped: the plinth top is covered by the rim bars, so a groove and screws there are never seen; four
 //          bolts on the visible front and right faces stand in for the screws.
 //   E4     the finial ball rests on a short visible pin (a ball at z 30 would swallow the pin).
@@ -101,16 +102,19 @@ function waveInlay(tile, P) {
 }
 
 function plinthParts(scene) {
-  const { P, Ln, Dots, at, back, slab, cyl, turned } = scene;
+  const { P, Ln, Dots, at, back, slab, cyl } = scene;
   back.push(`<path class="iso-halo" d="${k.haloOf(PLINTH, FOOT_LOW, FOOT_H + BASE_H, P)}"/>`); // B1
   for (const [x, y] of k.corners(PLINTH, 15)) {
-    cyl('foot.flange', x, y, 13, FOOT_LOW, 1.6, { tone: 'lo' }, { steps: 28, ground: true }); // B2
-    const profile = [
-      [-20.4, 10.5],
-      [-18.4, 9.4, 1],
-      [-16, 10.8],
-    ];
-    turned('foot', upright(x, y), profile, { tone: 'mid' }, { steps: 24, smooth: false, ground: true }); // B3
+    cyl(
+      'foot.flange',
+      x,
+      y,
+      13,
+      FOOT_LOW,
+      1.6,
+      { tone: 'lo' },
+      { steps: 28, ground: true, symbol: 'foot.flange' },
+    ); // B2
   }
   // B4 slab and B5 lid seam; four bolts on the visible front and right faces (B7 replacement)
   const frontY = PLINTH.y + PLINTH.d;
@@ -173,6 +177,7 @@ function plinthParts(scene) {
       {
         steps: 3,
         extra: Dots([at([x, y, CORNER_CAP])], { size: 0.5 }),
+        symbol: 'cap',
       },
     );
   }
@@ -287,6 +292,7 @@ function rimParts(scene) {
       { tone: 'mid' },
       {
         steps: 2,
+        symbol: 'chapter',
         inner:
           Ln(k.planOutline(k.insetPlan(plate, 1.6), 4.4, P), { tone: 'faint' }) +
           Ln(rules, { tone: 'lo', free: true }),
@@ -296,55 +302,43 @@ function rimParts(scene) {
   }
 }
 
-/** The merged path lists of one tile tone: drawn as one solid group (see scene.mergeLayer). */
-const tileGroup = () => ({
-  fill: [],
-  shades: [[], [], [], []],
-  top: [],
-  crease: [],
-  outline: [],
-  numerals: [],
-  waves: [],
-  extra: [],
-});
-
-function tileLayerSvg(scene, group, odd) {
-  const { Ln, S } = scene;
-  const inner =
-    Ln(group.numerals.join(''), { tone: 'mid', className: 'iso-numeral', free: 'both' }) +
-    Ln(group.waves.join(''), { tone: 'faint' }) +
-    group.extra.join('');
-  const paths = {
-    fill: group.fill.join(''),
-    shades: group.shades.map((list) => list.join('')),
-    top: group.top.join(''),
-    crease: group.crease.join(''),
-    outline: group.outline.join(''),
-  };
-  return S(paths, { tone: 'hi', className: odd ? 'sq-b' : undefined, inner });
-}
+/** One tile solid is drawn once per tone in <defs>; every tile is a <use> at its screen offset (parallel camera). */
+const fixed = (v) => String(Math.round(v * 10) / 10);
 
 function surfaceParts(scene) {
-  const { P, Ln, slab, band, put, record } = scene;
+  const { P, Ln, S, at, slab, band, put, record } = scene;
   slab('field', FIELD, 0, FIELD_Z, { tone: 'mid' }, { steps: 2, ground: true }); // F1
   const wet = new Set([...GANGA, ...SEA]);
-  const groups = { even: tileGroup(), odd: tileGroup() };
+  const origins = {};
+  const uses = [];
+  const numerals = [];
+  const waves = [];
+  const edges = [];
+  let extra = '';
   for (let square = 1; square <= 144; square++) {
     const tile = tileOf(square);
     const odd = (tile.row + tile.column) % 2 === 1; // F3
-    const group = odd ? groups.odd : groups.even;
     const paths = k.slabOf(tile.plan, FIELD_Z, TOP_Z - FIELD_Z, P, TILE_STEPS); // F2
-    const numerals = numeralStrokes(String(square), tile.cx, tile.cy)
-      .map((stroke) => k.onTop(stroke, TOP_Z, P))
-      .join(''); // F4
-    let extra = '';
-    group.fill.push(paths.fill);
-    paths.shades.forEach((d, i) => group.shades[i].push(d));
-    group.top.push(paths.top);
-    group.crease.push(paths.crease);
-    group.outline.push(paths.outline);
-    group.numerals.push(numerals);
-    if (wet.has(square)) group.waves.push(waveInlay(tile, P)); // F5, F6
+    const here = at([tile.cx, tile.cy, TOP_Z]);
+    const id = odd ? 'tileO' : 'tileE';
+    if (!origins[id]) {
+      origins[id] = here;
+      scene.addDef(`<g id="${id}">${S(paths, { tone: 'hi', className: odd ? 'sq-b' : undefined })}</g>`);
+    }
+    const [dx, dy] = [here[0] - origins[id][0], here[1] - origins[id][1]];
+    const move = (dx ? ` x="${fixed(dx)}"` : '') + (dy ? ` y="${fixed(dy)}"` : '');
+    uses.push(`<use href="#${id}"${move}/>`);
+    numerals.push(
+      numeralStrokes(String(square), tile.cx, tile.cy)
+        .map((stroke) => k.onTop(stroke, TOP_Z, P))
+        .join(''),
+    ); // F4
+    if (wet.has(square)) {
+      waves.push(waveInlay(tile, P)); // F5, F6
+      // The tile solid is a <use>, which the line check cannot see into: a hidden copy of its top outline, under the
+      // tiles, lets the waves' ends land on a stroke it can find (the visible edge is the <use>'s own).
+      edges.push(k.planOutline(tile.plan, TOP_Z, P, TILE_STEPS));
+    }
     if (square === 1) {
       // F7 Ayodhya threshold: the standing field of tile 1 inset 3
       const field = { x: tile.plan.x + 3, y: tile.plan.y + 3, w: tile.plan.w - 6, d: 33, r: 1 };
@@ -356,16 +350,16 @@ function surfaceParts(scene) {
       extra += Ln(k.ring(28, 19, 10, TOP_Z, P, 40), { tone: 'lo' });
       extra += Ln(G.spokesOf(F, TOP_Z, 10, 13, 8, P, { phase: Math.PI / 8 }), { tone: 'lo' });
     }
-    group.extra.push(extra);
     // The recorded item carries the tile's true shape; its own markup is only used by the audit.
     const shape = record(A.slab(tile.plan, FIELD_Z, TOP_Z - FIELD_Z, { name: `tile.${square}` }, TILE_STEPS));
     put(`tile.${square}`, [tile.cx, tile.cy, TOP_Z], k.solidSvg(paths, { tone: 'hi' }), [shape]);
   }
-  scene.mergeLayer(
-    'tile.',
-    'field',
-    tileLayerSvg(scene, groups.even, false) + tileLayerSvg(scene, groups.odd, true),
-  );
+  const marks =
+    Ln(numerals.join(''), { tone: 'mid', className: 'iso-numeral', free: 'both' }) +
+    Ln(waves.join(''), { tone: 'faint' }) +
+    extra;
+  const proxies = Ln(edges.join(''), { tone: 'faint', className: 'iso-crease' });
+  scene.mergeLayer('tile.', 'field', proxies + uses.join('') + marks);
   // F8 coronation dais ring on tile 144
   band(
     'dais',
@@ -385,10 +379,28 @@ function toranaParts(scene) {
     // E1 posts, cut at the two E2 beads: a bead wraps its post, so the post is a piece under, between and over them
     const cuts = [RIM_Z, 8, 8.8, 21, 21.8, 25.6];
     for (let i = 0; i < cuts.length; i += 2) {
-      cyl('torana.post', POST_X, y, 2.2, cuts[i], cuts[i + 1] - cuts[i], { tone: 'hi' }, { steps: 20 });
+      cyl(
+        'torana.post',
+        POST_X,
+        y,
+        2.2,
+        cuts[i],
+        cuts[i + 1] - cuts[i],
+        { tone: 'hi' },
+        { steps: 20, symbol: `torana.post.${i}` },
+      );
     }
     for (const z of [8, 21]) {
-      band('torana.bead', upright(POST_X, y), z, z + 0.8, 2.2, 2.6, { tone: 'hi' }, { steps: 20 }); // E2
+      band(
+        'torana.bead',
+        upright(POST_X, y),
+        z,
+        z + 0.8,
+        2.2,
+        2.6,
+        { tone: 'hi' },
+        { steps: 20, symbol: 'torana.bead' },
+      ); // E2
     }
   }
   slab(
@@ -424,8 +436,8 @@ function parasolParts(scene) {
     { tone: 'hi' },
     {
       // E7, E9
-      smooth: { slope: domeSlope, radius: domeRadius, rows: 3, error: 0.6, fineness: 0.4 },
-      steps: 40,
+      smooth: { slope: domeSlope, radius: domeRadius, rows: 2, error: 0.8, fineness: 0.5 },
+      steps: 28,
       radius: domeRadius,
       inner: domeRibs(scene, F),
     },
