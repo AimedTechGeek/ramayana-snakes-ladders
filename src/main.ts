@@ -6,6 +6,7 @@ import { PreloadScene } from './game/scenes/PreloadScene';
 import { RotateScene } from './game/scenes/RotateScene';
 import { SetupScene } from './game/scenes/SetupScene';
 import { WinScene } from './game/scenes/WinScene';
+import { DPR, LOGICAL_HEIGHT, LOGICAL_WIDTH } from './game/hidpi';
 import { CSS } from './game/palette';
 import { initLocale } from './i18n/i18n';
 
@@ -19,15 +20,31 @@ async function waitForFonts(): Promise<void> {
   await Promise.race([Promise.all(loads), timeout]);
 }
 
+/** Phaser renders Text at resolution 1 unless told otherwise; default every Text to DPR so it stays sharp under camera zoom. */
+function installHiDpiText(): void {
+  const factory = Phaser.GameObjects.GameObjectFactory.prototype;
+  const original = factory.text;
+  factory.text = function (
+    this: Phaser.GameObjects.GameObjectFactory,
+    x: number,
+    y: number,
+    text: string | string[],
+    style?: Phaser.Types.GameObjects.Text.TextStyle,
+  ): Phaser.GameObjects.Text {
+    return original.call(this, x, y, text, { resolution: DPR, ...style });
+  };
+}
+
 async function startGame(): Promise<void> {
   await waitForFonts();
   initLocale();
+  installHiDpiText();
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    width: 1280,
-    height: 720,
+    width: LOGICAL_WIDTH * DPR,
+    height: LOGICAL_HEIGHT * DPR,
     backgroundColor: CSS.deepIndigo,
     dom: { createContainer: true },
     scale: {
