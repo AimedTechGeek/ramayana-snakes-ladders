@@ -26,8 +26,10 @@ const BANNED = [
 function walk(dir, out = []) {
   for (const n of readdirSync(dir)) {
     const p = join(dir, n);
-    if (statSync(p).isDirectory()) walk(p, out);
-    else if (n.endsWith('.svg')) out.push(p);
+    // iso/ holds the T40 anatomy SVGs (<style>, off-palette greys): scripts/art/iso/check.mjs checks those.
+    if (statSync(p).isDirectory()) {
+      if (n !== 'iso') walk(p, out);
+    } else if (n.endsWith('.svg')) out.push(p);
   }
   return out;
 }
