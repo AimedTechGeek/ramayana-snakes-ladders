@@ -17,7 +17,7 @@ import * as A from '../anatomy/audit.mjs';
 import * as k from '../anatomy/iso-kit.mjs';
 import * as G from '../anatomy/lathe.mjs';
 import { squareWorld } from '../iso-board.mjs';
-import { numeralStrokes } from './common.mjs';
+import { NUMERAL_ADVANCE, NUMERAL_BASELINE, NUMERAL_STROKES, NUMERAL_WIDTH } from './common.mjs';
 import { upright } from './scene.mjs';
 import { BASE_H, CELL, FIELD_Z, FOOT_H, RIM, RIM_Z, SIZE, TOP_Z } from './world.mjs';
 
@@ -313,6 +313,23 @@ function surfaceParts(scene) {
   const uses = [];
   const numerals = [];
   const waves = [];
+  const glyphOrigin = at([0, 0, TOP_Z]);
+  for (const [digit, strokes] of Object.entries(NUMERAL_STROKES)) {
+    // one engraved digit at the world origin, drawn once; every numeral is a row of <use> glyphs (the digits are
+    // free-ended marks, so the line check has nothing to see inside them)
+    const d = strokes
+      .map((stroke) =>
+        k.onTop(
+          stroke.map(([u, v]) => [u, -v]),
+          TOP_Z,
+          P,
+        ),
+      )
+      .join('');
+    scene.addDef(
+      `<path id="n${digit}" class="iso-line iso-numeral" data-tone="mid" data-free="both" d="${d}"/>`,
+    );
+  }
   const edges = [];
   let extra = '';
   for (let square = 1; square <= 144; square++) {
@@ -328,16 +345,24 @@ function surfaceParts(scene) {
     const [dx, dy] = [here[0] - origins[id][0], here[1] - origins[id][1]];
     const move = (dx ? ` x="${fixed(dx)}"` : '') + (dy ? ` y="${fixed(dy)}"` : '');
     uses.push(`<use href="#${id}"${move}/>`);
-    numerals.push(
-      numeralStrokes(String(square), tile.cx, tile.cy)
-        .map((stroke) => k.onTop(stroke, TOP_Z, P))
-        .join(''),
-    ); // F4
+    const digits = [...String(square)]; // F4
+    const left = tile.cx - ((digits.length - 1) * NUMERAL_ADVANCE + NUMERAL_WIDTH) / 2;
+    digits.forEach((digit, i) => {
+      const [gx, gy] = at([left + i * NUMERAL_ADVANCE, tile.cy + NUMERAL_BASELINE, TOP_Z]);
+      numerals.push(
+        `<use href="#n${digit}" x="${fixed(gx - glyphOrigin[0])}" y="${fixed(gy - glyphOrigin[1])}"/>`,
+      );
+    });
+    scene.stats.marks += digits.length;
     if (wet.has(square)) {
       waves.push(waveInlay(tile, P)); // F5, F6
-      // The tile solid is a <use>, which the line check cannot see into: a hidden copy of its top outline, under the
-      // tiles, lets the waves' ends land on a stroke it can find (the visible edge is the <use>'s own).
-      edges.push(k.planOutline(tile.plan, TOP_Z, P, TILE_STEPS));
+      // The tile solid is a <use>, which the line check cannot see into: hidden copies of the two edges the waves
+      // end on (left and right), under the tiles, give it strokes to find (the visible edges are the <use>'s own).
+      const { x, y, w, d } = tile.plan;
+      edges.push(
+        k.lineOnTop([x, y], [x, y + d], TOP_Z, P),
+        k.lineOnTop([x + w, y], [x + w, y + d], TOP_Z, P),
+      );
     }
     if (square === 1) {
       // F7 Ayodhya threshold: the standing field of tile 1 inset 3
@@ -354,10 +379,7 @@ function surfaceParts(scene) {
     const shape = record(A.slab(tile.plan, FIELD_Z, TOP_Z - FIELD_Z, { name: `tile.${square}` }, TILE_STEPS));
     put(`tile.${square}`, [tile.cx, tile.cy, TOP_Z], k.solidSvg(paths, { tone: 'hi' }), [shape]);
   }
-  const marks =
-    Ln(numerals.join(''), { tone: 'mid', className: 'iso-numeral', free: 'both' }) +
-    Ln(waves.join(''), { tone: 'faint' }) +
-    extra;
+  const marks = numerals.join('') + Ln(waves.join(''), { tone: 'faint' }) + extra;
   const proxies = Ln(edges.join(''), { tone: 'faint', className: 'iso-crease' });
   scene.mergeLayer('tile.', 'field', proxies + uses.join('') + marks);
   // F8 coronation dais ring on tile 144
@@ -421,7 +443,7 @@ function toranaParts(scene) {
   const sag = [-8, 644, 20];
   const onKnot = (knot) => G.add3(knot, G.mul3(G.unit3(G.sub3(sag, knot)), 0.67));
   const route = G.fillet([onKnot(knots[0]), sag, onKnot(knots[1])], 3, 10);
-  tube('torana.garland', route, 0.6, { tone: 'hi', maxLength: 10, spacing: 0.8, limp: false });
+  tube('torana.garland', route, 0.6, { tone: 'hi', maxLength: 10, spacing: 0.8, limp: false, caps: false });
   for (const knot of knots) ball('torana.knot', knot, 0.9, { tone: 'hi' });
 }
 

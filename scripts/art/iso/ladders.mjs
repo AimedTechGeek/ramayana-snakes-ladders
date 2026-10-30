@@ -124,6 +124,7 @@ function ropeLadder(scene, f, o) {
     const [c1, c2] = [centres[0][i], centres[1][i]];
     const dir = G.unit3(G.sub3(c2, c1));
     const route = [G.add3(c1, G.mul3(dir, gapRung)), G.sub3(c2, G.mul3(dir, gapRung))];
+    // both ends sit on knot balls, which hide the end faces: no caps
     tube(`${id}.rung`, route, rungR, {
       className: `rung-${id}`,
       maxLength: 80,
@@ -132,6 +133,7 @@ function ropeLadder(scene, f, o) {
       touch,
       tone: 'hi',
       limp: false,
+      caps: false,
     });
   }
   return { centres, lateralAt };
@@ -387,6 +389,7 @@ function meetingLadder(scene, f) {
     tone: 'hi',
     ends: [true, false],
     limp: false,
+    caps: [false, true],
   });
   // top: the tail curl, a spiral of 1.5 turns from r 2 to r 4 ending in a tuft ball
   const top = centres[0][centres[0].length - 1];
@@ -409,6 +412,7 @@ function meetingLadder(scene, f) {
     tone: 'hi',
     ends: [false, true],
     limp: false,
+    caps: [true, false],
   });
   ball(`${id}.tuft`, end, 0.9, { tone: 'hi', className: `rung-${id}` });
 }
@@ -558,6 +562,7 @@ function tailLadder(scene, f) {
       touch,
       tone: 'hi',
       limp: false,
+      caps: false,
     });
     ball(`${id}.tuft-dot`, dot, 0.9, { tone: 'hi', className: `rail-${id}` }, { symbol: `${id}.tuft-dot` });
   }

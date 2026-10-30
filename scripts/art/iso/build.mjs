@@ -9,6 +9,7 @@ import { addBase } from './board.mjs';
 import { cropProjection, exportSvg, numeralSvg, writeManifest, writeSvg } from './common.mjs';
 import { addLadders } from './ladders.mjs';
 import { boardProjectionFrame, createScene } from './scene.mjs';
+import { addSnakes } from './snakes.mjs';
 import { CELL, FIELD_Z, SIZE, TOP_Z } from './world.mjs';
 
 const out = process.argv[2];
@@ -66,17 +67,21 @@ console.log(`wrote ${join(out, 'sample-tiles.svg')}`);
 
 const LEVELS = ['easy', 'medium', 'hard'];
 
-/** One board: base + ladders (T40.4) of a level, as the stage-sized SVG every game scene places at offset (0, 0). */
+/** One board: base, ladders (T40.4) and snakes (T40.5) of a level, as the stage-sized SVG every game scene places at offset (0, 0). */
 function board(level) {
   const scene = createScene();
   addBase(scene);
   const ladders = addLadders(scene, level);
+  const { ids: snakes, worst, peak } = addSnakes(scene, level);
   const tiles = scene.R.items.filter((item) => item.name.startsWith('tile.')).length;
   const { solids, tubes, marks } = scene.stats;
   console.log(
-    `board-${level}: ${solids + marks} placed parts (${solids - tiles} solids besides ${tiles} tiles, ${tubes} tube chunks, ${marks} strokes, ticks, rings and dots), ${ladders.length} ladders`,
+    `board-${level}: ${solids + marks} placed parts (${solids - tiles} solids besides ${tiles} tiles, ${tubes} tube chunks, ${marks} strokes, ticks, rings and dots), ${ladders.length} ladders, ${snakes.length} snakes`,
   );
-  const label = `A carved teak chaupar board, ${level} level: 144 numbered bone tiles in a brass-rimmed frame, the Ayodhya gate by square 1, the coronation parasol by square 144, and ${ladders.length} carved ladders.`;
+  console.log(
+    `  snakes: bodies keep >= ${worst.toFixed(2)} over what they cross, highest body top ${peak.toFixed(1)} (spec cap 12)`,
+  );
+  const label = `A carved teak chaupar board, ${level} level: 144 numbered bone tiles in a brass-rimmed frame, the Ayodhya gate by square 1, the coronation parasol by square 144, ${ladders.length} carved ladders and ${snakes.length} snakes.`;
   const svg = scene.finish({ label, audit: flags.has('--audit'), debug: flags.has('--debug') });
   return { svg, scene };
 }

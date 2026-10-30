@@ -152,7 +152,7 @@ export function createScene() {
       ends = [true, true],
     } = options;
     const total = G.pathLength(route);
-    R.route(name, route, typeof radius === 'number' ? radius : radius(0), {
+    R.route(name, route, radius, {
       gaps,
       limp,
       ends,
@@ -203,6 +203,15 @@ export function createScene() {
 
   const layers = [];
   const sharedDefs = [];
+
+  /**
+   * Mark the recorded solids named `prefix*` as held by what they ride on (a collar on a snake's body, a crest on its
+   * head): the body is a limp tube that holds nothing up in the audit's contact graph, so its riders say so here.
+   */
+  function hold(...prefixes) {
+    for (const shape of R.solids)
+      if (prefixes.some((p) => (shape.name ?? '').startsWith(p))) shape.ground = true;
+  }
   const crowd = [];
 
   /** Name patterns of two lines that meet on purpose (a rung ending on a knot beside its rail): crowding excused. */
@@ -261,9 +270,8 @@ export function createScene() {
     A.settle(R, P);
     R.items.sort((a, b) => a.key - b.key);
     const { width, height } = boardProjectionFrame();
-    const svg = pruneCss(
-      compactPaths(exportSvg({ width, height, label, body: [...back, ...drawnItems(debug)] })),
-    );
+    const body = `<g transform="scale(.1)">${[...back, ...drawnItems(debug)].join('')}</g>`;
+    const svg = pruneCss(tenfold(exportSvg({ width, height, label, body })));
     if (audit) A.auditOrExit(R, P, { argv: ['--audit'], crowd });
     return svg;
   }
@@ -292,6 +300,7 @@ export function createScene() {
     line,
     mergeLayer,
     addDef,
+    hold,
     allowCrowd,
     finish,
   };
@@ -383,7 +392,21 @@ export function compactPaths(svg) {
   });
 }
 
-/** Drop the ink, rail, rung and seat class rules that no element of this board uses. */
+/** Drop the ink, rail, rung and seat class rules that no element of this board uses, and kit rules no board needs. */
+const UNUSED_CSS = [
+  '.iso-wire',
+  '.iso-face-text',
+  '.iso-line[data-tone="red"]',
+  '.iso-line[data-tone="green"]',
+  '.iso-line[data-tone="blue"]',
+  '.iso-line[data-tone="lit"]',
+  '.iso-line[data-dotted]',
+  '.iso-line[data-dashed]',
+  '.iso-line[data-flow]',
+  '.iso-dots circle[data-pulse]',
+  '.iso-solid[data-lit]',
+];
+
 function pruneCss(svg) {
   const end = svg.indexOf('</style>');
   const body = svg.slice(end);
@@ -392,7 +415,59 @@ function pruneCss(svg) {
     .split('\n')
     .filter((rule) => {
       const m = /^\.(ink|hink|rail|rung|seat)-([\w-]+)[ {]/.exec(rule);
+      if (UNUSED_CSS.some((prefix) => rule.startsWith(prefix))) return false;
       return !m || new RegExp(`class="[^"]*\\b${m[1]}-${m[2]}(?![\\w-])`).test(body);
     });
   return kept.join('\n') + body;
+}
+
+/** The stroke, blur and offset rules of the kit that are written in user units: tenfold, since the drawing is. */
+const TENFOLD_CSS = [
+  '.iso{--anatomy-weight:6px}',
+  '.tb-ring{stroke-width:4.5}',
+  '.iso-solid[data-seamless]>.iso-shade,.iso-solid[data-seamless]>.iso-top{stroke-width:4}',
+  '.iso-numeral{stroke-width:9}',
+  '.iso-halo{filter:blur(90px);transform:translateY(30px)}',
+].join('\n');
+
+const times10 = (v) => num(Number(v) * 10);
+
+/** One M/L/Z path in tenths: the first point absolute, then every step relative, all whole numbers. */
+function tenthsPath(d) {
+  let out = '';
+  for (const part of d.split('M').slice(1)) {
+    const closed = part.endsWith('Z');
+    const points = part
+      .replace(/Z$/, '')
+      .split('L')
+      .map((pair) => pair.match(NUMBER).map((v) => Math.round(Number(v) * 10)));
+    out += `M${points[0].join(' ')}`;
+    const steps = [];
+    for (let i = 1; i < points.length; i++)
+      steps.push(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]);
+    if (steps.length) out += `l${steps.map((v, i) => (i && v >= 0 ? ` ${v}` : String(v))).join('')}`;
+    if (closed) out += 'Z';
+  }
+  return out;
+}
+
+/**
+ * The drawing's coordinates are all on a 0.1 grid, so every number becomes a whole number of tenths, relative paths
+ * and all, and the drawing sits in a scale(.1) group: a fifth shorter than decimals. The stroke widths and the halo's
+ * blur in the CSS (user units) are written tenfold to match; dots and <use> offsets are scaled with the paths.
+ */
+function tenfold(svg) {
+  const cut = svg.indexOf('</style>');
+  const body = svg
+    .slice(cut)
+    .replace(/ d="([MLZ0-9 .-]*)"/g, (whole, d) => ` d="${tenthsPath(d)}"`)
+    .replace(/<(circle|use)\b[^>]*>/g, (tag) =>
+      tag
+        .replace(/\b(cx|cy|r|x|y)="(-?[\d.]+)"/g, (whole, name, v) => `${name}="${times10(v)}"`)
+        .replace(
+          /translate\(([^)]*)\)/,
+          (whole, v) => `translate(${v.trim().split(/[ ,]+/).map(times10).join(' ')})`,
+        ),
+    );
+  return `${svg.slice(0, cut)}${TENFOLD_CSS}\n${body}`;
 }
