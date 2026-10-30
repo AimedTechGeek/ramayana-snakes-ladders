@@ -1,6 +1,6 @@
 // node build.mjs <out dir> [--audit] [--debug] (npm run art:iso, through tsx): writes the isometric art into
 // public/assets/iso/. T40.2 wrote the sample (ten tiles with numerals); T40.4 writes board-<level>.svg (base and
-// ladders) with boards.json; the snake, figurine and die tasks add to them. --audit runs the anatomy audit on every board (about a
+// ladders) with boards.json; T40.5 adds the snakes, T40.6 the Hanuman figurines; the die task adds its own. --audit runs the anatomy audit on every board (about a
 // minute each); --debug wraps every item in a <g data-name> for the line check's reports.
 import { join } from 'node:path';
 import { boxCorners, depthOf, slabOf, solidSvg } from '../anatomy/iso-kit.mjs';
@@ -10,6 +10,7 @@ import { cropProjection, exportSvg, numeralSvg, writeManifest, writeSvg } from '
 import { addLadders } from './ladders.mjs';
 import { boardProjectionFrame, createScene } from './scene.mjs';
 import { addSnakes } from './snakes.mjs';
+import { buildFigurines } from './figurines/index.mjs';
 import { CELL, FIELD_Z, SIZE, TOP_Z } from './world.mjs';
 
 const out = process.argv[2];
@@ -114,3 +115,5 @@ function squareScreenOf(square) {
   const { x, y } = squareScreen(square);
   return [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
 }
+
+buildFigurines(out);
