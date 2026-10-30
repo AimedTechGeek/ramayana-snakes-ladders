@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpi } from '../hidpi';
 import type { Level } from '../../core/types';
 import { t } from '../../i18n/i18n';
 import { HEROES, heroName } from '../heroes';
@@ -62,6 +63,7 @@ export class SetupScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyHiDpi(this);
     this.seats = defaultSeats();
     this.level = 'easy';
     this.seatViews = [];

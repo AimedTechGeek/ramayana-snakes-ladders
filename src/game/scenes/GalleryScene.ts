@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpi } from '../hidpi';
 import { Character } from '../../characters/Character';
 import type { Emotion, TweenName } from '../../characters/reactions';
 import { HERO_ORDER, HEROES, heroName } from '../heroes';
@@ -31,6 +32,7 @@ export class GalleryScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyHiDpi(this);
     this.add
       .text(640, 36, 'Heroes and their emotions', {
         fontFamily: TITLE_FONT,

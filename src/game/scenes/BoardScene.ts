@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpi } from '../hidpi';
 import { Character } from '../../characters/Character';
 import { orderedDelay, pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
 import { reactionFor, scaled, TIMING } from '../../characters/reactions';
@@ -81,6 +82,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyHiDpi(this);
     this.audio = getAudio(this.game.registry.get('muted') === true);
     ensureFxTextures(this);
     this.drawBoard();

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpi } from '../hidpi';
 import { t } from '../../i18n/i18n';
 import { BODY_FONT, COLORS } from '../palette';
 
@@ -28,6 +29,7 @@ export class RotateScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyHiDpi(this);
     this.scrim = this.add.rectangle(0, 0, 1280, 720, COLORS.deepIndigo).setOrigin(0);
     const icon = this.add.graphics();
     drawPhoneIcon(icon);

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpi } from '../hidpi';
 import { t } from '../../i18n/i18n';
 import { rankingOf } from '../../core/game';
 import type { GameConfig, GameState, PlayerState } from '../../core/types';
@@ -35,6 +36,7 @@ export class WinScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyHiDpi(this);
     this.add.rectangle(0, 0, 1280, 720, COLORS.deepIndigo, 0.7).setOrigin(0).setInteractive();
     ensureFxTextures(this);
     confettiRain(this, 1280);

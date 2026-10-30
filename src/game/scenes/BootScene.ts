@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyHiDpi, LOGICAL_WIDTH } from '../hidpi';
 import { getLocale, setLocale, t } from '../../i18n/i18n';
 import { CSS, COLORS, TITLE_FONT } from '../palette';
 import { loadGame } from '../save';
@@ -9,8 +10,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyHiDpi(this);
     this.add
-      .text(this.scale.width / 2, 200, t('ui.title'), {
+      .text(LOGICAL_WIDTH / 2, 200, t('ui.title'), {
         fontFamily: TITLE_FONT,
         fontSize: '64px',
         color: CSS.gold,
@@ -29,7 +31,7 @@ export class BootScene extends Phaser.Scene {
       );
     } else {
       const play = this.add
-        .text(this.scale.width / 2, 440, t('ui.play'), {
+        .text(LOGICAL_WIDTH / 2, 440, t('ui.play'), {
           fontFamily: TITLE_FONT,
           fontSize: '40px',
           color: CSS.ink,
