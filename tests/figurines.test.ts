@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import camera from '../src/game/iso/camera.json';
-import rawManifest from '../public/assets/iso/figurines.json';
+import rawManifest from '../art-src/iso/figurines.json';
 
 const PEDESTAL_R = 7;
 const ANCHOR_TOLERANCE_PX = 0.3;
@@ -9,8 +9,8 @@ const manifest = rawManifest as Record<
   { w: number; h: number; anchorX: number; anchorY: number; k: number }
 >;
 
-// Source text of every figurine SVG, by path relative to public/assets/iso.
-const FILES = import.meta.glob('../public/assets/iso/fig/*.svg', {
+// Source text of every figurine SVG, by path relative to art-src/iso.
+const FILES = import.meta.glob('../art-src/iso/fig/*.svg', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -26,7 +26,7 @@ function baseOutline(svg: string): [number, number][] {
 function svgOf(key: string): string {
   const [hero, emotion, variant, size] = key.split('.');
   const name = `${hero}-${emotion}${variant === 'lit' ? '-lit' : ''}-${size}`;
-  const svg = FILES[`../public/assets/iso/fig/${name}.svg`];
+  const svg = FILES[`../art-src/iso/fig/${name}.svg`];
   if (!svg) throw new Error(`missing ${name}.svg`);
   return svg;
 }

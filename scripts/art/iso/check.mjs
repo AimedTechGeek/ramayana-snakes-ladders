@@ -1,4 +1,4 @@
-// node check.mjs [dir] (npm run art:iso:check): checks every SVG under public/assets/iso (T40 spec section 8).
+// node check.mjs [dir...] (npm run art:iso:check): checks every SVG under public/assets/iso and art-src/iso, the figurine sources (T40 spec section 8).
 //   - well formed (tag balance, quoted attributes, no NaN/undefined) and standalone light with vector-effect none
 //   - file size under 300 KB
 //   - every texture line ends on a stroke, a dot or an outline (the anatomy line-end check, run in headless Edge);
@@ -10,7 +10,7 @@ import { chromium } from 'playwright-core';
 import { LINE_ENDS } from '../anatomy/line-ends.mjs';
 
 const MAX_KB = 300;
-const root = process.argv[2] ?? 'public/assets/iso';
+const roots = process.argv.length > 2 ? process.argv.slice(2) : ['public/assets/iso', 'art-src/iso'];
 
 function svgFiles(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -57,16 +57,16 @@ function viewBoxOf(svg) {
   return { width: Number(m[1]), height: Number(m[2]) };
 }
 
-const files = svgFiles(root);
+const files = roots.flatMap((root) => svgFiles(root).map((file) => ({ file, root })));
 if (!files.length) {
-  console.log(`FAIL no SVG files under ${root}`);
+  console.log(`FAIL no SVG files under ${roots.join(', ')}`);
   process.exit(1);
 }
 
 let failed = 0;
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 try {
-  for (const file of files) {
+  for (const { file, root } of files) {
     const svg = readFileSync(file, 'utf8');
     const name = relative(root, file).replace(/\\/g, '/');
     const problems = structureProblems(svg);
