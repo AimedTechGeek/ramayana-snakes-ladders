@@ -1,13 +1,13 @@
-// Node twin of src/game/iso/boardIso.ts: same camera.json, same projection. Keep the two identical.
+// Node twin of src/game/iso/boardIso.ts: same camera.json, same world, same projection. Keep the two identical.
 
 import { readFileSync } from 'node:fs';
 import { boxCorners, depthOf, fitProjection, iso } from './anatomy/iso-kit.mjs';
+import { BASE_H, CELL, FOOT_H, HEADROOM, RIM, SIZE, TOP_Z } from './iso/world.mjs';
 
 export const camera = JSON.parse(
   readFileSync(new URL('../../src/game/iso/camera.json', import.meta.url), 'utf8'),
 );
 
-const SIZE = camera.cell * camera.columns;
 const { rect } = camera;
 
 /** Same serpentine rule as gridOf in src/game/layout.ts. */
@@ -20,17 +20,21 @@ function gridOf(square) {
 
 export function squareWorld(square) {
   const { row, column } = gridOf(square);
-  return [column * camera.cell + camera.cell / 2, SIZE - row * camera.cell - camera.cell / 2, camera.topZ];
+  return [column * CELL + CELL / 2, SIZE - row * CELL - CELL / 2, TOP_Z];
 }
 
 let projection;
 
 export function boardProjection() {
   projection ??= fitProjection(
-    boxCorners({ x: 0, y: 0, w: SIZE, d: SIZE, r: 0 }, 0, camera.topZ + camera.headroom),
+    boxCorners(
+      { x: -RIM, y: -RIM, w: SIZE + 2 * RIM, d: SIZE + 2 * RIM, r: 0 },
+      -(BASE_H + FOOT_H),
+      TOP_Z + HEADROOM,
+    ),
     rect.width,
     rect.height,
-    { pad: camera.pad, headroom: camera.headroom, azimuth: camera.azimuth, elevation: camera.elevation },
+    { pad: camera.pad, azimuth: camera.azimuth, elevation: camera.elevation },
   );
   return projection;
 }

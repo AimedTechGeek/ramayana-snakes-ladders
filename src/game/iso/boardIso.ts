@@ -1,33 +1,37 @@
 // Isometric board projection shared with scripts/art/iso-board.mjs (keep the two identical). Pure, no Phaser.
-// World: x to the right along a row, y toward the viewer (row 0 is the nearest row), z up.
+// Geometry comes from ./world; the camera comes from ./camera.json.
 
 import { gridOf } from '../layout';
 import camera from './camera.json';
 import { boxCorners, depthOf, fitProjection, iso, type Point3, type Projection } from './isoKit';
+import { BASE_H, CELL, FOOT_H, HEADROOM, RIM, SIZE, TOP_Z } from './world';
 
 export interface Screen {
   x: number;
   y: number;
 }
 
-const SIZE = camera.cell * camera.columns;
 const { rect } = camera;
 
-/** Centre of a square's top face, at z = topZ. */
+/** Centre of a square's top face, at TOP_Z. */
 export function squareWorld(square: number): Point3 {
   const { row, column } = gridOf(square);
-  return [column * camera.cell + camera.cell / 2, SIZE - row * camera.cell - camera.cell / 2, camera.topZ];
+  return [column * CELL + CELL / 2, SIZE - row * CELL - CELL / 2, TOP_Z];
 }
 
 let projection: Projection | undefined;
 
-/** Projection fitted once over the whole board box into the screen rect. */
+/** Projection fitted once over the plinth box (rim included, feet to the headroom top) into the screen rect. */
 export function boardProjection(): Projection {
   projection ??= fitProjection(
-    boxCorners({ x: 0, y: 0, w: SIZE, d: SIZE, r: 0 }, 0, camera.topZ + camera.headroom),
+    boxCorners(
+      { x: -RIM, y: -RIM, w: SIZE + 2 * RIM, d: SIZE + 2 * RIM, r: 0 },
+      -(BASE_H + FOOT_H),
+      TOP_Z + HEADROOM,
+    ),
     rect.width,
     rect.height,
-    { pad: camera.pad, headroom: camera.headroom, azimuth: camera.azimuth, elevation: camera.elevation },
+    { pad: camera.pad, azimuth: camera.azimuth, elevation: camera.elevation },
   );
   return projection;
 }
