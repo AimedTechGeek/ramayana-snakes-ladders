@@ -68,13 +68,14 @@ const LINES = (scope) => `${scope} .iso-line,${scope} .tb-ring,${scope} .iso-edg
  * Classes the build adds after the kit's own rules (so they win at equal specificity):
  * vector-effect none (spec 8), numerals, odd-tile top, seat bands, snake / ladder ink classes.
  * Usage: `.iso-solid ink-<snake>` on a snake's pieces, `hink-<snake>` on its head, `rail-<ladder>` and `rung-<ladder>`
- * on the ladder's rails and rungs, `seat-<hero>` on the seat band, `sq-b` on odd tiles.
+ * on the ladder's rails and rungs, `seat-<hero>` on the seat band, `sq-b` on odd tiles, `open` on a ring band cut with a bore (its fill needs even-odd).
  */
 export function extraCss() {
   const rules = [
     '.iso-svg path,.iso-svg circle{vector-effect:none}',
     '.iso-numeral{stroke-width:.9}',
     '.sq-b{--anatomy-top:#F4F4F1}',
+    '.iso-solid.open>.iso-fill{fill-rule:evenodd}',
   ];
   for (const hero of Object.keys(SEAT_COLOURS)) {
     const { top, shades } = seatBand(hero);

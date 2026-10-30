@@ -1,13 +1,18 @@
-// node build.mjs <out dir> (npm run art:iso, through tsx): writes the isometric art into public/assets/iso/.
-// T40.2 writes only the sample (ten tiles with numerals); the board, figurine and die tasks add their files here.
+// node build.mjs <out dir> [--audit] [--debug] (npm run art:iso, through tsx): writes the isometric art into
+// public/assets/iso/. T40.2 wrote the sample (ten tiles with numerals); T40.3 adds the board base; the ladder,
+// snake, figurine and die tasks add their files here. --audit runs the anatomy audit on every board (about a
+// minute each); --debug wraps every item in a <g data-name> for the line check's reports.
 import { join } from 'node:path';
 import { boxCorners, depthOf, slabOf, solidSvg } from '../anatomy/iso-kit.mjs';
 import { boardProjection, squareWorld } from '../iso-board.mjs';
+import { addBase } from './board.mjs';
 import { cropProjection, exportSvg, numeralSvg, writeSvg } from './common.mjs';
+import { createScene } from './scene.mjs';
 import { CELL, FIELD_Z, SIZE, TOP_Z } from './world.mjs';
 
 const out = process.argv[2];
-if (!out) throw new Error('usage: node build.mjs <out dir>');
+if (!out) throw new Error('usage: node build.mjs <out dir> [--audit] [--debug]');
+const flags = new Set(process.argv.slice(3));
 
 // Squares 8..17: the end of row 1, the turn, the start of row 2. Every digit 0-9 occurs, two-digit numbers throughout,
 // and both tile tops (even and odd (row + column)) appear.
@@ -57,3 +62,19 @@ function sampleTiles() {
 
 writeSvg(join(out, 'sample-tiles.svg'), sampleTiles());
 console.log(`wrote ${join(out, 'sample-tiles.svg')}`);
+
+function boardBase() {
+  const scene = createScene();
+  addBase(scene);
+  const tiles = scene.R.items.filter((item) => item.name.startsWith('tile.')).length;
+  const { solids, tubes, marks } = scene.stats;
+  console.log(
+    `board base: ${solids + marks} placed parts (${solids - tiles} solids besides ${tiles} tiles, ${tubes} tube chunks, ${marks} strokes, ticks, rings and dots)`,
+  );
+  const label =
+    'A carved teak chaupar board on a plinth: 144 numbered bone tiles in a brass-rimmed frame, a ruler along the near and left edges, the Ayodhya gate by square 1 and the coronation parasol by square 144.';
+  return scene.finish({ label, audit: flags.has('--audit'), debug: flags.has('--debug') });
+}
+
+writeSvg(join(out, 'board-base.svg'), boardBase());
+console.log(`wrote ${join(out, 'board-base.svg')}`);

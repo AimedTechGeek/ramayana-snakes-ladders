@@ -80,6 +80,7 @@
 .iso-svg path,.iso-svg circle{vector-effect:none}
 .iso-numeral{stroke-width:.9}
 .sq-b{--anatomy-top:#F4F4F1}
+.iso-solid.open>.iso-fill{fill-rule:evenodd}
 .seat-rama{--anatomy-top:#3F6FC2;--anatomy-shade-0:#3A5FA1;--anatomy-shade-1:#476DB0;--anatomy-shade-2:#557BBE;--anatomy-shade-3:#6289CD}
 .seat-sita{--anatomy-top:#D15587;--anatomy-shade-0:#AB4B73;--anatomy-shade-1:#BA5981;--anatomy-shade-2:#CA668F;--anatomy-shade-3:#D9749D}
 .seat-lakshmana{--anatomy-top:#2E9E6B;--anatomy-shade-0:#2C845D;--anatomy-shade-1:#39926B;--anatomy-shade-2:#47A178;--anatomy-shade-3:#54AF86}
