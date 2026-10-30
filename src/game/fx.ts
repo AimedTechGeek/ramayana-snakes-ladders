@@ -5,7 +5,7 @@ import { COLORS, CSS, TITLE_FONT } from './palette';
 const GOLD_DOT = 'fx-gold-dot';
 const PARCHMENT_SQUARE = 'fx-parchment-square';
 const PETAL = 'fx-petal';
-const FX_DEPTH = 6;
+const FX_DEPTH = 900; // above the token shadows (500), below the tokens (1000+): T40 spec 2.6
 
 /** Particle lifespans are halved in fast mode. */
 function life(ms: number, fast: boolean): number {

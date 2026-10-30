@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { applyHiDpi } from '../hidpi';
 import { Character } from '../../characters/Character';
+import { MedallionToken, type BoardToken } from '../../characters/BoardToken';
+import { Figurine } from '../../characters/Figurine';
 import { orderedDelay, pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
 import { reactionFor, scaled, TIMING } from '../../characters/reactions';
 import { speech, t } from '../../i18n/i18n';
@@ -8,11 +10,22 @@ import { boardFor, type StoryBoard } from '../../core/boards';
 import { createRandomDice, type Dice } from '../../core/dice';
 import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
-import type { GameConfig, GameState } from '../../core/types';
+import type { GameConfig, GameState, Hero, Jump, Level } from '../../core/types';
 import { getAudio, type Audio } from '../audio';
-import { BOARD_BACKGROUND_KEY, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey, tokenKey } from '../assets';
+import { BOARD_STAGE, boardKey, boardUrl, FIGURINE_HEROES, figurineAssets } from '../assets';
 import { HEROES, heroName } from '../heroes';
-import { BOARD, PANEL, SEAT, fanOffset, seatTokenSpot, seatTop, squareCenter, type Point } from '../layout';
+import { PANEL, SEAT, seatTokenSpot, seatTop } from '../layout';
+import { squareScreen } from '../iso/boardIso';
+import { fieldCentre, glidePoint, jumpPaths, type JumpPath, type Vec2 } from '../iso/jumps';
+import {
+  entryPose,
+  hopPoint,
+  restingSpot,
+  screenPose,
+  TOKEN_DEPTH_BASE,
+  worldPose,
+  type TokenPose,
+} from '../iso/tokenPose';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
 import { clearSave, saveGame } from '../save';
@@ -31,6 +44,12 @@ export type BoardSceneData =
 // Timing from docs/design/reactions.json.
 const STEP_MS = 120;
 const FAST_STEP_MS = 40;
+// Depth layers (T40 spec 2.6): board 0, shadows 500, fx 900, tokens 1000+, HUD 5000, speech bubbles 6000.
+const BOARD_DEPTH = 0;
+const HUD_DEPTH = 5000;
+const BUBBLE_DEPTH = 6000;
+/** Left edge of the banner, hint and chips: right of the die plate in the HUD column. */
+const BANNER_X = PANEL.x + 144;
 const BOT_DELAY_MS = 1000;
 const FAST_BOT_DELAY_MS = 400;
 
@@ -38,12 +57,17 @@ export class BoardScene extends Phaser.Scene {
   private engine!: Game;
   private board!: StoryBoard;
   private dice: Dice = createRandomDice();
-  private tokens: Phaser.GameObjects.Container[] = [];
+  private level: Level = 'easy';
+  private heroes: Hero[] = [];
+  private paths: JumpPath[] = [];
+  private tokens: BoardToken[] = [];
+  /** World (x, y) each token stands at on the board; null while it waits on its seat card. */
+  private worldAt: (Vec2 | null)[] = [];
   /** Square each token is drawn on; trails the engine while animations run. */
   private shownSquare: number[] = [];
   private seatPositionText: Phaser.GameObjects.Text[] = [];
   private seatFrames: Phaser.GameObjects.Rectangle[] = [];
-  private characters: Character[] = [];
+  private characters: (Character | Figurine)[] = [];
   private bubbles: SpeechBubble[] = [];
   /** Last line shown per speech key, so a bubble does not repeat itself. */
   private lastLines = new Map<string, string>();
@@ -63,6 +87,9 @@ export class BoardScene extends Phaser.Scene {
   }
 
   init(data: BoardSceneData): void {
+    this.level = data.state ? data.state.level : data.config.level;
+    this.paths = jumpPaths(this.level);
+    this.heroes = (data.state ?? data.config).players.map((player) => player.hero);
     if (data.state) {
       this.board = boardFor(data.state.level);
       this.engine = Game.restore(data.state, this.board, this.dice);
@@ -71,6 +98,7 @@ export class BoardScene extends Phaser.Scene {
       this.engine = Game.create(data.config, this.board, this.dice);
     }
     this.tokens = [];
+    this.worldAt = [];
     this.shownSquare = [];
     this.seatPositionText = [];
     this.seatFrames = [];
@@ -81,12 +109,25 @@ export class BoardScene extends Phaser.Scene {
     this.busy = false;
   }
 
+  /** Loads the chosen level's board (rasterised at 2x) and the seated Hanuman's figurine textures. */
+  preload(): void {
+    const key = boardKey(this.level);
+    if (!this.textures.exists(key)) {
+      this.load.svg(key, boardUrl(this.level), {
+        width: BOARD_STAGE.width * BOARD_STAGE.scale,
+        height: BOARD_STAGE.height * BOARD_STAGE.scale,
+      });
+    }
+    for (const asset of figurineAssets(this.heroes, ['s', 'm'])) {
+      if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.url);
+    }
+  }
+
   create(): void {
     applyHiDpi(this);
     this.audio = getAudio(this.game.registry.get('muted') === true);
     ensureFxTextures(this);
     this.drawBoard();
-    this.drawJumps();
     this.drawSeats();
     this.createTokens();
     this.createHud();
@@ -206,12 +247,12 @@ export class BoardScene extends Phaser.Scene {
         return;
       case 'Laddered':
         this.audio.ladder();
-        await this.slideTo(event.player, event.jump.to, 'ladder');
+        await this.slideTo(event.player, event.jump.to, 'ladder', event.jump);
         return;
       case 'Bitten':
         this.audio.snake();
         this.biteEffects(event.jump.from);
-        await this.slideTo(event.player, event.jump.to, 'snake');
+        await this.slideTo(event.player, event.jump.to, 'snake', event.jump);
         return;
       case 'TripleSixVoid':
         this.audio.tripleSix();
@@ -284,7 +325,7 @@ export class BoardScene extends Phaser.Scene {
     this.bubbles[cue.seat]?.say(line, intensity, fast);
   }
 
-  private characterAt(seat: number): Character {
+  private characterAt(seat: number): Character | Figurine {
     const character = this.characters[seat];
     if (!character) throw new Error(`No character for seat ${seat}`);
     return character;
@@ -305,22 +346,22 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private createHud(): void {
-    this.dieButton = new DiceButton(this, PANEL.x + 64, 552 + 64).setDepth(10);
+    this.dieButton = new DiceButton(this, PANEL.x + 64, 552 + 64).setDepth(HUD_DEPTH);
     this.dieButton.on('press', () => void this.requestRoll());
 
-    this.bannerDot = this.add.circle(864 + 6, 548 + 16, 6, COLORS.parchment).setDepth(10);
+    this.bannerDot = this.add.circle(BANNER_X + 6, 548 + 16, 6, COLORS.parchment).setDepth(HUD_DEPTH);
     this.bannerText = this.add
-      .text(864 + 24, 548, '', { fontFamily: TITLE_FONT, fontSize: '26px', color: CSS.parchment })
-      .setDepth(10);
+      .text(BANNER_X + 24, 548, '', { fontFamily: TITLE_FONT, fontSize: '26px', color: CSS.parchment })
+      .setDepth(HUD_DEPTH);
     this.hintText = this.add
-      .text(864, 584, '', { fontFamily: BODY_FONT, fontSize: '16px', color: CSS.parchment })
+      .text(BANNER_X, 584, '', { fontFamily: BODY_FONT, fontSize: '16px', color: CSS.parchment })
       .setAlpha(0.7)
-      .setDepth(10)
+      .setDepth(HUD_DEPTH)
       .setVisible(false);
 
-    this.fastChip = this.createChip(864, 624, 128, () => this.toggleFast());
-    this.muteChip = this.createChip(1000, 624, 128, () => this.toggleMute());
-    this.createChip(1136, 624, 120, () => this.openMenu()).setLabel(t('ui.menu'));
+    this.fastChip = this.createChip(BANNER_X, 624, 100, () => this.toggleFast());
+    this.muteChip = this.createChip(BANNER_X + 108, 624, 100, () => this.toggleMute());
+    this.createChip(BANNER_X + 216, 624, 104, () => this.openMenu()).setLabel(t('ui.menu'));
     this.applyFast();
     this.applyMute();
     this.setBanner(this.snapshot().current);
@@ -331,12 +372,12 @@ export class BoardScene extends Phaser.Scene {
       .rectangle(x, y, width, 56, COLORS.parchment)
       .setOrigin(0, 0)
       .setStrokeStyle(2, COLORS.ink)
-      .setDepth(10)
+      .setDepth(HUD_DEPTH)
       .setInteractive({ useHandCursor: true });
     const label = this.add
       .text(x + width / 2, y + 28, '', { fontFamily: BODY_FONT, fontSize: '20px', color: CSS.ink })
       .setOrigin(0.5)
-      .setDepth(11);
+      .setDepth(HUD_DEPTH + 1);
     box.on('pointerdown', onClick);
     const chip: Chip = {
       setLabel: (text) => {
@@ -385,60 +426,124 @@ export class BoardScene extends Phaser.Scene {
     return this.fastMode ? ms / 2 : ms;
   }
 
+  /** Runs `poseAt(u)` for u from 0 to 1 over `duration` (eased by `ease`), placing the token every frame. */
+  private async travel(
+    player: number,
+    duration: number,
+    ease: string,
+    poseAt: (u: number) => TokenPose,
+    onUpdate?: (u: number, pose: TokenPose) => void,
+  ): Promise<void> {
+    const token = this.tokenAt(player);
+    const progress = { u: 0 };
+    await tweenAsync(this, {
+      targets: progress,
+      u: 1,
+      duration,
+      ease,
+      onUpdate: () => {
+        const pose = poseAt(progress.u);
+        token.place(pose);
+        onUpdate?.(progress.u, pose);
+      },
+    });
+    token.place(poseAt(1));
+  }
+
+  /** The pose a token has at rest: on the board at a world spot, or on its seat card. */
+  private restPose(player: number, spot: Vec2 | null): TokenPose {
+    return spot ? worldPose(spot[0], spot[1]) : screenPose(seatTokenSpot(player), TOKEN_DEPTH_BASE);
+  }
+
   private async stepTo(player: number, square: number): Promise<void> {
     this.audio.step();
     const token = this.tokenAt(player);
+    const from = this.worldAt[player] ?? null;
     this.shownSquare[player] = square;
-    const target = this.restingPoint(player);
-    await tweenAsync(this, {
-      targets: token,
-      x: target.x,
-      y: target.y,
-      duration: this.stepMs,
-      ease: 'Sine.easeOut',
-    });
+    const to = this.spotOf(player);
+    if (from === null) {
+      const seat = seatTokenSpot(player);
+      await this.travel(player, this.scaled(360), 'Sine.easeInOut', (u) => entryPose(seat, to, u));
+    } else {
+      await this.travel(player, this.stepMs, 'Linear', (u) => {
+        const [x, y, z] = hopPoint(from, to, u);
+        return worldPose(x, y, z);
+      });
+    }
+    this.worldAt[player] = to;
+    token.squash(this.scaled(60));
     await this.relayout(player);
   }
 
-  private async slideTo(player: number, square: number, kind: 'ladder' | 'snake' | 'void'): Promise<void> {
-    const token = this.tokenAt(player);
-    const start = new Phaser.Math.Vector2(token.x, token.y);
+  private async slideTo(
+    player: number,
+    square: number,
+    kind: 'ladder' | 'snake' | 'void',
+    jump?: Jump,
+  ): Promise<void> {
+    const start = this.worldAt[player] ?? null;
     this.shownSquare[player] = square;
-    const rest = this.restingPoint(player);
-    const end = new Phaser.Math.Vector2(rest.x, rest.y);
-    const curve = kind === 'snake' ? this.snakeCurve(start, end) : new Phaser.Curves.Line(start, end);
-    const progress = { t: 0 };
+    const end = square === 0 ? null : this.spotOf(player);
+    const path = jump ? this.paths.find((p) => p.from === jump.from && p.to === jump.to) : undefined;
     const trail = kind === 'ladder' ? sparkleTrail(this, this.fastMode) : undefined;
     let lastSparkle = 0;
-    await tweenAsync(this, {
-      targets: progress,
-      t: 1,
-      duration: this.scaled(kind === 'snake' ? 700 : 500),
-      ease: kind === 'snake' ? 'Quad.easeIn' : 'Sine.easeInOut',
-      onUpdate: () => {
-        const p = curve.getPoint(progress.t);
-        token.setPosition(p.x, p.y);
-        if (trail && progress.t - lastSparkle >= 0.04) {
-          lastSparkle = progress.t;
-          trail.emit(p.x, p.y);
+    let poseAt: (u: number) => TokenPose;
+    if (path && start && end) {
+      // Along the jump's own path; the fan offset eases from the old slot to the new one.
+      const [fromX, fromY] = fieldCentre(path.from);
+      const [toX, toY] = fieldCentre(path.to);
+      const startFan = [start[0] - fromX, start[1] - fromY];
+      const endFan = [end[0] - toX, end[1] - toY];
+      poseAt = (u) => {
+        const [x, y, z] = glidePoint(path, u);
+        const dx = startFan[0]! + (endFan[0]! - startFan[0]!) * u;
+        const dy = startFan[1]! + (endFan[1]! - startFan[1]!) * u;
+        return worldPose(x + dx, y + dy, z);
+      };
+    } else {
+      // A straight line at tile height (to or from the seat card, a straight screen line).
+      const a = this.restPose(player, start);
+      const b = this.restPose(player, end);
+      poseAt = (u) => ({
+        feet: { x: a.feet.x + (b.feet.x - a.feet.x) * u, y: a.feet.y + (b.feet.y - a.feet.y) * u },
+        ground: {
+          x: a.ground.x + (b.ground.x - a.ground.x) * u,
+          y: a.ground.y + (b.ground.y - a.ground.y) * u,
+        },
+        depth: a.depth + (b.depth - a.depth) * u,
+        lift: 0,
+      });
+    }
+    const ladderMs = Math.max(400, 25 * Math.abs((jump?.to ?? 0) - (jump?.from ?? 0)));
+    await this.travel(
+      player,
+      this.scaled(kind === 'snake' ? 700 : kind === 'ladder' ? ladderMs : 500),
+      kind === 'snake' ? 'Quad.easeIn' : 'Sine.easeInOut',
+      poseAt,
+      (u, pose) => {
+        if (trail && u - lastSparkle >= 0.04) {
+          lastSparkle = u;
+          trail.emit(pose.feet.x, pose.feet.y);
         }
       },
-    });
+    );
     trail?.stop();
-    if (kind === 'ladder') goldBurst(this, end.x, end.y, this.fastMode);
-    else dustPuff(this, end.x, end.y, this.fastMode);
+    this.worldAt[player] = end;
+    const landed = this.restPose(player, end).feet;
+    if (kind === 'ladder') goldBurst(this, landed.x, landed.y, this.fastMode);
+    else dustPuff(this, landed.x, landed.y, this.fastMode);
     await this.relayout(player);
   }
 
   /** Dust at the snake's head and a brief camera shake when a token is bitten. */
   private biteEffects(headSquare: number): void {
-    const head = squareCenter(headSquare);
+    const head = squareScreen(headSquare);
     dustPuff(this, head.x, head.y, this.fastMode);
     shake(this, this.fastMode);
   }
 
   private bounceEffect(): void {
-    const c = squareCenter(144);
+    const c = squareScreen(144);
     bouncePuff(this, c.x, c.y, this.fastMode);
   }
 
@@ -446,288 +551,40 @@ export class BoardScene extends Phaser.Scene {
   private async relayout(player: number): Promise<void> {
     const square = this.shownSquare[player];
     const sharing = this.shownSquare.flatMap((s, i) => (s === square ? [i] : []));
-    if (sharing.length < 2) return;
+    if (square === 0 || sharing.length < 2) return;
     await Promise.all(
       sharing.map((i) => {
-        const p = this.restingPoint(i);
-        return tweenAsync(this, { targets: this.tokenAt(i), x: p.x, y: p.y, duration: this.scaled(80) });
+        const from = this.worldAt[i];
+        const to = this.spotOf(i);
+        this.worldAt[i] = to;
+        if (!from) return this.travel(i, 0, 'Linear', () => this.restPose(i, to));
+        return this.travel(i, this.scaled(80), 'Linear', (u) =>
+          worldPose(from[0] + (to[0] - from[0]) * u, from[1] + (to[1] - from[1]) * u),
+        );
       }),
     );
   }
 
-  private restingPoint(player: number): Point {
+  /** The world spot (x, y) a token on the board rests at: the square's field centre plus its fan slot. */
+  private spotOf(player: number): Vec2 {
     const square = this.shownSquare[player] ?? 0;
-    if (square === 0) return seatTokenSpot(player);
     const sharing = this.shownSquare.flatMap((s, i) => (s === square ? [i] : []));
-    const centre = squareCenter(square);
-    const offset = fanOffset(sharing.indexOf(player), sharing.length);
-    return { x: centre.x + offset.x, y: centre.y + offset.y };
+    return restingSpot(square, sharing.indexOf(player), sharing.length);
   }
 
-  /**
-   * The S-shaped body of a snake from head to tail. The sideways swing is a quarter of the length but
-   * capped at two-thirds of a cell, so long flat snakes stay in their own lane instead of sweeping
-   * across neighbouring rows. Tokens slide along this same curve.
-   */
-  private snakeCurve(head: Phaser.Math.Vector2, tail: Phaser.Math.Vector2): Phaser.Curves.CubicBezier {
-    const swing = Math.min(head.distance(tail) * 0.25, BOARD.cell * 0.66);
-    const side = new Phaser.Math.Vector2(-(tail.y - head.y), tail.x - head.x).normalize().scale(swing);
-    const mid = head.clone().lerp(tail, 0.5);
-    return new Phaser.Curves.CubicBezier(head, mid.clone().add(side), mid.clone().subtract(side), tail);
-  }
-
-  private tokenAt(player: number): Phaser.GameObjects.Container {
+  private tokenAt(player: number): BoardToken {
     const token = this.tokens[player];
     if (!token) throw new Error(`No token for player ${player}`);
     return token;
   }
 
+  /** The board diorama: one image per difficulty at (0, 0), rasterised at 2x (T40 spec 2.6). */
   private drawBoard(): void {
     this.add
-      .image(BOARD.x, BOARD.y, BOARD_BACKGROUND_KEY)
+      .image(0, 0, boardKey(this.level))
       .setOrigin(0)
-      .setDisplaySize(BOARD.size, BOARD.size);
-    const g = this.add.graphics();
-    for (let square = 1; square <= 144; square++) {
-      const c = squareCenter(square);
-      const left = c.x - BOARD.cell / 2 + 4;
-      const top = c.y - BOARD.cell / 2 + 4;
-      const chipWidth = square > 99 ? 30 : 22;
-      g.fillStyle(COLORS.parchment, 0.55);
-      g.fillRect(left, top, chipWidth, 16);
-      this.add
-        .text(left + chipWidth / 2, top + 8, String(square), {
-          fontFamily: BODY_FONT,
-          fontSize: '14px',
-          fontStyle: 'bold',
-          color: CSS.ink,
-        })
-        .setOrigin(0.5);
-    }
-    g.lineStyle(4, COLORS.gold, 1);
-    g.strokeRect(BOARD.x - 2, BOARD.y - 2, BOARD.size + 4, BOARD.size + 4);
-    g.lineStyle(2, COLORS.ink, 1);
-    g.strokeRect(BOARD.x - 5, BOARD.y - 5, BOARD.size + 10, BOARD.size + 10);
-  }
-
-  private drawJumps(): void {
-    const g = this.add.graphics().setDepth(2);
-    for (const ladder of this.board.ladders)
-      this.drawLadder(g, ladder.id, squareCenter(ladder.from), squareCenter(ladder.to));
-    // Shortest first, so the longest bodies (Ravana's) lie on top and can be traced end to end.
-    const byLength = [...this.board.snakes].sort((x, y) => x.from - x.to - (y.from - y.to));
-    for (const snake of byLength)
-      this.drawSnake(g, snake.id, squareCenter(snake.from), squareCenter(snake.to));
-  }
-
-  /** Points of a line from foot to top, bowed sideways by `bow` and shifted by `offset` plus a sine `wave`. */
-  private ladderLine(foot: Point, top: Point, offset: number, bow = 0, wave = 0): Phaser.Math.Vector2[] {
-    const a = new Phaser.Math.Vector2(foot.x, foot.y);
-    const b = new Phaser.Math.Vector2(top.x, top.y);
-    const length = a.distance(b);
-    const side = new Phaser.Math.Vector2(-(b.y - a.y), b.x - a.x).normalize();
-    const steps = Math.max(8, Math.ceil(length / 5));
-    const points: Phaser.Math.Vector2[] = [];
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const lateral = offset + bow * 4 * t * (1 - t) + wave * Math.sin((t * length) / 5);
-      points.push(a.clone().lerp(b, t).add(side.clone().scale(lateral)));
-    }
-    return points;
-  }
-
-  /** A stroked polyline with an ink outline underneath. */
-  private strokeLine(
-    g: Phaser.GameObjects.Graphics,
-    points: readonly Phaser.Math.Vector2[],
-    width: number,
-    color: number,
-  ): void {
-    for (const [w, c] of [
-      [width + 3, COLORS.ink],
-      [width, color],
-    ] as const) {
-      g.lineStyle(w, c, 1);
-      g.beginPath();
-      points.forEach((p, i) => (i === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y)));
-      g.strokePath();
-    }
-  }
-
-  private drawLadder(g: Phaser.GameObjects.Graphics, id: string, foot: Point, top: Point): void {
-    const look = LADDER_LOOKS[id];
-    if (!look) throw new Error(`No ladder look for ${id}`);
-    const rail = Phaser.Display.Color.HexStringToColor(look.rail).color;
-    const rung = Phaser.Display.Color.HexStringToColor(look.rung).color;
-    const length = Phaser.Math.Distance.Between(foot.x, foot.y, top.x, top.y);
-    const rungCount = Math.max(2, Math.floor(length / 22));
-    const half = 9;
-
-    /** Rungs span between two rails sampled at the same parameter. */
-    const drawRungs = (left: readonly Phaser.Math.Vector2[], right: readonly Phaser.Math.Vector2[]): void => {
-      for (let i = 1; i < rungCount; i++) {
-        const k = Math.round((i / rungCount) * (left.length - 1));
-        const p = left[k]!;
-        const q = right[k]!;
-        g.lineStyle(5, COLORS.ink, 1);
-        g.lineBetween(p.x, p.y, q.x, q.y);
-        g.lineStyle(3, rung, 1);
-        g.lineBetween(p.x, p.y, q.x, q.y);
-      }
-    };
-
-    switch (look.style) {
-      case 'wood':
-      case 'bow': {
-        const bow = look.style === 'bow' ? 14 : 0;
-        const left = this.ladderLine(foot, top, -half, bow);
-        const right = this.ladderLine(foot, top, half, bow);
-        this.strokeLine(g, left, 4, rail);
-        this.strokeLine(g, right, 4, rail);
-        drawRungs(left, right);
-        break;
-      }
-      case 'rope':
-      case 'vine': {
-        const wave = look.style === 'rope' ? 1.6 : 2.2;
-        const left = this.ladderLine(foot, top, -half, 0, wave);
-        const right = this.ladderLine(foot, top, half, 0, -wave);
-        this.strokeLine(g, left, 3, rail);
-        this.strokeLine(g, right, 3, rail);
-        drawRungs(left, right);
-        if (look.style === 'rope') {
-          // Knots where the rungs tie onto the ropes.
-          for (let i = 1; i < rungCount; i++) {
-            const k = Math.round((i / rungCount) * (left.length - 1));
-            for (const p of [left[k]!, right[k]!]) {
-              g.fillStyle(COLORS.ink, 1);
-              g.fillCircle(p.x, p.y, 3.5);
-              g.fillStyle(rail, 1);
-              g.fillCircle(p.x, p.y, 2.2);
-            }
-          }
-        } else {
-          // Leaf dots along the vines.
-          g.fillStyle(0x6fb35c, 1);
-          for (let k = 4; k < left.length; k += 6) {
-            g.fillCircle(left[k]!.x, left[k]!.y, 3);
-            g.fillCircle(right[k]!.x, right[k]!.y, 3);
-          }
-        }
-        break;
-      }
-      case 'stone': {
-        const stones = Math.max(2, Math.floor(length / 24));
-        for (let i = 0; i <= stones; i++) {
-          const t = i / stones;
-          const x = foot.x + (top.x - foot.x) * t + (i % 2 === 0 ? -3 : 3);
-          const y = foot.y + (top.y - foot.y) * t;
-          g.fillStyle(COLORS.ink, 1);
-          g.fillEllipse(x, y, 22, 15);
-          g.fillStyle(rail, 1);
-          g.fillEllipse(x, y, 18, 11);
-          g.fillStyle(rung, 1);
-          g.fillEllipse(x - 3, y - 2, 7, 3);
-        }
-        break;
-      }
-      case 'tail': {
-        // An orange tail with an ink outline, short fur ticks and a tuft at the top.
-        const body = this.ladderLine(foot, top, 0, 22);
-        this.strokeLine(g, body, 9, COLORS.saffron);
-        g.lineStyle(1.5, COLORS.ink, 1);
-        for (let k = 3; k < body.length - 2; k += 4) {
-          const p = body[k]!;
-          const q = body[k + 1]!;
-          const dir = new Phaser.Math.Vector2(q.x - p.x, q.y - p.y).normalize();
-          g.lineBetween(p.x, p.y, p.x - dir.y * 5 + dir.x * 2, p.y + dir.x * 5 + dir.y * 2);
-        }
-        const tip = body[body.length - 1]!;
-        const before = body[body.length - 4]!;
-        const heading = Math.atan2(tip.y - before.y, tip.x - before.x);
-        for (const spread of [-0.6, -0.2, 0.2, 0.6]) {
-          const dx = Math.cos(heading + spread) * 12;
-          const dy = Math.sin(heading + spread) * 12;
-          g.lineStyle(5, COLORS.ink, 1);
-          g.lineBetween(tip.x, tip.y, tip.x + dx, tip.y + dy);
-          g.lineStyle(3, COLORS.saffron, 1);
-          g.lineBetween(tip.x, tip.y, tip.x + dx, tip.y + dy);
-        }
-        break;
-      }
-    }
-
-    // Foot and top squares: a dot in the rail colour, ringed in ink.
-    for (const p of [foot, top]) {
-      g.fillStyle(COLORS.ink, 1);
-      g.fillCircle(p.x, p.y, 7);
-      g.fillStyle(rail, 1);
-      g.fillCircle(p.x, p.y, 4.5);
-    }
-  }
-
-  private drawSnake(g: Phaser.GameObjects.Graphics, id: string, head: Point, tail: Point): void {
-    const look = SNAKE_LOOKS[id];
-    if (!look) throw new Error(`No snake look for ${id}`);
-    const body = Phaser.Display.Color.HexStringToColor(look.body).color;
-    const belly = Phaser.Display.Color.HexStringToColor(look.belly).color;
-    const a = new Phaser.Math.Vector2(head.x, head.y);
-    const b = new Phaser.Math.Vector2(tail.x, tail.y);
-    const curve = this.snakeCurve(a, b);
-    const points = curve.getSpacedPoints(60);
-    const widthAt = (u: number): number => 13 - 7 * u;
-
-    // Ink outline first, then the body, so the outline never cuts across the body.
-    g.fillStyle(COLORS.ink, 1);
-    points.forEach((p, i) => g.fillCircle(p.x, p.y, widthAt(i / 60) / 2 + 1.5));
-    g.fillStyle(body, 1);
-    points.forEach((p, i) => g.fillCircle(p.x, p.y, widthAt(i / 60) / 2));
-    g.fillStyle(belly, 1);
-    points.forEach((p, i) => g.fillCircle(p.x, p.y, widthAt(i / 60) * 0.14));
-
-    // Pattern every ~14px of body, skipping the part hidden under the head.
-    const length = curve.getLength();
-    for (let d = 26, n = 0; d < length - 6; d += 14, n++) {
-      const u = d / length;
-      const p = curve.getPointAt(u);
-      const tangent = curve.getTangentAt(u);
-      const w = widthAt(u);
-      const normal = new Phaser.Math.Vector2(-tangent.y, tangent.x);
-      g.fillStyle(belly, 1);
-      g.lineStyle(2, belly, 1);
-      if (look.pattern === 'bands') {
-        g.lineBetween(
-          p.x - normal.x * w * 0.4,
-          p.y - normal.y * w * 0.4,
-          p.x + normal.x * w * 0.4,
-          p.y + normal.y * w * 0.4,
-        );
-      } else if (look.pattern === 'spots') {
-        const sign = n % 2 === 0 ? 1 : -1;
-        g.fillCircle(
-          p.x + normal.x * w * 0.22 * sign,
-          p.y + normal.y * w * 0.22 * sign,
-          Math.max(1.5, w * 0.16),
-        );
-      } else {
-        const r = Math.max(2, w * 0.22);
-        const angle = Math.atan2(tangent.y, tangent.x);
-        const corners = [0, 1, 2, 3].map((k) => ({
-          x: p.x + Math.cos(angle + (k * Math.PI) / 2) * r,
-          y: p.y + Math.sin(angle + (k * Math.PI) / 2) * r,
-        }));
-        g.fillPoints(corners, true);
-      }
-    }
-
-    // The head image looks "up" with the neck at the bottom: turn it to face away from the body.
-    const start = curve.getTangentAt(0);
-    const size = id === 'ravana' ? 60 : 44;
-    this.add
-      .image(head.x - start.x * 3, head.y - start.y * 3, snakeHeadKey(id))
-      .setDisplaySize(size, size)
-      .setRotation(Math.atan2(-start.y, -start.x) + Math.PI / 2)
-      .setDepth(3);
+      .setDisplaySize(BOARD_STAGE.width, BOARD_STAGE.height)
+      .setDepth(BOARD_DEPTH);
   }
 
   private drawSeats(): void {
@@ -739,8 +596,8 @@ export class BoardScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setStrokeStyle(2, COLORS.ink);
       this.seatFrames.push(frame);
-      this.characters.push(new Character(this, PANEL.x + 48, top + 116, player.hero));
-      this.bubbles.push(new SpeechBubble(this, PANEL.x + 96, top + 70).setDepth(12));
+      this.characters.push(this.createSeatFigure(player.hero, PANEL.x + 48, top + 116));
+      this.bubbles.push(new SpeechBubble(this, PANEL.x + 96, top + 70).setDepth(BUBBLE_DEPTH));
       this.add.text(PANEL.x + 100, top + 12, player.name, {
         fontFamily: TITLE_FONT,
         fontSize: '24px',
@@ -782,15 +639,32 @@ export class BoardScene extends Phaser.Scene {
     this.seatFrames.forEach((frame, seat) =>
       frame.setStrokeStyle(seat === current ? 4 : 2, seat === current ? COLORS.saffron : COLORS.ink),
     );
+    // The current player's seat figure and board token use the lit textures until the next TurnStarted.
+    this.characters.forEach((character, seat) => {
+      if (character instanceof Figurine) character.setLit(seat === current);
+      this.tokens[seat]?.setLit(seat === current);
+    });
+  }
+
+  private createSeatFigure(hero: Hero, x: number, y: number): Character | Figurine {
+    if (!FIGURINE_HEROES.includes(hero)) return new Character(this, x, y, hero);
+    return new Figurine(this, x, y, hero, 'm', 0);
   }
 
   private createTokens(): void {
     const state = this.snapshot();
     this.shownSquare = state.players.map((p) => p.position);
     state.players.forEach((player, seat) => {
-      const image = this.add.image(0, 0, tokenKey(player.hero)).setDisplaySize(40, 40);
-      const at = this.restingPoint(seat);
-      this.tokens.push(this.add.container(at.x, at.y, [image]).setDepth(5));
+      const token: BoardToken = FIGURINE_HEROES.includes(player.hero)
+        ? new Figurine(this, 0, 0, player.hero, 's')
+        : new MedallionToken(this, player.hero);
+      const seatFigure = this.characters[seat];
+      // The board token shows the seat figure's emotion but plays no reaction tween (T40 spec 5).
+      if (seatFigure instanceof Figurine) seatFigure.onEmotion = (emotion) => token.setEmotion(emotion);
+      this.tokens.push(token);
+      const spot = player.position === 0 ? null : this.spotOf(seat);
+      this.worldAt.push(spot);
+      token.place(this.restPose(seat, spot));
     });
   }
 }

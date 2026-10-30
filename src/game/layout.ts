@@ -2,7 +2,8 @@
 
 export const CANVAS = { width: 1280, height: 720 } as const;
 export const BOARD = { x: 24, y: 24, size: 672, cell: 56, columns: 12 } as const;
-export const PANEL = { x: 720, y: 24, width: 536 } as const;
+// Right of the 784 px board stage (T40 spec 2.4); T40.9 restyles the column to (792, 40, 464, 640).
+export const PANEL = { x: 792, y: 24, width: 464 } as const;
 export const SEAT = { height: 120, gap: 8 } as const;
 export const CONTROLS_Y = 552;
 
@@ -37,32 +38,7 @@ export function seatTop(seat: number): number {
   return PANEL.y + seat * (SEAT.height + SEAT.gap);
 }
 
-/** Where a token waits on its seat card before entering the board (square 0). */
+/** Where a token waits on its seat card before entering the board (square 0): its feet point. */
 export function seatTokenSpot(seat: number): Point {
-  return { x: PANEL.x + PANEL.width - 28, y: seatTop(seat) + 58 };
-}
-
-const FAN: readonly (readonly Point[])[] = [
-  [],
-  [{ x: 0, y: 0 }],
-  [
-    { x: -12, y: 0 },
-    { x: 12, y: 0 },
-  ],
-  [
-    { x: -12, y: -12 },
-    { x: 12, y: -12 },
-    { x: 0, y: 12 },
-  ],
-  [
-    { x: -12, y: -12 },
-    { x: 12, y: -12 },
-    { x: -12, y: 12 },
-    { x: 12, y: 12 },
-  ],
-];
-
-/** Offset for the i-th of `count` tokens sharing one square, so they never hide each other. */
-export function fanOffset(i: number, count: number): Point {
-  return FAN[Math.min(count, 4)]?.[i] ?? { x: 0, y: 0 };
+  return { x: PANEL.x + PANEL.width - 28, y: seatTop(seat) + 80 };
 }

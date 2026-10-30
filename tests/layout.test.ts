@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOARD, fanOffset, rowOf, squareCenter } from '../src/game/layout';
+import { BOARD, rowOf, squareCenter } from '../src/game/layout';
 
 const half = BOARD.cell / 2;
 const bottom = BOARD.y + BOARD.size - half;
@@ -29,17 +29,8 @@ describe('squareCenter', () => {
   });
 });
 
-describe('rowOf and fanOffset', () => {
+describe('rowOf', () => {
   it('RowOf_Should_MapTwelveSquaresPerRow', () => {
     expect([rowOf(1), rowOf(12), rowOf(13), rowOf(144)]).toEqual([0, 0, 1, 11]);
-  });
-
-  it('FanOffset_FourTokensOnOneSquare_Should_AllDiffer', () => {
-    const spots = new Set([0, 1, 2, 3].map((i) => JSON.stringify(fanOffset(i, 4))));
-    expect(spots.size).toBe(4);
-  });
-
-  it('FanOffset_SingleToken_Should_BeCentred', () => {
-    expect(fanOffset(0, 1)).toEqual({ x: 0, y: 0 });
   });
 });

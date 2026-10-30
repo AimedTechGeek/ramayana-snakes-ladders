@@ -1,10 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import { STORY_JUMPS } from '../src/core/boards';
-import { ASSETS, FAVICON_URL, LADDER_LOOKS, SNAKE_LOOKS, snakeHeadKey } from '../src/game/assets';
+import {
+  ASSETS,
+  FAVICON_URL,
+  figurineAssets,
+  figurineFrame,
+  figurineKey,
+  FIGURINE_HEROES,
+  LADDER_LOOKS,
+  SNAKE_LOOKS,
+  snakeHeadKey,
+} from '../src/game/assets';
 
 // Paths of every SVG under public/assets, relative to public/.
 const FILES = new Set(
   Object.keys(import.meta.glob('../public/assets/**/*.svg', { query: '?url' })).map((p) =>
+    p.replace('../public/', ''),
+  ),
+);
+
+const PNGS = new Set(
+  Object.keys(import.meta.glob('../public/assets/iso/fig/*.png', { query: '?url' })).map((p) =>
     p.replace('../public/', ''),
   ),
 );
@@ -30,5 +46,21 @@ describe('asset manifest', () => {
     for (const jump of STORY_JUMPS.filter((j) => j.kind === 'ladder')) {
       expect(LADDER_LOOKS[jump.id], jump.id).toBeDefined();
     }
+  });
+
+  it('EveryFigurineTexture_Should_ShipAsAPngWithAManifestFrame', () => {
+    const assets = figurineAssets(FIGURINE_HEROES, ['s', 'm']);
+    expect(assets).toHaveLength(FIGURINE_HEROES.length * 2 * 5 * 2);
+    for (const asset of assets) expect(PNGS.has(asset.url), asset.url).toBe(true);
+    expect(PNGS.size).toBeGreaterThanOrEqual(assets.length);
+  });
+
+  it('FigurineFrame_Should_PutTheFeetPointInsideItsTextureAtTwiceTheDisplayScale', () => {
+    const frame = figurineFrame('hanuman', 'idle', false, 's');
+    expect(frame.scale).toBe(2);
+    expect(frame.anchorX).toBeGreaterThan(0);
+    expect(frame.anchorX).toBeLessThan(frame.w);
+    expect(frame.anchorY).toBeLessThan(frame.h);
+    expect(figurineKey('hanuman', 'idle', true, 's')).not.toBe(figurineKey('hanuman', 'idle', false, 's'));
   });
 });
