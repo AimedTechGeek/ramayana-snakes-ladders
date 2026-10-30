@@ -1,9 +1,10 @@
 // node build.mjs <out dir> (npm run art:iso, through tsx): writes the isometric art into public/assets/iso/.
-// T40.2 writes only the sample (ten tiles with numerals); the board, figurine and die tasks add their files here.
+// T40.2 wrote the sample (ten tiles with numerals), T40.6 adds the Hanuman figurines; the board and die tasks add theirs here.
 import { join } from 'node:path';
 import { boxCorners, depthOf, slabOf, solidSvg } from '../anatomy/iso-kit.mjs';
 import { boardProjection, squareWorld } from '../iso-board.mjs';
 import { cropProjection, exportSvg, numeralSvg, writeSvg } from './common.mjs';
+import { buildFigurines } from './figurines/index.mjs';
 import { CELL, FIELD_Z, SIZE, TOP_Z } from './world.mjs';
 
 const out = process.argv[2];
@@ -57,3 +58,5 @@ function sampleTiles() {
 
 writeSvg(join(out, 'sample-tiles.svg'), sampleTiles());
 console.log(`wrote ${join(out, 'sample-tiles.svg')}`);
+
+buildFigurines(out);
