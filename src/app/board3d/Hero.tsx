@@ -378,8 +378,9 @@ export function useHeroActor(
     } else if (!reduced && (directive.clip === 'walk' || directive.clip === 'run')) {
       handle.setLocomotion(directive.clip, directive.distance / CELL);
     } else {
-      // reduced motion: the token glides in the idle pose (T44 4.6), no steps
-      const clip = directive.clip === 'walk' || directive.clip === 'run' ? 'idle' : directive.clip;
+      // reduced motion: the token glides in the idle pose (T44 4.6), no steps, and the winner is glad, not spinning
+      const gait = directive.clip === 'walk' || directive.clip === 'run';
+      const clip = gait ? 'idle' : reduced && directive.clip === 'cheer' ? 'happy' : directive.clip;
       const intensity = mood && clip !== 'idle' && clip !== 'cheer' ? mood.reaction.intensity : undefined;
       if (handle.clip !== clip) handle.play(clip, { intensity });
     }

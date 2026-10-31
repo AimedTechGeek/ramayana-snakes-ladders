@@ -258,8 +258,9 @@ function DieModel({
   return (
     <group position={position} rotation-y={rotationY}>
       <primitive object={scene} />
-      <mesh ref={ring} position={[0, -0.125, 0]} rotation-x={-Math.PI / 2} visible={false}>
-        <ringGeometry args={[0.92, 1.02, 48]} />
+      {/* on the felt around the die: a ring under the tray poked out past the plinth's 1.4 u ledge (T44.8) */}
+      <mesh ref={ring} position={[0, 0.015, 0]} rotation-x={-Math.PI / 2} visible={false}>
+        <ringGeometry args={[0.36, 0.42, 48]} />
         <meshBasicMaterial
           transparent
           opacity={0.4}
