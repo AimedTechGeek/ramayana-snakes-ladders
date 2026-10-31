@@ -18,6 +18,7 @@
     "art:iso": "tsx scripts/art/iso/build.mjs public/assets/iso && node scripts/art/iso/raster.mjs",
     "art:atlas:test": "node scripts/art/iso/atlas-test.mjs",
     "art:iso:check": "node scripts/art/iso/check.mjs public/assets/iso art-src/iso",
+    "art:snakes": "tsx scripts/art/iso/snakes/index.mjs",
     "devices": "node scripts/devices.mjs",
     "screenshots": "node scripts/screenshots.mjs"
   },

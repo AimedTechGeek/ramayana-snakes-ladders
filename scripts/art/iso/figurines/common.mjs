@@ -44,8 +44,8 @@ export function figureProjection(size) {
  * A figure under construction: the recorder, the drawing helpers and the sorted output.
  * Every helper records the true shape of what it draws, so `settle` and the audit see the real geometry.
  */
-export function createFigure({ size, lit = false, label }) {
-  const { projection: P, width, height, anchor, k: kPx } = figureProjection(size);
+export function createFigure({ size, lit = false, label, view }) {
+  const { projection: P, width, height, anchor, k: kPx } = view ?? figureProjection(size);
   const R = A.recorder(P);
   const V = R.V;
   const ks = G.scaleOf(P);
