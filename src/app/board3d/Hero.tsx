@@ -47,7 +47,7 @@ import {
 import { HeroDirector } from './heroDirector';
 import { faceTextureFor, showFrame } from './heroFace';
 
-export type HeroId = 'hanuman';
+export type HeroId = 'hanuman' | 'lakshmana';
 
 export interface PlayOptions {
   /** Defaults: idle, walk, run, cheer loop; the rest play once and hold their last pose. */
