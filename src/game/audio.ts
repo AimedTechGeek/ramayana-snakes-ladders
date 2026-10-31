@@ -124,21 +124,35 @@ export class Audio {
     }
   }
 
-  /** Rising bansuri-like phrase on a pentatonic scale, about 700 ms. */
-  ladder(): void {
+  /** Rising bansuri-like phrase on a pentatonic scale, about 700 ms (about 300 ms when `short`: a bridge top reached). */
+  ladder(short = false): void {
     const play = this.playable();
     if (!play) return;
     const start = play.ctx.currentTime;
+    const gap = short ? 0.04 : 0.1;
     BANSURI_NOTES.forEach((hz, i) =>
       this.tone(play, {
         from: hz,
-        at: start + i * 0.1,
-        duration: 0.18,
+        at: start + i * gap,
+        duration: short ? 0.1 : 0.18,
         peak: 0.18,
         attack: 0.03,
         vibrato: 6,
       }),
     );
+  }
+
+  /** A bridge rising: three stone thuds (sine 110 Hz 60 ms plus a 30 ms noise tick) at 0 / 120 / 240 ms; Fast halves every duration. */
+  stone(fast = false): void {
+    const play = this.playable();
+    if (!play) return;
+    const start = play.ctx.currentTime;
+    const k = fast ? 0.5 : 1;
+    for (const offset of [0, 0.12, 0.24]) {
+      const at = start + offset * k;
+      this.tone(play, { from: 110, at, duration: 0.06 * k, peak: 0.3, attack: 0.004 });
+      this.clatter(play, at, 500, 0.25, 0.03 * k);
+    }
   }
 
   /** Low mridangam-style thud followed by a short descending glide, about 600 ms. */

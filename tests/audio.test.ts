@@ -9,6 +9,9 @@ describe('audio', () => {
       audio.dice();
       audio.step();
       audio.ladder();
+      audio.ladder(true);
+      audio.stone();
+      audio.stone(true);
       audio.snake();
       audio.bounce();
       audio.tripleSix();

@@ -124,6 +124,8 @@ export class LivingBoard {
   private readonly propLayout: PlacedProp[][];
   private readonly jumpTypes = new Map<number, JumpType>();
   private readonly revealedJumps = new Set<number>();
+  /** Squares whose board numeral is hidden because a bridge stele engraves it (T42.9). */
+  private readonly hiddenNumerals = new Set<number>();
   private readonly listeners: JumpRevealListener[] = [];
   private readonly items: AmbientItem[] = [];
   private nextId = 1;
@@ -192,6 +194,13 @@ export class LivingBoard {
   /** The depth key of a square's floor point, for actors that stand on it (`standingDepth(living.keyOf(sq))`). */
   keyOf(square: number): number {
     return this.blockOf(square).key;
+  }
+
+  /** Hides or shows a square's board numeral (a revealed bridge shows its top square's number on its stele instead). */
+  setNumeralHidden(square: number, hidden: boolean): void {
+    if (hidden) this.hiddenNumerals.add(square);
+    else this.hiddenNumerals.delete(square);
+    for (const glyph of this.blockOf(square).numerals) glyph.setVisible(!hidden);
   }
 
   /** The tile centre on screen (logical px), the floor point of the block. */
@@ -319,7 +328,9 @@ export class LivingBoard {
         `num-${digit}-${ink}`,
         block.at.x + meta.sill.x + offset * meta.advance.x,
         block.at.y + meta.sill.y + offset * meta.advance.y,
-      ).setDepth(NUMERAL_DEPTH);
+      )
+        .setDepth(NUMERAL_DEPTH)
+        .setVisible(!this.hiddenNumerals.has(block.square));
     });
   }
 
