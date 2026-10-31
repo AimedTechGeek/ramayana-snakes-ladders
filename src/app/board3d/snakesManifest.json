@@ -313,7 +313,7 @@
    ],
    "hood": false,
    "triangles": 2102,
-   "bytes": 60824,
+   "bytes": 60832,
    "bones": 10,
    "build_s": 0.3
   },
@@ -470,7 +470,7 @@
    ],
    "hood": false,
    "triangles": 2166,
-   "bytes": 61984,
+   "bytes": 62032,
    "bones": 10,
    "build_s": 0.3
   },
@@ -625,7 +625,7 @@
    ],
    "hood": false,
    "triangles": 2166,
-   "bytes": 62060,
+   "bytes": 62072,
    "bones": 10,
    "build_s": 0.3
   },
@@ -782,7 +782,7 @@
    ],
    "hood": false,
    "triangles": 1998,
-   "bytes": 58700,
+   "bytes": 58712,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1093,7 +1093,7 @@
    ],
    "hood": false,
    "triangles": 2166,
-   "bytes": 61960,
+   "bytes": 61936,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1248,7 +1248,7 @@
    "props": [],
    "hood": false,
    "triangles": 2012,
-   "bytes": 59396,
+   "bytes": 59440,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1405,7 +1405,7 @@
    ],
    "hood": false,
    "triangles": 2172,
-   "bytes": 61764,
+   "bytes": 61780,
    "bones": 10,
    "build_s": 0.4
   },
@@ -1562,7 +1562,7 @@
    ],
    "hood": false,
    "triangles": 1998,
-   "bytes": 59488,
+   "bytes": 59476,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1719,7 +1719,7 @@
    ],
    "hood": false,
    "triangles": 1846,
-   "bytes": 57528,
+   "bytes": 57524,
    "bones": 10,
    "build_s": 0.3
   },
@@ -2030,9 +2030,9 @@
    ],
    "hood": false,
    "triangles": 2530,
-   "bytes": 66488,
+   "bytes": 66452,
    "bones": 10,
-   "build_s": 0.4
+   "build_s": 0.3
   }
  }
 }

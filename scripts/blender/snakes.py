@@ -724,8 +724,9 @@ def add_face_details(kit, head, spec):
         else:
             kit.sphere(c, 0.46 * R, u=7, v=4)
             kit.paint("head", eye_c)
-            hl = c + (head.u * 0.6 + head.f * 0.45 + head.r * sgn * 0.0) * (0.3 * R)
-            kit.sphere(hl, 0.15 * R, u=5, v=3)
+            # catch-light: on the eye's upper front surface, poking out of it (inside it, T44.12's dot never showed)
+            hl = c + (head.u * 0.55 + head.f * 0.8 + head.r * sgn * 0.15).normalized() * (0.4 * R)
+            kit.sphere(hl, 0.14 * R, u=5, v=3)
             kit.paint("head", "#FFFFFF")
             # brow: slanted, inner end lower (menacing-cute)
             b_in = head.surf(x_eye + 0.35, sgn * (th_eye - 22), 0.12)
