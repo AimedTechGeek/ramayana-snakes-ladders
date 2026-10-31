@@ -16,6 +16,7 @@ const DRONE_PATTERN = [DRONE_PA_HZ, DRONE_SA_HZ, DRONE_SA_HZ, DRONE_SA_HZ];
 const BANSURI_NOTES = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2].map((ratio) => 440 * ratio);
 const BELL_HZ = 392;
 const REVEAL_GAIN = 0.25;
+const HISS_GAIN = 0.2;
 /** Inharmonic temple-bell partials as [ratio, relative level]. */
 const BELL_PARTIALS: readonly (readonly [number, number])[] = [
   [1, 0.5],
@@ -141,13 +142,77 @@ export class Audio {
     );
   }
 
-  /** Low mridangam-style thud followed by a short descending glide, about 600 ms. */
-  snake(): void {
+  /** Strike of a snake: a low thud with a short descending glide, 180 ms (90 ms in Fast). */
+  snake(fast = false): void {
     const play = this.playable();
     if (!play) return;
     const start = play.ctx.currentTime;
+    const k = fast ? 0.5 : 1;
     this.thud(play, start, 160, 60, 0.5);
-    this.tone(play, { from: 660, to: 330, at: start + 0.3, duration: 0.3, peak: 0.1, attack: 0.01 });
+    this.tone(play, {
+      from: 660,
+      to: 330,
+      at: start + 0.06 * k,
+      duration: 0.12 * k,
+      peak: 0.1,
+      attack: 0.01 * k,
+    });
+  }
+
+  /** A snake rises: band-passed noise at 1.8 kHz with a 6 Hz tremolo, 420 ms (210 ms in Fast). */
+  hiss(fast = false): void {
+    const play = this.playable();
+    if (!play || !this.noise) return;
+    const { ctx, out } = play;
+    const start = ctx.currentTime;
+    const duration = fast ? 0.21 : 0.42;
+    const end = start + duration;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    src.loop = true;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 1800;
+    band.Q.value = 2;
+    const swell = ctx.createGain();
+    swell.gain.setValueAtTime(0.0001, start);
+    swell.gain.exponentialRampToValueAtTime(HISS_GAIN, start + duration * 0.25);
+    swell.gain.exponentialRampToValueAtTime(0.0001, end);
+    const tremolo = ctx.createGain();
+    tremolo.gain.value = 0.7;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 6;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.3;
+    lfo.connect(depth).connect(tremolo.gain);
+    src.connect(band).connect(tremolo).connect(swell).connect(out);
+    src.start(start);
+    lfo.start(start);
+    src.stop(end + 0.02);
+    lfo.stop(end + 0.02);
+  }
+
+  /** A snake swallows: a sine gliding 300 to 110 Hz over 220 ms (110 ms in Fast) with a 20 ms click. */
+  gulp(fast = false): void {
+    const play = this.playable();
+    if (!play) return;
+    const start = play.ctx.currentTime;
+    const k = fast ? 0.5 : 1;
+    this.clatter(play, start, 2500, 0.15, 0.02);
+    this.tone(play, { from: 300, to: 110, at: start, duration: 0.22 * k, peak: 0.3, attack: 0.005 });
+  }
+
+  /** The bitten token reappears: a 600 Hz sine, 80 ms (40 ms in Fast), fast decay. */
+  pop(fast = false): void {
+    const play = this.playable();
+    if (!play) return;
+    this.tone(play, {
+      from: 600,
+      at: play.ctx.currentTime,
+      duration: fast ? 0.04 : 0.08,
+      peak: 0.25,
+      attack: 0.003,
+    });
   }
 
   /** A soft "boing": a quick upward swoop that falls back. */
