@@ -18,9 +18,14 @@ import {
   ambientFeatures,
   birdPose,
   fanSlots,
+  DRESSING_PER_BLOCK,
+  PROP_HEIGHT_CAP,
+  dressingOf,
   layoutInstances,
+  renderScaleOf,
   underCanopy,
 } from '../src/app/board3d/propLayout';
+import { blockTopY, squareCentre } from '../src/app/board3d/boardLayout';
 import manifest from '../src/app/board3d/propsManifest.json';
 
 const SQUARES = Array.from({ length: 144 }, (_, i) => i + 1);
@@ -170,5 +175,59 @@ describe('ambient life', () => {
       expect(b.z).toBeCloseTo(a.z, 6);
     }
     expect(BIRD_ROUTES.length).toBeLessThanOrEqual(5);
+  });
+});
+
+describe('charm pass: scale and dressing (T44.8)', () => {
+  const PX = 1 / 56;
+
+  it('PropScale_(EveryNonLandmarkKind)_Should_StayUnderTheRaisedHeightCap', () => {
+    // Owner asked for bigger props; the cap stays well under a hero's shoulders (0.92 u) so tokens read.
+    for (const kind of CATALOG.filter((k) => !k.landmark))
+      expect(kind.height * PX * renderScaleOf(kind.kind), kind.kind).toBeLessThanOrEqual(PROP_HEIGHT_CAP);
+  });
+
+  it('Dressing_(EverySquare)_Should_AddAtMostTwoSmallPiecesOfItsRegionAndNoneOn144', () => {
+    for (const square of SQUARES) {
+      const dressing = dressingOf(square);
+      expect(dressing.length).toBeLessThanOrEqual(DRESSING_PER_BLOCK);
+      for (const piece of dressing) expect(heightOf(piece.kind), piece.kind).toBeLessThanOrEqual(9);
+    }
+    expect(dressingOf(144)).toEqual([]);
+  });
+
+  it('Dressing_(AnyPiece)_Should_StayOffTheTokenFieldAndTheChipCorner', () => {
+    for (const square of SQUARES)
+      for (const p of dressingOf(square)) {
+        expect(Math.abs(p.x) < 16 && p.y > -22 && p.y < 4).toBe(false);
+        expect(p.x < -10 && p.y > 12).toBe(false);
+        expect(Math.abs(p.x) <= 28 && Math.abs(p.y) <= 28).toBe(true);
+      }
+  });
+
+  it('Dressing_(AnyPiece)_Should_KeepClearOfTheSeedRuleProps', () => {
+    for (const square of SQUARES)
+      for (const p of dressingOf(square))
+        for (const q of PROP_LAYOUT[square]!)
+          expect(Math.hypot(p.x - q.x, p.y - q.y)).toBeGreaterThanOrEqual(9);
+  });
+
+  it('Dressing_(SameSquare)_Should_BeDeterministic', () => {
+    for (const square of [2, 50, 99, 130]) expect(dressingOf(square)).toEqual(dressingOf(square));
+  });
+
+  it('PropInstances_(BoardFrame)_Should_StandOnTheirBlockTopAtTheSquareCentrePlusTheirOffset', () => {
+    const instances = layoutInstances();
+    for (const square of SQUARES) {
+      const [cx, cz] = squareCentre(square);
+      const here = instances.filter((i) => i.square === square && !i.dressing);
+      const placed = PROP_LAYOUT[square]!.filter((p) => !MANIFEST_KINDS[p.kind]!.landmark && square !== 144);
+      expect(here.length).toBe(placed.length);
+      here.forEach((inst, k) => {
+        expect(inst.position[0]).toBeCloseTo(cx + placed[k]!.x * PX, 6);
+        expect(inst.position[2]).toBeCloseTo(cz + placed[k]!.y * PX, 6);
+        expect(inst.position[1]).toBe(blockTopY(square));
+      });
+    }
   });
 });

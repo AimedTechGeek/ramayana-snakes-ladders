@@ -60,6 +60,7 @@ function MetricsProbe() {
     }
   });
   useEffect(() => {
+    if (import.meta.env.DEV) Object.assign(window, { __three: { gl, scene } });
     bridge.metrics = () => {
       const shadow = shadowCasters(scene);
       return {

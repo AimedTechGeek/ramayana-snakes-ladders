@@ -20,9 +20,11 @@ import {
   TRUCK_SPEED,
   clampDistance,
   fitPose,
+  fitScreenShift,
   focusPose,
   fovFor,
   isPhoneWidth,
+  worldPerPixel,
 } from './cameraConfig';
 import type { DioramaView } from './DioramaView';
 
@@ -51,7 +53,9 @@ export function CameraRig({ view }: { view: DioramaView }) {
   const reduced = useMemo(prefersReducedMotion, []);
 
   const fitTo = (rig: CameraControls, azimuth: number, animate: boolean): void => {
-    const { position, target } = fitPose(width, height, azimuth);
+    const { position, target, distance } = fitPose(width, height, azimuth);
+    const shift = fitScreenShift(width) * worldPerPixel(distance, fovFor(width), height);
+    void rig.setFocalOffset(-shift, 0, 0, animate && !reduced);
     void rig.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, animate && !reduced);
   };
   const latest = useRef({ fitTo });
@@ -80,10 +84,12 @@ export function CameraRig({ view }: { view: DioramaView }) {
         if (!at) return;
         moved.current = true;
         const { position, target } = focusPose(at, rig.azimuthAngle);
+        void rig.setFocalOffset(0, 0, 0, !reduced);
         void rig.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, !reduced);
       },
       set: ({ azimuth, polar, distance, target }) => {
         moved.current = true;
+        void rig.setFocalOffset(0, 0, 0, false);
         if (target) void rig.setTarget(target[0], target[1], target[2], false);
         void rig.rotateTo(azimuth, polar, false);
         void rig.dollyTo(distance, false);

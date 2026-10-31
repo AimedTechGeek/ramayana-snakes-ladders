@@ -20,7 +20,12 @@ import { CHIP_FONT, CHIP_HEIGHT, CHIP_WIDTH, chipUvOrigin, drawChipAtlas } from 
 import type { DioramaView } from './DioramaView';
 
 const BLOBS_PER_BLOCK = 3;
-const MIST_LIFT = 0.15;
+const MIST_LIFT = 0.09;
+/**
+ * Blobs are flattened into low cotton puffs (T44.8 look checkpoint): full spheres buried the fogged board under one
+ * white mass at Fit; flat puffs keep each hidden block's silhouette, its chip and the grid readable.
+ */
+const MIST_FLATTEN = 0.5;
 
 /** Where the three blobs of a block sit (offsets in u from the block centre) and their radii, from the square seed. */
 export function mistBlobs(square: number): { dx: number; dz: number; radius: number }[] {
@@ -64,7 +69,7 @@ export function Mist({ fog }: { fog: FogState }) {
       const [x, z] = squareCentre(square);
       mistBlobs(square).forEach((blob, k) => {
         dummy.position.set(x + blob.dx, blockTopY(square) + MIST_LIFT, z + blob.dz);
-        dummy.scale.setScalar(blob.radius);
+        dummy.scale.set(blob.radius, blob.radius * MIST_FLATTEN, blob.radius);
         dummy.updateMatrix();
         instanced.setMatrixAt((square - 1) * BLOBS_PER_BLOCK + k, dummy.matrix);
       });

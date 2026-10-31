@@ -32,7 +32,8 @@ export interface SceneryProps {
   blockTopY?: BlockTopY;
 }
 
-const TALL_PX = 14;
+/** Kinds at least this tall (px) cast shadows: trees, huts, posts, animals, bushes (contact shadows sell the clay). */
+const TALL_PX = 8;
 
 interface KindMeshProps {
   kind: string;
@@ -54,7 +55,7 @@ function KindMesh({ kind, instances, revealed, geometry, material, glow = false 
     const inst = instances[index]!;
     dummy.position.set(...inst.position);
     dummy.rotation.set(0, inst.yaw, 0);
-    dummy.scale.setScalar(Math.max(popScale(amount), 0.0001));
+    dummy.scale.setScalar(Math.max(popScale(amount) * inst.scale, 0.0001));
     dummy.updateMatrix();
     mesh.current?.setMatrixAt(index, dummy.matrix);
   };

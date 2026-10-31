@@ -8,6 +8,7 @@ import {
   seedOf,
   type PlacedProp,
   type PropKind,
+  type RegionName,
 } from '../../game/board/blockRules';
 import { squareWorld } from '../../game/iso/boardIso';
 import { FAN_WORLD, FIELD_C_OFFSET, SIZE } from '../../game/iso/world';
@@ -40,6 +41,10 @@ export interface PropInstance {
   position: [number, number, number];
   /** Heading about the vertical axis, radians (0 faces the viewer). */
   yaw: number;
+  /** Uniform render scale (renderScaleOf, jittered for dressing). */
+  scale: number;
+  /** A small cluster piece added by the charm pass, not by the T42 seed rule. */
+  dressing: boolean;
 }
 
 /** Kinds that read the same from every side: they take any heading; everything else turns at most ~14 degrees. */
@@ -89,7 +94,79 @@ export function isInstancedProp(kind: string, square: number): boolean {
   return square !== FINAL_SQUARE;
 }
 
-/** Every prop standing on the board (random and fixed), in square order. */
+// ---------------------------------------------------------------- charm pass (T44.8 look checkpoint)
+
+/**
+ * Props are drawn larger than their 22-px model cap so blocks read as lived-in at Fit (owner, T44.8). They stand on
+ * the side and back strips, so even scaled they stay well under a hero's shoulders (0.92 u) and off the token field.
+ */
+export const PROP_HEIGHT_CAP = 0.5;
+const SCALE_TALL = 1.25;
+const SCALE_MID = 1.4;
+const SCALE_FLAT = 1.6;
+
+/** Render scale of a kind: tall kinds grow least, flat ground pieces most. */
+export function renderScaleOf(kind: string): number {
+  const height = MANIFEST_KINDS[kind]?.height ?? 0;
+  if (height >= 17) return SCALE_TALL;
+  if (height <= 4) return SCALE_FLAT;
+  return SCALE_MID;
+}
+
+/**
+ * Small kinds that cluster around a block's edges (dressing): ground cover in the region's own vocabulary. They are
+ * extra instances of the same InstancedMeshes, so they add triangles but no draw calls.
+ */
+export const DRESSING_KINDS: Readonly<Record<RegionName, readonly string[]>> = {
+  mithila: ['marigold-bush', 'path-stone', 'potted-plant', 'haystack'],
+  ayodhya: ['potted-plant', 'bench', 'potted-plant', 'path-stone'],
+  dandaka: ['fern', 'mushroom-cluster', 'rock', 'fern', 'log-pile'],
+  ganga: ['lotus-pad', 'river-rock', 'lotus-pad', 'fish-ripple'],
+  kishkindha: ['berry-bush', 'boulder', 'basket', 'boulder'],
+  sea: ['shell', 'foam-ring', 'wave-crest', 'shell'],
+  lanka: ['terrace-step', 'rock', 'terrace-step'],
+};
+
+/** Dressing slots, px from the tile centre (x right, y toward the viewer): the front sill and the free corners. */
+const DRESSING_SLOTS: readonly { x: number; y: number }[] = [
+  { x: 17, y: 18 },
+  { x: 1, y: 21 },
+  { x: -20, y: -24 },
+  { x: 20, y: -24 },
+  { x: -21, y: 6 },
+  { x: 21, y: 6 },
+];
+/** A dressing slot this close (px) to a seed-rule prop is taken. */
+const SLOT_CLEARANCE = 13;
+export const DRESSING_PER_BLOCK = 2;
+
+/** Second hash so dressing never correlates with the T42 bits. */
+function dressingSeed(square: number, k: number): number {
+  return (Math.imul(seedOf(square) ^ (k * 0x9e3779b9), 0x85ebca6b) >>> 0) ^ (square << 7);
+}
+
+/** Dressing of a square: up to two small kinds in free slots, never on the token field or the chip corner. */
+export function dressingOf(square: number): (PlacedProp & { scale: number })[] {
+  if (square === FINAL_SQUARE) return [];
+  const kinds = DRESSING_KINDS[regionOf(square)];
+  const taken = (PROP_LAYOUT[square] ?? []).map((p) => ({ x: p.x, y: p.y }));
+  const free = DRESSING_SLOTS.filter((slot) =>
+    taken.every((p) => Math.hypot(p.x - slot.x, p.y - slot.y) >= SLOT_CLEARANCE),
+  );
+  const out: (PlacedProp & { scale: number })[] = [];
+  for (let k = 0; k < DRESSING_PER_BLOCK && free.length > 0; k++) {
+    const seed = dressingSeed(square, k);
+    const slot = free.splice(seed % free.length, 1)[0]!;
+    const kind = kinds[(seed >>> 8) % kinds.length]!;
+    const jitterX = ((seed >>> 16) % 5) - 2;
+    const jitterY = ((seed >>> 20) % 5) - 2;
+    const scale = renderScaleOf(kind) * (0.75 + (((seed >>> 24) & 255) / 255) * 0.3);
+    out.push({ kind, x: slot.x + jitterX, y: slot.y + jitterY, scale });
+  }
+  return out;
+}
+
+/** Every prop standing on the board (random and fixed, then the dressing), in square order. */
 export function layoutInstances(blockTopY: BlockTopY = defaultBlockTopY): PropInstance[] {
   const out: PropInstance[] = [];
   for (let square = 1; square <= FINAL_SQUARE; square++) {
@@ -100,8 +177,21 @@ export function layoutInstances(blockTopY: BlockTopY = defaultBlockTopY): PropIn
         square,
         position: spotOf(square, placed.x, placed.y, blockTopY(square)),
         yaw: yawOf(placed.kind, square),
+        scale: renderScaleOf(placed.kind),
+        dressing: false,
       });
     }
+    dressingOf(square).forEach((placed, k) => {
+      const unit = ((dressingSeed(square, k + 7) & 1023) / 1023) * 2 - 1;
+      out.push({
+        kind: placed.kind,
+        square,
+        position: spotOf(square, placed.x, placed.y, blockTopY(square)),
+        yaw: ROUND_KINDS.has(placed.kind) ? unit * Math.PI : unit * SKEW,
+        scale: placed.scale,
+        dressing: true,
+      });
+    });
   }
   return out;
 }
@@ -177,7 +267,7 @@ function spotsOf(
   const out: Spot[] = [];
   for (const placed of layoutInstances(blockTopY)) {
     if (!(placed.kind in table)) continue;
-    const [dx, dz, dy] = shift(placed.kind);
+    const [dx, dz, dy] = shift(placed.kind).map((d) => d * placed.scale) as [number, number, number];
     const [x, y, z] = placed.position;
     out.push({ square: placed.square, position: [x + dx, y + dy, z + dz] });
   }

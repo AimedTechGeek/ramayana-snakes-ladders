@@ -137,6 +137,21 @@ export function fitPose(
   return { position: positionFor(target, azimuth, FIT_POLAR, distance), target, distance };
 }
 
+/**
+ * Fit on a desktop canvas slides the board this many CSS px right of centre, out from under the seat cards on the left
+ * (the toolbar on the right is narrower). Phone-width canvases keep it centred: their cards are small corner chips.
+ */
+export const FIT_SHIFT_PX = 52;
+
+export function fitScreenShift(cssWidth: number): number {
+  return isPhoneWidth(cssWidth) ? 0 : FIT_SHIFT_PX;
+}
+
+/** World units per CSS px at `distance` from a camera of vertical `fov` (deg) on a canvas `cssHeight` tall. */
+export function worldPerPixel(distance: number, fov: number, cssHeight: number): number {
+  return (2 * distance * Math.tan((fov * DEG) / 2)) / Math.max(1, cssHeight);
+}
+
 /** Focus: close on a token's feet, azimuth kept, polar 55 deg, distance 7 u. Only ever called from the Focus button. */
 export function focusPose(
   feet: readonly [number, number, number],

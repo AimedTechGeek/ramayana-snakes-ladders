@@ -20,6 +20,8 @@ import {
   fitPose,
   focusPose,
   fovFor,
+  fitScreenShift,
+  worldPerPixel,
 } from '../src/app/board3d/cameraConfig';
 
 const deg = (rad: number) => (rad * 180) / Math.PI;
@@ -87,5 +89,21 @@ describe('Fit and Focus poses (spec 9.2)', () => {
     expect(position.distanceTo(target)).toBeCloseTo(FOCUS_DISTANCE, 5);
     expect(target.toArray()).toEqual([2, 0.72, 1]);
     expect(Math.atan2(position.x - target.x, position.z - target.z)).toBeCloseTo(0.5, 5);
+  });
+});
+
+describe('Fit composition (T44.8)', () => {
+  it('FitShift_(DesktopCanvas)_Should_SlideTheBoardRightOfTheSeatCards', () => {
+    expect(fitScreenShift(1280)).toBeGreaterThan(0);
+    expect(fitScreenShift(1280)).toBeLessThanOrEqual(96);
+  });
+
+  it('FitShift_(PhoneCanvas)_Should_KeepTheBoardCentred', () => {
+    expect(fitScreenShift(844)).toBe(0);
+  });
+
+  it('WorldPerPixel_(FitDistance)_Should_MatchTheFrustumHeightOverTheCanvas', () => {
+    // 2 * 19 * tan(17.5 deg) = 11.98 u over 720 px
+    expect(worldPerPixel(19, 35, 720)).toBeCloseTo(11.98 / 720, 4);
   });
 });
