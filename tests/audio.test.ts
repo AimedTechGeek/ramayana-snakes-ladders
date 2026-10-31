@@ -13,6 +13,9 @@ describe('audio', () => {
       audio.stone();
       audio.stone(true);
       audio.snake();
+      audio.hiss();
+      audio.gulp();
+      audio.pop(true);
       audio.bounce();
       audio.tripleSix();
       audio.win();

@@ -11,10 +11,11 @@ import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
 import type { GameConfig, GameState, Hero, Jump, Level } from '../../core/types';
 import { getAudio, type Audio } from '../audio';
-import { FIGURINE_HEROES, figurineAssets, loadAtlas } from '../assets';
+import { atlasSheet, FIGURINE_HEROES, figurineAssets, loadAtlas } from '../assets';
 import { BridgeActor, bridgeSheet } from '../board/BridgeActor';
 import { bridgePose, hopAtProgress, hopMs, walkHops } from '../board/bridgeRules';
 import { estimateTextureMb, LivingBoard } from '../board/LivingBoard';
+import { SnakeActor, snakeSheetKey } from '../board/SnakeActor';
 import { HEROES, heroName } from '../heroes';
 import { PANEL, SEAT, seatTokenSpot, seatTop } from '../layout';
 import { squareScreen } from '../iso/boardIso';
@@ -29,7 +30,7 @@ import {
   type TokenPose,
 } from '../iso/tokenPose';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
-import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
+import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, sparkleTrail } from '../fx';
 import {
   applyEvent,
   createRevealState,
@@ -92,6 +93,8 @@ export class BoardScene extends Phaser.Scene {
   private living!: LivingBoard;
   /** The stone bridges of the ladders: rise on reveal, fade when a token rests behind them (T42.9). */
   private bridges!: BridgeActor;
+  /** The standing snakes: hidden until a token lands on their square, then they bite (T42.8). */
+  private snakes!: SnakeActor;
   /** Squares the current event revealed in `reveal` whose crossfade waits for the token to arrive. */
   private pendingTerrain = new Set<number>();
   private board!: StoryBoard;
@@ -167,6 +170,8 @@ export class BoardScene extends Phaser.Scene {
     for (const asset of figurineAssets(this.heroes, ['s', 'm'])) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.url);
     }
+    if (!this.textures.exists(snakeSheetKey(this.level)))
+      loadAtlas(this, atlasSheet(snakeSheetKey(this.level)));
   }
 
   create(): void {
@@ -179,6 +184,7 @@ export class BoardScene extends Phaser.Scene {
       audio: this.audio,
       restingSquares: () => this.restingSquares(),
     });
+    this.snakes = new SnakeActor(this, this.rig, this.living, this.level, this.audio, () => this.fastMode);
     this.rig.within('hud', () => this.drawSeats());
     this.createTokens();
     this.rig.within('hud', () => this.createHud());
@@ -355,11 +361,8 @@ export class BoardScene extends Phaser.Scene {
         await this.crossBridge(event.player, event.jump);
         return;
       case 'Bitten':
-        this.audio.snake();
-        this.biteEffects(event.jump.from);
         this.living.revealJump(event.jump.from);
-        await this.slideTo(event.player, event.jump.to, 'snake', event.jump);
-        this.revealTerrain(event.jump.to);
+        await this.snakeBite(event.player, event.jump);
         return;
       case 'TripleSixVoid':
         this.audio.tripleSix();
@@ -757,11 +760,25 @@ export class BoardScene extends Phaser.Scene {
     });
   }
 
-  /** Dust at the snake's head and a brief camera shake when a token is bitten. */
-  private biteEffects(headSquare: number): void {
-    const head = squareScreen(headSquare);
-    this.rig.within('board', () => dustPuff(this, head.x, head.y, this.fastMode));
-    shake(this, this.fastMode);
+  /** The snake eats the token and it reappears at the tail square; the camera pans there while the token is inside. */
+  private async snakeBite(player: number, jump: Jump): Promise<void> {
+    const token = this.tokenAt(player);
+    const objects = this.tokenObjects[player] ?? [];
+    await this.snakes.bite(jump.from, {
+      tokenSpot: this.worldAt[player] ?? fieldCentre(jump.from),
+      drawToken: (pose, alpha) => {
+        token.place(pose);
+        for (const object of objects) (object as Phaser.GameObjects.Image).setAlpha(alpha);
+      },
+      panToTail: () => this.followToken(player, worldPose(...fieldCentre(jump.to)).feet),
+      landAtTail: () => {
+        this.shownSquare[player] = jump.to;
+        this.worldAt[player] = this.spotOf(player);
+        this.revealTerrain(jump.to);
+        return this.restPose(player, this.worldAt[player]);
+      },
+    });
+    await this.relayout(player);
   }
 
   private bounceEffect(): void {
