@@ -140,5 +140,11 @@
   "ui.rank1": "पहला",
   "ui.rank2": "दूसरा",
   "ui.rank3": "तीसरा",
-  "ui.rank4": "चौथा"
+  "ui.rank4": "चौथा",
+  "ui.gallery": "गैलरी",
+  "ui.focus": "खिलाड़ी देखें",
+  "ui.paused": "विराम",
+  "ui.continue": "खेल पर लौटें",
+  "ui.mainMenu": "मुख्य मेनू",
+  "ui.back": "वापस"
 }

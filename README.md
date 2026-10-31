@@ -1,6 +1,6 @@
 # Ramayana Snakes & Ladders
 
-Snakes & Ladders, retold through the Ramayana. Every ladder and every snake is a moment from the epic, so the board tells the story from Ayodhya's gate, through the forest and across to Lanka, and back to Ayodhya's throne at square 144. Four heroes play it, each with their own voice and feelings, in English or Hindi. It is built with Phaser 3 and TypeScript.
+Snakes & Ladders, retold through the Ramayana. Every ladder and every snake is a moment from the epic, so the board tells the story from Ayodhya's gate, through the forest and across to Lanka, and back to Ayodhya's throne at square 144. Four heroes play it, each with their own voice and feelings, in English or Hindi. It is built with TypeScript, React and three.js (React Three Fiber).
 
 ![The board mid-game](docs/images/03-board.png)
 
@@ -42,19 +42,20 @@ Requires Node.js 22 (see `.nvmrc`).
 
 ## Project structure
 
-| Path              | Contents                                                                                       |
-| ----------------- | ---------------------------------------------------------------------------------------------- |
-| `src/core/`       | Rules engine, boards, dice and events. Plain TypeScript with no Phaser, so it is unit tested.  |
-| `src/game/`       | Phaser scenes (Boot, Setup, Board, Win, Rotate, Gallery), layout, audio, effects and autosave. |
-| `src/characters/` | The hero figures, faces, reactions and how events map to reactions.                            |
-| `src/i18n/`       | English and Hindi strings.                                                                     |
-| `sim/`            | Monte Carlo simulator that drives the real rules engine.                                       |
-| `scripts/`        | Smoke, device and screenshot checks, and the art generator in `scripts/art/`.                  |
-| `public/assets/`  | Art: board and figurine atlases, tokens and the favicon.                                       |
-| `tests/`          | Unit tests.                                                                                    |
-| `docs/design/`    | Design documents: heroes, style guide, board art, UX and emotion timing.                       |
-| `docs/review/`    | Review and playtest notes.                                                                     |
-| `docs/images/`    | Screenshots used by this README and the player guide.                                          |
+| Path              | Contents                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------------- |
+| `src/core/`       | Rules engine, boards, dice and events. Plain TypeScript with no renderer, so it is unit tested.     |
+| `src/app/`        | React screens (Boot, Setup, Game, Menu, Win, Rotate, Gallery), the 3D board and the TurnController. |
+| `src/game/`       | Fog-of-war reveal, autosave, locomotion and block rules, setup model, heroes and audio.             |
+| `src/characters/` | Reactions and how engine events map to them.                                                        |
+| `src/i18n/`       | English and Hindi strings.                                                                          |
+| `sim/`            | Monte Carlo simulator that drives the real rules engine.                                            |
+| `scripts/`        | Smoke, device and screenshot checks, and the art generator in `scripts/art/`.                       |
+| `public/assets/`  | Art: board and figurine atlases, tokens and the favicon.                                            |
+| `tests/`          | Unit tests.                                                                                         |
+| `docs/design/`    | Design documents: heroes, style guide, board art, UX and emotion timing.                            |
+| `docs/review/`    | Review and playtest notes.                                                                          |
+| `docs/images/`    | Screenshots used by this README and the player guide.                                               |
 
 ## How it was built
 

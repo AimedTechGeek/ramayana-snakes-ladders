@@ -140,5 +140,11 @@
   "ui.rank1": "1st",
   "ui.rank2": "2nd",
   "ui.rank3": "3rd",
-  "ui.rank4": "4th"
+  "ui.rank4": "4th",
+  "ui.gallery": "Gallery",
+  "ui.focus": "Focus",
+  "ui.paused": "Paused",
+  "ui.continue": "Continue",
+  "ui.mainMenu": "Main Menu",
+  "ui.back": "Back"
 }

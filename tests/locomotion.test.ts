@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import easyMeta from '../public/assets/iso/bridges-easy.meta.json';
 import rawMeta from '../public/assets/iso/hanuman-s.meta.json';
-import { crossingTimeline, routeFacing, type BridgeMeta } from '../src/game/board/bridgeRules';
 import { fieldCentre } from '../src/game/iso/boardIso';
 import {
   distanceAt,
@@ -18,7 +17,8 @@ import {
   type Facing,
 } from '../src/game/iso/locomotion';
 
-const bridges = (easyMeta as unknown as { bridges: Record<string, BridgeMeta> }).bridges;
+/** The easy bridges' routes in world units (art meta). */
+const bridges = (easyMeta as unknown as { bridges: Record<string, { route: [number, number][] }> }).bridges;
 const SQUARE = 56;
 const PX_PER_UNIT_AT_ZOOM_2 = 0.7621 * 2;
 
@@ -56,7 +56,6 @@ describe('facingOf (spec 2)', () => {
       const first = bridge.route[0]!;
       const last = bridge.route[bridge.route.length - 1]!;
       expect(facingOf([last[0] - first[0], last[1] - first[1]], 'SW'), id).toBe(expected[id]);
-      expect(routeFacing(bridge), id).toBe(expected[id]);
     }
   });
 });
@@ -265,41 +264,5 @@ describe('leaps and bridge timelines (spec 3.1 and 4)', () => {
     expect(leapFrameOf(leapPhaseAt(241, beats))).toBe(2);
     expect(leapFrameOf(leapPhaseAt(421, beats))).toBe(3);
     expect(leapFrameOf(leapPhaseAt(540, beats))).toBe(3);
-  });
-
-  const total = (id: string, fast = false) => crossingTimeline(bridges[id]!, id, fast).totalMs;
-
-  it('VishwamitraCrossing_Should_Take1730MsWithin30', () => {
-    expect(Math.abs(total('vishwamitra') - 1730)).toBeLessThanOrEqual(30);
-  });
-
-  it('GuhaCrossing_Should_TakeAbout1400Ms', () =>
-    expect(Math.abs(total('guha') - 1400)).toBeLessThanOrEqual(30));
-
-  it('ShabariFootbridge_(15_Units)_Should_BeOneLeapOf540Ms', () => {
-    const plan = crossingTimeline(bridges.shabari!, 'shabari', false);
-    expect(plan.single).toBe(true);
-    expect(plan.totalMs).toBe(540);
-  });
-
-  it('HanumanLeap_Should_BeOneLongLeapAndNeverARun', () => {
-    const plan = crossingTimeline(bridges['hanuman-leap']!, 'hanuman-leap', false);
-    expect(plan.single).toBe(true);
-    expect(plan.runMs).toBe(0);
-    expect(plan.totalMs).toBe(200 + 80 + 700 + 120);
-  });
-
-  it('FastCrossings_Should_Take810_640_And_240Ms', () => {
-    expect(Math.abs(total('vishwamitra', true) - 810)).toBeLessThanOrEqual(10);
-    expect(Math.abs(total('guha', true) - 640)).toBeLessThanOrEqual(10);
-    expect(total('shabari', true)).toBe(240);
-  });
-
-  it('EveryEasyBridgeRoute_(Not_Single_Leap)_Should_RunTheDeckAt280UnitsPerSecond', () => {
-    for (const [id, bridge] of Object.entries(bridges)) {
-      const plan = crossingTimeline(bridge, id, false);
-      if (plan.single) continue;
-      expect(plan.runMs, id).toBeCloseTo((bridge.length / 280) * 1000, 6);
-    }
   });
 });

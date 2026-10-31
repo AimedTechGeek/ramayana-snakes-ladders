@@ -1,21 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as node from '../scripts/art/iso/blocks.mjs';
-import { framePlacements, frameFixtures } from '../scripts/art/iso/frame.mjs';
 import propsMeta from '../public/assets/iso/props.meta.json';
-import frameMeta from '../public/assets/iso/frame.meta.json';
-import {
-  AMBIENT_LIMIT,
-  BAND,
-  FLOOR_OFFSET,
-  NUMERAL_DEPTH,
-  airDepth,
-  floorDepth,
-  floorKey,
-  frameDepth,
-  selectAmbient,
-  snakeHeadDepth,
-  standingDepth,
-} from '../src/game/board/boardBands';
 import {
   BACK_MAX_HEIGHT,
   REGION_INK,
@@ -32,7 +17,6 @@ import {
   type PropKind,
   type RegionName,
 } from '../src/game/board/blockRules';
-import { CELL, SIZE } from '../src/game/iso/world';
 import { gridOf } from '../src/game/layout';
 
 const SQUARES = Array.from({ length: 144 }, (_, i) => i + 1);
@@ -152,83 +136,5 @@ describe('prop placement per seed rule', () => {
         if (p.kind === 'dais') continue;
         expect(Math.abs(p.x) < 16 && p.y > -22 && p.y < 4, `${p.kind} on ${square}`).toBe(false);
       }
-  });
-});
-
-describe('depth bands', () => {
-  const keys = SQUARES.map((square) => {
-    const { row, column } = gridOf(square);
-    return floorKey(column * CELL + CELL / 2, SIZE - row * CELL - CELL / 2);
-  });
-
-  it('Bands_(FloorStandingAirNumerals)_Should_SortFloorBelowStandingBelowNumerals', () => {
-    expect(floorDepth(Math.max(...keys), 'shadow')).toBeLessThan(standingDepth(Math.min(...keys)));
-    expect(standingDepth(Math.max(...keys))).toBeLessThan(airDepth(Math.min(...keys)));
-    expect(snakeHeadDepth(Math.max(...keys))).toBeLessThan(NUMERAL_DEPTH);
-    expect(NUMERAL_DEPTH).toBe(BAND.numerals);
-  });
-
-  it('Bands_(FloorParts)_Should_StackTileFogShimmerMistShadowInOrder', () => {
-    const order = ['tile', 'fog', 'shimmer', 'mist', 'shadow'] as const;
-    const depths = order.map((part) => floorDepth(keys[0]!, part));
-    expect([...depths].sort((a, b) => a - b)).toEqual(depths);
-  });
-
-  it('Bands_(EdgeNeighbours)_Should_DifferByMoreThanTheMistOffsetSoTheNearerFogCoversTheFartherMist', () => {
-    const keyAt = (row: number, column: number) =>
-      floorKey(column * CELL + CELL / 2, SIZE - row * CELL - CELL / 2);
-    for (let row = 0; row < 12; row++)
-      for (let column = 0; column < 12; column++) {
-        if (column < 11)
-          expect(Math.abs(keyAt(row, column + 1) - keyAt(row, column))).toBeGreaterThan(FLOOR_OFFSET.mist);
-        if (row < 11)
-          expect(Math.abs(keyAt(row + 1, column) - keyAt(row, column))).toBeGreaterThan(FLOOR_OFFSET.mist);
-      }
-  });
-
-  it('Bands_(SnakeHead)_Should_SortJustAboveItsCoil', () => {
-    expect(snakeHeadDepth(300) - standingDepth(300)).toBe(0.5);
-  });
-
-  it('Bands_(FrameModules)_Should_FollowTheMetaRule', () => {
-    const all = [...framePlacements(), ...frameFixtures()];
-    expect(all).toHaveLength(frameMeta.placements.length + frameMeta.fixtures.length);
-    const gate = all.find((p) => p.frame === 'gate')!;
-    const rim = all.find((p) => p.frame === 'rim-back')!;
-    const plate = all.find((p) => p.frame === 'plate-maker')!;
-    expect(frameDepth(gate)).toBeGreaterThanOrEqual(BAND.standing);
-    expect(frameDepth(rim)).toBeLessThan(BAND.standing);
-    expect(frameDepth(plate)).toBe(floorKey(plate.depthAt[0], plate.depthAt[1]) + plate.depthBias);
-  });
-});
-
-describe('ambient cull selection', () => {
-  const view = { x: 100, y: 100, width: 200, height: 200 };
-  const at = (id: number, x: number, y: number, cost = 1) => ({ id, x, y, cost });
-
-  it('Cull_(SourceFarOutsideTheView)_Should_NotAnimate', () => {
-    expect([...selectAmbient([at(1, 200, 200), at(2, 900, 900)], view)]).toEqual([1]);
-  });
-
-  it('Cull_(SourceOneTileOutside)_Should_StillAnimate', () => {
-    expect(selectAmbient([at(1, 330, 200)], view, 60).has(1)).toBe(true);
-    expect(selectAmbient([at(1, 361, 200)], view, 60).has(1)).toBe(false);
-  });
-
-  it('Cull_(MoreThanTheLimit)_Should_PauseTheFarthestFromTheViewCentreFirst', () => {
-    const sources = Array.from({ length: 200 }, (_, i) =>
-      at(i, 200 + (i % 20) * 3, 200 + Math.floor(i / 20) * 3),
-    );
-    const chosen = selectAmbient(sources, view);
-    expect(chosen.size).toBe(AMBIENT_LIMIT);
-    const dist = (id: number) => Math.hypot(sources[id]!.x - 200, sources[id]!.y - 200);
-    const worstChosen = Math.max(...[...chosen].map(dist));
-    const bestDropped = Math.min(...sources.filter((s) => !chosen.has(s.id)).map((s) => dist(s.id)));
-    expect(worstChosen).toBeLessThanOrEqual(bestDropped);
-  });
-
-  it('Cull_(CostlyItem)_Should_CountItsTweensAgainstTheLimit', () => {
-    const chosen = selectAmbient([at(1, 200, 200, 119), at(2, 201, 200, 2), at(3, 202, 200, 1)], view);
-    expect([...chosen].sort()).toEqual([1, 3]);
   });
 });
