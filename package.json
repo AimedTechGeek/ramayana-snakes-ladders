@@ -31,6 +31,7 @@
     "blender:dice": "node scripts/blender/run.mjs scripts/blender/die.py public/models/dice/die.glb",
     "blender:props": "node scripts/blender/run.mjs scripts/blender/props.py public/models/props src/app/board3d/propsManifest.json",
     "blender:bridges": "tsx scripts/blender/bridges-build.mjs",
+    "blender:snakes": "node scripts/blender/run.mjs scripts/blender/snakes.py public/models/snakes src/app/board3d/snakesManifest.json",
     "blender:board": "node scripts/blender/run.mjs scripts/blender/board.py public/models/board/board.glb",
     "blender:spike:check": "node scripts/blender/spike-check.mjs screenshots-tmp/spike",
     "blender:heroes": "node scripts/blender/heroes/build.mjs",

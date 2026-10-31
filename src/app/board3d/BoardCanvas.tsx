@@ -16,6 +16,7 @@ import { Die, type DieHandle } from './Die';
 import type { DioramaView } from './DioramaView';
 import { Lighting, PlinthShadow } from './Lighting';
 import { BubbleAnchors, Jumps, Puffs, Tokens } from './Pieces';
+import { Snakes } from './Snake';
 import { PropsLayer } from './Props';
 
 interface BoardCanvasProps {
@@ -113,6 +114,7 @@ export function BoardCanvas({
         reducedMotion={reducedMotion}
       />
       <Jumps view={view} />
+      <Snakes view={view} reducedMotion={reducedMotion} />
       <Tokens view={view} reducedMotion={reducedMotion} />
       <Puffs view={view} />
       <BubbleAnchors view={view} />

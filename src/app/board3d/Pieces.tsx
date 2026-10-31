@@ -2,48 +2,15 @@
 // placeholder bridges and snakes that rise when revealed, bounce puffs, and the head anchors of the speech bubbles.
 
 import { useFrame, useThree } from '@react-three/fiber';
-import { Suspense, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
-import { Group, Mesh, MeshBasicMaterial, TubeGeometry, Vector2, Vector3 } from 'three';
-import type { Hero, Jump } from '../../core/types';
+import { Suspense, useMemo, useRef, useSyncExternalStore } from 'react';
+import { Group, Mesh, MeshBasicMaterial, Vector2, Vector3 } from 'three';
+import type { Hero } from '../../core/types';
 import { HEROES } from '../../game/heroes';
 import { toThree } from './coords';
 import type { DioramaView } from './DioramaView';
 import { Hero as HeroFigure, blob, useHeroActor, type HeroHandle, type HeroId } from './Hero';
 import { angleDelta } from './heroClips';
 import { Bridges } from './Bridge';
-import { snakeCurve } from './jumpCurves';
-
-function JumpPiece({ view, jump, kind }: { view: DioramaView; jump: Jump; kind: 'ladder' | 'snake' }) {
-  const group = useRef<Group>(null);
-  const geometry = useMemo(() => new TubeGeometry(snakeCurve(jump), 64, 0.08, 8, false), [jump]);
-  useEffect(() => () => geometry.dispose(), [geometry]);
-  const head = useMemo(() => snakeCurve(jump).getPoint(0), [jump]);
-
-  useFrame(() => {
-    const node = group.current;
-    if (!node) return;
-    const rise = view.jumpRise.get(jump.from) ?? 0;
-    node.visible = rise > 0;
-    node.scale.set(1, Math.max(0.001, rise), 1);
-  });
-
-  return (
-    <group ref={group} visible={false}>
-      <mesh geometry={geometry} castShadow>
-        <meshStandardMaterial
-          color={kind === 'ladder' ? '#cdbb9a' : '#3d7a3a'}
-          roughness={kind === 'ladder' ? 0.85 : 0.5}
-        />
-      </mesh>
-      {kind === 'snake' && (
-        <mesh position={head} castShadow>
-          <sphereGeometry args={[0.16, 16, 12]} />
-          <meshStandardMaterial color="#2e5e2b" roughness={0.5} />
-        </mesh>
-      )}
-    </group>
-  );
-}
 
 export function Jumps({ view }: { view: DioramaView }) {
   useSyncExternalStore(view.subscribe, view.getVersion);
@@ -52,9 +19,6 @@ export function Jumps({ view }: { view: DioramaView }) {
   return (
     <group>
       <Bridges view={view} />
-      {board.snakes.map((jump) => (
-        <JumpPiece key={`s${jump.from}`} view={view} jump={jump} kind="snake" />
-      ))}
     </group>
   );
 }
@@ -69,6 +33,7 @@ function useTokenPlacement(view: DioramaView, player: number) {
     if (!node || !token || !at) return;
     node.position.set(at[0], at[1], at[2]);
     node.scale.setScalar(Math.max(0.001, token.scale));
+    node.visible = !token.hidden;
   });
   return group;
 }

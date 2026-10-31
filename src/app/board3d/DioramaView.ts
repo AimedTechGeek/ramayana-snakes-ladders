@@ -20,6 +20,8 @@ import {
 import { restingSpot } from '../../game/iso/tokenPose';
 import type { RevealChange } from '../../game/reveal';
 import { bridgeCurve, bridgeLeads } from './jumpCurves';
+import { groundHeightAt } from './boardLayout';
+import { SNAKE_META, backOut, biteTimeline, mouthPoint, type SnakeClip } from './snakeChoreo';
 import { toThree, toWorld, waitingSpot } from './coords';
 import { crossingPlan, hopHeight, leapProgress } from './crossing';
 import type { Beats } from './heroClips';
@@ -40,6 +42,15 @@ export interface TokenState {
   gliding: boolean;
   /** A leap in progress (onto or off a bridge deck, Hanuman's leap to Lanka): `ms` into its four beats. */
   leap: { ms: number; beats: Beats } | null;
+  /** Swallowed by a snake: not drawn (from the end of the swallow to the reappearance at the tail). */
+  hidden: boolean;
+}
+
+/** The beat of a snake's clip now playing: the snake samples `clip` at (now - start) / ms. */
+export interface SnakeAct {
+  clip: SnakeClip;
+  start: number;
+  ms: number;
 }
 
 /** A point in viewport CSS pixels (a token's head, for its speech bubble). */
@@ -91,7 +102,6 @@ interface StepSound {
 const ENTER_MS = 360;
 const SLIDE_MS = 500;
 const RISE_MS = 450;
-const BITE_MS = 400;
 const REFAN_MS = 80;
 const PUFF_MS = 600;
 const ENTER_ARC = 0.6;
@@ -106,6 +116,12 @@ export class DioramaView implements BoardView {
   /** Foot squares of bridges that rose during this turn's reveal (their crossing skips the thud), and thud start times. */
   justRisen = new Set<number>();
   thuds = new Map<number, number>();
+  /** Snake beat in progress per head square (rise, hold, strike, swallow, settle); absent: idle. */
+  snakeAct = new Map<number, SnakeAct>();
+  /** Snakes revealed but not yet risen: bite() plays their rise (first time only). */
+  snakePending = new Set<number>();
+  /** Head squares whose snake GLB has mounted (Snake.tsx). */
+  snakeLoaded = new Set<number>();
   current = -1;
   moods: (SeatMood | null)[] = [];
   bubbles: (Bubble | null)[] = [];
@@ -204,6 +220,7 @@ export class DioramaView implements BoardView {
       override: null,
       gliding: false,
       leap: null,
+      hidden: false,
     }));
     this.tokens.forEach((token, i) => (token.spot = this.spotOf(i)));
     this.moods = players.map(() => null);
@@ -331,14 +348,68 @@ export class DioramaView implements BoardView {
 
   async bite(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive): Promise<void> {
     const token = this.token(player);
-    const half = this.ms(BITE_MS, motion) / 2;
-    await this.tween(half, (u) => (token.scale = 1 - u));
-    arrive(jump.to);
+    const id = this.setup?.board.snakes.find((snake) => snake.from === jump.from)?.id ?? '';
+    const meta = SNAKE_META[id];
+    const loaded = meta !== undefined && (await this.snakeReady(jump.from));
+    const steps = biteTimeline({
+      fast: motion.fast,
+      reducedMotion: motion.reducedMotion,
+      firstTime: this.snakePending.has(jump.from),
+    });
+    const ms = (name: string): number => steps.find((step) => step.name === name)?.ms ?? 0;
+    const play = async (clip: SnakeClip, beat: number, each?: (u: number) => void): Promise<void> => {
+      if (loaded) this.snakeAct.set(jump.from, { clip, start: performance.now(), ms: beat });
+      await this.tween(beat, each ?? (() => undefined));
+    };
+    // rise (the first reveal only): the snake appears from the ground
+    if (this.snakePending.has(jump.from)) {
+      this.snakePending.delete(jump.from);
+      if (loaded) await play('rise', ms('rise'));
+    }
+    // hold: the head turns to the token
+    const spot = token.spot;
+    const idleMouth = mouthPoint(jump.from, id, 'idle');
+    const snakeAt = toWorld(idleMouth[0], idleMouth[2]);
+    token.heading = headingOf(spot, snakeAt, token.heading);
+    if (ms('hold') > 0) await play('hold', ms('hold'));
+    await play('strike', ms('strike'));
+    // swallow: the token flies to the mouth, shrinking; hidden at the end
+    const feet = this.tokenPosition(player) ?? toThree(spot, 0);
+    const mouth = mouthPoint(jump.from, id, 'strike');
+    token.gliding = true;
+    await play('swallow', ms('swallow'), (u) => {
+      const e = u * u;
+      const x = feet[0] + (mouth[0] - feet[0]) * e;
+      const z = feet[2] + (mouth[2] - feet[2]) * e;
+      token.spot = toWorld(x, z);
+      token.lift = feet[1] + (mouth[1] - feet[1]) * e - groundHeightAt(x, z);
+      token.scale = 1 - 0.9 * e;
+    });
+    token.hidden = true;
+    token.gliding = false;
+    token.lift = 0;
+    // settle: the head goes back to idle (Fast: at once)
+    if (ms('settle') > 0) await play('settle', ms('settle'));
+    this.snakeAct.delete(jump.from);
+    // reappear at the tail square
     token.square = jump.to;
     token.spot = this.spotOf(player);
-    await this.tween(half, (u) => (token.scale = u));
+    token.scale = 0.1;
+    token.hidden = false;
+    arrive(jump.to);
+    this.puff(jump.to, motion);
+    await this.tween(ms('reappear'), (u) => (token.scale = 0.1 + 0.9 * backOut(u)));
     token.scale = 1;
     await this.refan(player, motion);
+  }
+
+  /** Resolves true once the snake's GLB has mounted for this head square; false after 1.5 s (the bite then plays without it). */
+  private async snakeReady(from: number): Promise<boolean> {
+    for (let waited = 0; waited < 1500 && !this.disposed; waited += 30) {
+      if (this.snakeLoaded.has(from)) return true;
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    }
+    return this.snakeLoaded.has(from);
   }
 
   bounce(_player: number, motion: MotionOptions): void {
@@ -363,7 +434,8 @@ export class DioramaView implements BoardView {
       if (change.kind === 'terrain') this.revealedTerrain.add(change.square);
       else if (!this.jumpRise.has(change.jumpId)) {
         this.jumpRise.set(change.jumpId, 0);
-        rising.push(change.jumpId);
+        if (change.jumpType === 'snake') this.snakePending.add(change.jumpId); // bite() plays the rise
+        else rising.push(change.jumpId);
       }
     }
     this.changed();
