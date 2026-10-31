@@ -24,7 +24,7 @@ export class BootScene extends Phaser.Scene {
     const saved = loadGame();
     if (saved) {
       this.createButton(480, 380, 320, 80, t('ui.resume'), COLORS.saffron, () =>
-        this.scene.start('Board', { state: saved }),
+        this.scene.start('Board', { state: saved.state, reveal: saved.reveal }),
       );
       this.createButton(480, 476, 320, 64, t('ui.newGame'), COLORS.parchment, () =>
         this.scene.start('Setup'),

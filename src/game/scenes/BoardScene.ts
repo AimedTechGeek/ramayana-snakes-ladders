@@ -28,6 +28,7 @@ import {
 } from '../iso/tokenPose';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
+import { applyEvent, createRevealState, seedFromGameState, type RevealState } from '../reveal';
 import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
 import { DiceButton } from '../ui/DiceButton';
@@ -39,7 +40,8 @@ interface Chip {
 }
 
 export type BoardSceneData =
-  { config: GameConfig; state?: undefined } | { config?: undefined; state: GameState };
+  | { config: GameConfig; state?: undefined; reveal?: undefined }
+  | { config?: undefined; state: GameState; reveal?: RevealState };
 
 // Timing from docs/design/reactions.json.
 const STEP_MS = 120;
@@ -55,6 +57,8 @@ const FAST_BOT_DELAY_MS = 400;
 
 export class BoardScene extends Phaser.Scene {
   private engine!: Game;
+  /** Fog-of-war state; kept current and saved, not yet rendered. */
+  private reveal!: RevealState;
   private board!: StoryBoard;
   private dice: Dice = createRandomDice();
   private level: Level = 'easy';
@@ -93,9 +97,11 @@ export class BoardScene extends Phaser.Scene {
     if (data.state) {
       this.board = boardFor(data.state.level);
       this.engine = Game.restore(data.state, this.board, this.dice);
+      this.reveal = data.reveal ?? seedFromGameState(data.state);
     } else {
       this.board = boardFor(data.config.level);
       this.engine = Game.create(data.config, this.board, this.dice);
+      this.reveal = createRevealState();
     }
     this.tokens = [];
     this.worldAt = [];
@@ -146,7 +152,7 @@ export class BoardScene extends Phaser.Scene {
 
     this.game.registry.set('board', this);
     this.game.registry.set('board-ready', true);
-    saveGame(this.snapshot());
+    saveGame(this.snapshot(), this.reveal);
     this.busy = true;
     void this.play(this.engine.begin()).then(() => this.afterEvents());
   }
@@ -210,7 +216,7 @@ export class BoardScene extends Phaser.Scene {
       this.scene.pause();
       return;
     }
-    saveGame(this.snapshot());
+    saveGame(this.snapshot(), this.reveal);
     if (this.isBotTurn()) {
       this.dieButton.setEnabled(false);
       this.setHint('');
@@ -224,6 +230,7 @@ export class BoardScene extends Phaser.Scene {
 
   private async play(events: GameEvent[]): Promise<void> {
     for (const event of events) {
+      applyEvent(this.reveal, event);
       this.events.emit('game-event', event, this.engine);
       const reactions = this.react(event);
       await this.animate(event);

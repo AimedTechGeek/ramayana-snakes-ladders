@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearSave, loadGame, saveGame } from '../src/game/save';
 import type { GameState } from '../src/core/types';
+import { createRevealState } from '../src/game/reveal';
+
+const reveal = { terrain: [1, 2, 7, 42], jumps: [17] };
 
 const state: GameState = {
   level: 'medium',
@@ -42,9 +45,9 @@ describe('save', () => {
     vi.unstubAllGlobals();
   });
 
-  it('Save_ThenLoad_Should_RoundTripState', () => {
-    expect(saveGame(state)).toBe(true);
-    expect(loadGame()).toEqual(state);
+  it('Save_ThenLoad_Should_RoundTripStateAndReveal', () => {
+    expect(saveGame(state, reveal)).toBe(true);
+    expect(loadGame()).toEqual({ state, reveal });
   });
 
   it('Load_CorruptJson_Should_ReturnNull', () => {
@@ -52,8 +55,27 @@ describe('save', () => {
     expect(loadGame()).toBeNull();
   });
 
+  it('Load_V1Save_Should_MigrateBySeedingRevealFromPlayerPositions', () => {
+    localStorage.setItem('rsl.save.v1', JSON.stringify({ version: 1, state }));
+    expect(loadGame()).toEqual({ state, reveal: { terrain: [42, 7], jumps: [] } });
+  });
+
+  it('Load_V2SaveWithCorruptRevealShape_Should_ReturnNull', () => {
+    const badShapes = [
+      undefined,
+      null,
+      { terrain: 'x', jumps: [] },
+      { terrain: [1], jumps: [1.5] },
+      { terrain: [999], jumps: [] },
+    ];
+    for (const bad of badShapes) {
+      localStorage.setItem('rsl.save.v1', JSON.stringify({ version: 2, state, reveal: bad }));
+      expect(loadGame()).toBeNull();
+    }
+  });
+
   it('Load_WrongVersion_Should_ReturnNull', () => {
-    localStorage.setItem('rsl.save.v1', JSON.stringify({ version: 2, state }));
+    localStorage.setItem('rsl.save.v1', JSON.stringify({ version: 3, state, reveal }));
     expect(loadGame()).toBeNull();
   });
 
@@ -70,13 +92,13 @@ describe('save', () => {
       },
     };
     vi.stubGlobal('localStorage', broken);
-    expect(saveGame(state)).toBe(false);
+    expect(saveGame(state, createRevealState())).toBe(false);
     expect(loadGame()).toBeNull();
     expect(clearSave()).toBe(false);
   });
 
   it('Clear_Should_RemoveSave', () => {
-    saveGame(state);
+    saveGame(state, reveal);
     expect(clearSave()).toBe(true);
     expect(loadGame()).toBeNull();
   });
