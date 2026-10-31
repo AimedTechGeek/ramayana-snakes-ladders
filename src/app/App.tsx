@@ -7,6 +7,7 @@ import { getAudio } from '../game/audio';
 import { loadGame, type LoadedGame } from '../game/save';
 import { getLocale, setLocale } from '../i18n/i18n';
 import { bridge, type ScreenName } from './appHooks';
+import { BoardVignette } from './board3d/BoardVignette';
 import { BootScreen } from './screens/BootScreen';
 import { RotatePrompt } from './screens/Dialogs';
 import { GalleryScreen } from './screens/GalleryScreen';
@@ -95,6 +96,7 @@ export function App() {
           onMute={toggleMute}
           onToggleLanguage={toggleLanguage}
           onGallery={() => setScreen('gallery')}
+          art={<BoardVignette />}
         />
       )}
       {screen === 'setup' && (

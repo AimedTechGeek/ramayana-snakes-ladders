@@ -104,6 +104,8 @@ export function BoardCanvas({
       </Suspense>
       <Die
         position={[TRAY_ANCHOR[0], TRAY_ANCHOR[1], TRAY_ANCHOR[2]]}
+        // the 1.6 x 1.2 tray lies lengthwise along the 1.4 x 2.0 ledge
+        rotationY={Math.PI / 2}
         rollRef={dieRef}
         onTap={onDieTap}
         onContact={onDieContact}

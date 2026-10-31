@@ -33,7 +33,7 @@ export interface SceneryProps {
 }
 
 /** Kinds at least this tall (px) cast shadows: trees, huts, posts, animals, bushes (contact shadows sell the clay). */
-const TALL_PX = 8;
+const TALL_PX = 10;
 
 interface KindMeshProps {
   kind: string;
