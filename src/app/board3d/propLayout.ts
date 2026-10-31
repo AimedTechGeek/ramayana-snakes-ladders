@@ -213,7 +213,8 @@ export interface CoronationSet {
 /** Chhatra canopy centre sits this far behind the standing-field centre (T44 2.5 gives 0.42; 0.50 clears fanned tokens). */
 export const CANOPY_BEHIND = 0.5;
 export const CANOPY_RADIUS = 0.34;
-export const CANOPY_HEIGHT = 44 * PX;
+/** Canopy rim height: well above a standing hero (80 px) so it never sits behind a head like a halo (R6). */
+export const CANOPY_HEIGHT = 104 * PX;
 export const THRONE_Z = -0.4;
 /** The dais ring is 0.08 u tall; the throne stands on it. */
 export const DAIS_HEIGHT = 4.6 * PX;

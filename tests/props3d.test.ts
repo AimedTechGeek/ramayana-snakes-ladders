@@ -154,6 +154,11 @@ describe('coronation at 144', () => {
     expect(CORONATION.pole[1]).toBeLessThan(-0.5);
     expect(underCanopy(0, 0)).toBe(false);
   });
+
+  it('Chhatra_(CanopyHeight)_Should_ClearAStandingHeroHeadSoItNeverReadsAsAHalo', () => {
+    const heroHeight = 1.43;
+    expect(CORONATION.canopyHeight).toBeGreaterThan(heroHeight + 0.3);
+  });
 });
 
 describe('ambient life', () => {

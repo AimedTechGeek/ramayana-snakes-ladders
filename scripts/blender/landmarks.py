@@ -121,16 +121,17 @@ def throne(k):
 
 @kind("chhatra", 1200)
 def chhatra(k):
-    """Parasol on a pole planted on the rim behind the dais. Origin = pole foot; canopy centre over it at z 44..57."""
+    """Parasol on a pole planted on the rim behind the dais. Origin = pole foot; canopy centre over it at z 104..117,
+    well above a standing hero's head (80 px) so from the default camera it never reads as a halo (R6)."""
     k.lathe((0, 0, 0), [(0, 3.4), (1.2, 2.4), (2.4, 1.1)], "#C9A24A", sides=8, top=False)
-    k.cyl((0, 0, 1.6), 0.9, 52, GOLD, sides=6, r_top=0.8)
-    k.lathe((0, 0, 44), [(0, 19.0), (1.2, 19.4), (3.6, 17.2), (7.6, 11.4), (10.8, 5.0), (12.4, 0.8)], SAFFRON, sides=14,
+    k.cyl((0, 0, 1.6), 0.9, 112, GOLD, sides=6, r_top=0.8)
+    k.lathe((0, 0, 104), [(0, 19.0), (1.2, 19.4), (3.6, 17.2), (7.6, 11.4), (10.8, 5.0), (12.4, 0.8)], SAFFRON, sides=14,
             cols=["#F8E7B4", "#F6D083", SAFFRON, SAFFRON, "#F4983A", GOLD], bottom=True)
     for i in range(14):
         a = 2 * PI * i / 14
-        k.blob((math.cos(a) * 19.4, math.sin(a) * 19.4, 44.6), (1.5, 1.5, 2.1), GOLD, u=5, v=3)
-    k.blob((0, 0, 57.4), (1.5, 1.5, 2.2), GOLD, u=6, v=4)
-    k.cone((0, 0, 59), 0.6, 3.6, GOLD, sides=5)
+        k.blob((math.cos(a) * 19.4, math.sin(a) * 19.4, 104.6), (1.5, 1.5, 2.1), GOLD, u=5, v=3)
+    k.blob((0, 0, 117.4), (1.5, 1.5, 2.2), GOLD, u=6, v=4)
+    k.cone((0, 0, 119), 0.6, 3.6, GOLD, sides=5)
 
 
 def export_landmarks(out_dir):
