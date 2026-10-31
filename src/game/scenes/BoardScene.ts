@@ -11,7 +11,9 @@ import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
 import type { GameConfig, GameState, Hero, Jump, Level } from '../../core/types';
 import { getAudio, type Audio } from '../audio';
-import { FIGURINE_HEROES, figurineAssets } from '../assets';
+import { FIGURINE_HEROES, figurineAssets, loadAtlas } from '../assets';
+import { BridgeActor, bridgeSheet } from '../board/BridgeActor';
+import { bridgePose, hopAtProgress, hopMs, walkHops } from '../board/bridgeRules';
 import { estimateTextureMb, LivingBoard } from '../board/LivingBoard';
 import { HEROES, heroName } from '../heroes';
 import { PANEL, SEAT, seatTokenSpot, seatTop } from '../layout';
@@ -63,6 +65,10 @@ const BANNER_X = PANEL.x + 144;
 const ZOOM_BUTTONS = { x: 16, y: 720 - 16 - 56, size: 56, gap: 8 } as const;
 /** The follow camera centres this far above a token's feet, on its body. */
 const FOLLOW_LIFT = 20;
+/** A token rests within this world distance of its square's field centre (fan slots plus the top-square shift reach 15). */
+const RESTING_RADIUS = 17;
+/** Spec 1.3: bridge top squares shift the standing field this many world units in y. */
+const BRIDGE_TOP_FIELD_SHIFT = 6;
 const BOT_DELAY_MS = 1000;
 const FAST_BOT_DELAY_MS = 400;
 
@@ -84,6 +90,8 @@ export class BoardScene extends Phaser.Scene {
   private reveal!: RevealState;
   /** The board's 144 blocks, props, frame and fog; the visuals follow `reveal` as the token hops. */
   private living!: LivingBoard;
+  /** The stone bridges of the ladders: rise on reveal, fade when a token rests behind them (T42.9). */
+  private bridges!: BridgeActor;
   /** Squares the current event revealed in `reveal` whose crossfade waits for the token to arrive. */
   private pendingTerrain = new Set<number>();
   private board!: StoryBoard;
@@ -154,6 +162,8 @@ export class BoardScene extends Phaser.Scene {
 
   /** Loads the seated Hanuman's figurine textures (the board atlases load in PreloadScene). */
   preload(): void {
+    const bridgeAtlas = bridgeSheet(this.level);
+    if (!this.textures.exists(bridgeAtlas.key)) loadAtlas(this, bridgeAtlas);
     for (const asset of figurineAssets(this.heroes, ['s', 'm'])) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.url);
     }
@@ -164,6 +174,11 @@ export class BoardScene extends Phaser.Scene {
     this.audio = getAudio(this.game.registry.get('muted') === true);
     ensureFxTextures(this);
     this.living = new LivingBoard(this, this.rig, this.board, this.reveal, { isFast: () => this.fastMode });
+    this.bridges = new BridgeActor(this, this.rig, this.living, this.board.ladders, this.level, {
+      isFast: () => this.fastMode,
+      audio: this.audio,
+      restingSquares: () => this.restingSquares(),
+    });
     this.rig.within('hud', () => this.drawSeats());
     this.createTokens();
     this.rig.within('hud', () => this.createHud());
@@ -336,10 +351,8 @@ export class BoardScene extends Phaser.Scene {
         }
         return;
       case 'Laddered':
-        this.audio.ladder();
-        this.living.revealJump(event.jump.from);
-        await this.slideTo(event.player, event.jump.to, 'ladder', event.jump);
-        this.revealTerrain(event.jump.to);
+        await this.bridges.reveal(event.jump.from);
+        await this.crossBridge(event.player, event.jump);
         return;
       case 'Bitten':
         this.audio.snake();
@@ -699,6 +712,51 @@ export class BoardScene extends Phaser.Scene {
     await this.relayout(player);
   }
 
+  /** Spec 6.6: step onto the foot abutment, hop-walk the deck (the token rides the arch), step off, top block revealed. */
+  private async crossBridge(player: number, jump: Jump): Promise<void> {
+    const model = this.bridges.modelOf(jump.from);
+    const start = this.worldAt[player];
+    if (!start) throw new Error(`Player ${player} is not on the board at the foot of ${model.id}`);
+    this.shownSquare[player] = jump.to;
+    const end = this.spotOf(player);
+    const hops = walkHops(model.meta, start, end);
+    let stepped = -1;
+    // One tween drives every hop, so they run back to back by the clock (vishwamitra's seven deck hops take 980 ms).
+    await this.travel(
+      player,
+      hops.length * hopMs(this.fastMode),
+      'Linear',
+      (progress) => {
+        const at = hopAtProgress(hops.length, progress);
+        return bridgePose(model.meta, model.segments, hops[at.index]!, at.u);
+      },
+      (progress) => {
+        const { index } = hopAtProgress(hops.length, progress);
+        if (index === stepped) return;
+        stepped = index;
+        this.audio.step();
+      },
+    );
+    this.worldAt[player] = end;
+    this.tokenAt(player).place(this.restPose(player, end));
+    this.revealTerrain(jump.to);
+    this.audio.ladder(true);
+    const landed = this.restPose(player, end).feet;
+    this.rig.within('board', () => goldBurst(this, landed.x, landed.y, this.fastMode));
+    this.tokenAt(player).squash(this.scaled(60));
+    await this.relayout(player);
+  }
+
+  /** Squares tokens stand still on: the square a token is drawn on once it has reached its field (not while it hops to it). */
+  private restingSquares(): number[] {
+    return this.shownSquare.filter((square, i) => {
+      const spot = this.worldAt[i];
+      if (square === 0 || !spot) return false;
+      const [x, y] = fieldCentre(square);
+      return Math.hypot(spot[0] - x, spot[1] - y) <= RESTING_RADIUS;
+    });
+  }
+
   /** Dust at the snake's head and a brief camera shake when a token is bitten. */
   private biteEffects(headSquare: number): void {
     const head = squareScreen(headSquare);
@@ -748,7 +806,9 @@ export class BoardScene extends Phaser.Scene {
   private spotOf(player: number): Vec2 {
     const square = this.shownSquare[player] ?? 0;
     const sharing = this.shownSquare.flatMap((s, i) => (s === square ? [i] : []));
-    return restingSpot(square, sharing.indexOf(player), sharing.length);
+    const [x, y] = restingSpot(square, sharing.indexOf(player), sharing.length);
+    // Spec 1.3: the standing field of a bridge top square sits clear of the abutment sill.
+    return [x, y + (this.board.ladders.some((ladder) => ladder.to === square) ? BRIDGE_TOP_FIELD_SHIFT : 0)];
   }
 
   private tokenAt(player: number): BoardToken {

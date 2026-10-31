@@ -79,7 +79,14 @@ export function goldBurst(scene: Phaser.Scene, x: number, y: number, fast: boole
 }
 
 /** Parchment dust puff; `count` squares drift outwards and fade. */
-export function dustPuff(scene: Phaser.Scene, x: number, y: number, fast: boolean, count = 10): void {
+export function dustPuff(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  fast: boolean,
+  count = 10,
+  depth = FX_DEPTH,
+): void {
   const lifespan = life(450, fast);
   const emitter = scene.add
     .particles(x, y, PARCHMENT_SQUARE, {
@@ -90,7 +97,7 @@ export function dustPuff(scene: Phaser.Scene, x: number, y: number, fast: boolea
       rotate: { min: 0, max: 90 },
       emitting: false,
     })
-    .setDepth(FX_DEPTH);
+    .setDepth(depth);
   emitter.explode(count);
   destroyAfter(scene, emitter, lifespan);
 }
