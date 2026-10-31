@@ -72,8 +72,9 @@ export class Figurine extends Phaser.GameObjects.Container implements BoardToken
   }
 
   place(pose: TokenPose): void {
-    this.setPosition(pose.feet.x, pose.feet.y).setDepth(pose.depth);
-    this.shadow.setPosition(pose.ground.x, pose.ground.y).setScale(1 - 0.3 * pose.lift);
+    const scale = pose.scale ?? 1;
+    this.setPosition(pose.feet.x, pose.feet.y).setDepth(pose.depth).setScale(scale);
+    this.shadow.setPosition(pose.ground.x, pose.ground.y).setScale((1 - 0.3 * pose.lift) * scale);
   }
 
   squash(ms: number): void {
