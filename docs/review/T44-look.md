@@ -5,8 +5,10 @@ clay-toy diorama, so group C (Rama, Sita, Lakshmana, snakes, bridges: T44.9–T4
 still placeholder tubes. Rama, Sita and Lakshmana are still clay peg figures in their seat colours.
 
 Branch `feat/diorama-3d`. All captures are from the running app (Edge, headless), not mock-ups. The close-ups lift the
-fog with the review hook `__app.revealAll()`, so every region shows its props. The run, leap and bite shots drive the
-board view directly with fixed squares, so each moment is repeatable.
+fog with the review hook `__app.revealAll()`, so every region shows its props. Some shots are staged by driving the
+board view directly on fixed squares, so each moment is repeatable: the run, step-on, deck, long leap, bite, mid-reveal,
+speech bubble and chhatra shots. Staging puts Hanuman on the square and gives him the lit ring, so in those shots the
+ring can be under Hanuman while the banner names another player. That is the staging, not a bug.
 
 ## What changed in T44.8
 
@@ -51,9 +53,15 @@ board view directly with fixed squares, so each moment is repeatable.
 
 ![Hanuman running](images/t44-look/hanuman-run.webp)
 
-### Hanuman's leap to Lanka onto the bridge placeholder (95 → 122, mid-flight)
+### Hanuman leaping onto a bridge placeholder (hanuman-meeting 88 → 113): step-on, then running the deck
 
-![Hanuman leaping](images/t44-look/hanuman-leap.webp)
+![Hanuman stepping onto the bridge](images/t44-look/hanuman-step-on.webp)
+
+![Hanuman running the deck](images/t44-look/hanuman-on-deck.webp)
+
+### Hanuman's leap to Lanka (95 → 122, one long leap, Hanuman only, mid-flight)
+
+![Hanuman leaping to Lanka](images/t44-look/hanuman-leap.webp)
 
 ### Snake bite placeholder (kaikeyi 46 → 28: Hanuman scared, shrinking into the head)
 
@@ -69,13 +77,21 @@ board view directly with fixed squares, so each moment is repeatable.
 
 ![Speech bubble over Hanuman](images/t44-look/bubble.webp)
 
-### Fog boundary
+### Fog boundary, and fog mid-reveal (squares 17–28, about 190 ms into the 420 ms lift)
 
 ![Fog boundary](images/t44-look/fog-boundary.webp)
+
+![Fog mid-reveal](images/t44-look/fog-mid-reveal.webp)
 
 ### Win (Easy, 4 bots, normal speed: Hanuman wins)
 
 ![Win](images/t44-look/win.webp)
+
+### The chhatra at 144 with two heroes on the dais (respect check R6; un-dimmed, default camera angle)
+
+![Chhatra at Fit](images/t44-look/chhatra-fit.webp)
+
+![Chhatra close, default azimuth and polar](images/t44-look/chhatra-close.webp)
 
 ## Metrics
 
@@ -109,25 +125,30 @@ compressed):
 
 ## Full games
 
-All on the production build, with zero console errors and zero page errors.
+All on the production build (`vite preview`), with zero console errors and zero page errors. The first two ran on the
+build of commit ac5aa1c. The reduced-motion game ran on the final build, which adds the calm winner, the die ring on the
+felt and the timestamp tap. An earlier reduced-motion run on ac5aa1c also won cleanly (Hanuman, 149 s).
 
-| Game | Speed | Winner | Time |
-|---|---|---|---|
-| Easy, 4 bots (Hanuman, Rama, Sita, Lakshmana) | Normal | Hanuman | 461 s |
-| Hard, 4 bots | Fast | Rama | 147 s |
-| Easy, 4 bots, `prefers-reduced-motion: reduce` | Fast | Hanuman | 149 s |
+| Game | Speed | Winner | Time | Build |
+|---|---|---|---|---|
+| Easy, 4 bots (Hanuman, Rama, Sita, Lakshmana) | Normal | Hanuman | 461 s | ac5aa1c |
+| Hard, 4 bots | Fast | Rama | 147 s | ac5aa1c |
+| Easy, 4 bots, `prefers-reduced-motion: reduce` | Fast | Hanuman | 111 s | final |
 
-Also green: `npm run verify` (lint, 626 Vitest tests, sim, build, smoke on :4173) and `npm run devices`.
+Also green: `npm run verify` (lint, 626 Vitest tests, sim, build, smoke on :4173) and `npm run devices`. The 3D die was
+checked in the integrated scene: a mouse tap on the tray rolls, and a 48 px drag that starts on the tray orbits the
+camera without rolling. A tap now measures its duration from the event timestamps, so a long frame between press and
+release no longer turns a tap into a hold.
 
 ## Known gaps for the owner
 
 | # | Gap | Where it goes |
 |---|---|---|
 | 1 | Rama, Sita and Lakshmana are clay pegs; snakes and bridges are tubes. Hanuman's deck crossing follows the placeholder arch. | T44.9–T44.13 |
-| 2 | **Chhatra at 144 vs. tall heroes.** The canopy is 0.79 u high, but a hero is 1.43 u tall. From the default camera, the parasol reads beside or just above the winner's head on 144 (see Win). This is a respect risk (R6: no halo reading). Raise the pole above 1.6 u or move it further back. | Owner decision, then the landmarks owner |
+| 2 | **Chhatra at 144 vs. tall heroes: fails R6 as built.** The canopy is 0.79 u high, but a hero is 1.43 u tall. From the default camera angle the gold parasol sits directly behind a standing hero's head (see the chhatra captures), which is a halo reading. Fix options: raise the pole so the canopy clears 1.7 u, move it well behind the throne, or drop the canopy. | Owner decision, then the landmarks owner (before T44.16) |
 | 3 | At Fit with 3–4 seats, the glass seat-card column covers the board's front-left corner (squares 1–3 and the gate), visible through the glass. A bigger Fit shift would push the tray under the Roll pill. | Owner: accept, or shrink the cards on desktop |
 | 4 | Deviations from spec 1.3 / 3 / 2.4, made for the look: key light front-left at 3.0, environment 0.12, exposure 0.85; flattened mist; props scaled past the 22 px cap (new cap 0.5 u) plus 2 dressing pieces per block. | Owner sign-off; then update the spec |
-| 5 | Shadow pass is 42–51 calls before any snake or bridge is raised. That is at the phone budget (≤ 50). | T44.14: stop small props casting on phone, or cap landmark casters |
+| 5 | Shadow pass is 41–46 calls before any snake or bridge is raised: under the phone budget (≤ 50), but with little room for 13 snakes and 9 bridges. | T44.14: stop small props casting on phone, or cap landmark casters |
 | 6 | Fast 4-bot Hard game takes ~147 s. T44.1's ≤ 60 s was measured on the capsule placeholder. Bot delay, reactions and the die tumble (0.4 s Fast) dominate. | T44.14 if it matters |
 | 7 | The tray's indigo felt (die.glb) does not show: the board ledge's tan well floor covers it. The two trays overlap. | Board / dice owner: drop one of the two trays |
 | 8 | Not built: block-tap label (2.8), the 3D emote glyph over the head (4.7). A tap on the board no longer rolls (the die and tray, the Roll pill and Space/Enter do). | T44.14 |

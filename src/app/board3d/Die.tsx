@@ -243,13 +243,14 @@ function DieModel({
   });
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>): void => {
-    down.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY, t: performance.now() };
+    // event timestamps, not handler time: a long frame between down and up must not turn a tap into a hold
+    down.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY, t: e.nativeEvent.timeStamp };
   };
   const onPointerUp = (e: ThreeEvent<PointerEvent>): void => {
     const start = down.current;
     down.current = null;
     if (!start) return;
-    const up = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY, t: performance.now() };
+    const up = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY, t: e.nativeEvent.timeStamp };
     if (!isTap(start, up)) return;
     e.stopPropagation();
     callbacks.current.onTap?.();
