@@ -28,6 +28,7 @@
     "devices": "node scripts/devices.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "blender:spike": "node scripts/blender/run.mjs scripts/blender/hanuman_spike.py public/models/spike/hanuman.glb",
+    "blender:dice": "node scripts/blender/run.mjs scripts/blender/die.py public/models/dice/die.glb",
     "blender:spike:check": "node scripts/blender/spike-check.mjs screenshots-tmp/spike"
   },
   "dependencies": {
