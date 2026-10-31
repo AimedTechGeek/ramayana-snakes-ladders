@@ -441,6 +441,8 @@ def _rest_rotations(arm):
 def key_pose(arm, rests, pose, frame, shift_bones, scale_bones):
     kin = SKEL.kin(pose)
     for b in SKEL.order:
+        if b not in arm.pose.bones:     # a hero rig may drop the extras it does not use (Lakshmana has no tail)
+            continue
         pb = arm.pose.bones[b]
         pb.rotation_quaternion = rests[b].inverted() @ kin.Q[b] @ rests[b]
         pb.keyframe_insert("rotation_quaternion", frame=frame, group=b)
@@ -578,6 +580,8 @@ def verify_fk(arm, poses, frames=(0,)):
         bpy.context.view_layer.update()
         kin = SKEL.kin(poses[f])
         for b in ("foot.L", "foot.R", "hand.R", "head", "tail.04", "prop.R"):
+            if b not in arm.pose.bones:
+                continue
             blender_head = arm.pose.bones[b].head / SCALE
             err = (blender_head - kin.head(b)).length
             if err > 0.05:

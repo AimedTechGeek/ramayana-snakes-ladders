@@ -1,4 +1,4 @@
-// Pieces on the board: Hanuman and Rama (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
+// Pieces on the board: Hanuman, Rama and Lakshmana (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
 // placeholder bridges and snakes that rise when revealed, bounce puffs, and the head anchors of the speech bubbles.
 
 import { useFrame, useThree } from '@react-three/fiber';
@@ -80,7 +80,11 @@ function useTokenPlacement(view: DioramaView, player: number) {
   return group;
 }
 
-/** A rigged clay hero (Hanuman, Rama), driven by the view through heroDirector (useHeroActor). */
+/** Heroes with a rigged clay GLB (the others are pegs until their models land). */
+const RIGGED: readonly Hero[] = ['hanuman', 'rama', 'lakshmana'];
+const isRigged = (hero: Hero): hero is HeroId => RIGGED.includes(hero);
+
+/** A rigged clay hero (Hanuman, Rama, Lakshmana), driven by the view through heroDirector (useHeroActor). */
 function RiggedToken({
   view,
   player,
@@ -102,7 +106,7 @@ function RiggedToken({
   );
 }
 
-// ---- placeholder peg figures (Rama, Sita, Lakshmana until their GLBs land in T44.9-11)
+// ---- placeholder peg figures (Rama and Sita until their GLBs land in T44.9-10)
 
 const PEG_SKIN: Record<Hero, string> = {
   rama: '#E8B58C',
@@ -257,7 +261,7 @@ export function Tokens({ view, reducedMotion }: { view: DioramaView; reducedMoti
   return (
     <group>
       {players.map((player, i) =>
-        player.hero === 'hanuman' || player.hero === 'rama' ? (
+        isRigged(player.hero) ? (
           <Suspense
             key={i}
             fallback={<PegToken view={view} player={i} hero={player.hero} reducedMotion={reducedMotion} />}
