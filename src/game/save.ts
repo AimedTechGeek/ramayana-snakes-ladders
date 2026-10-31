@@ -1,14 +1,23 @@
 import { MAX_PLAYERS, MIN_PLAYERS } from '../core/game';
 import type { GameState, Hero, Level } from '../core/types';
 import { HERO_ORDER } from './heroes';
+import { isRevealState, seedFromGameState, type RevealState } from './reveal';
 
 const SAVE_KEY = 'rsl.save.v1';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
+/** v1 saves held only the engine state; they are migrated, not discarded. */
+const LEGACY_VERSION = 1;
 const LEVELS: readonly Level[] = ['easy', 'medium', 'hard'];
 
 interface SaveFile {
   version: number;
   state: GameState;
+  reveal: RevealState;
+}
+
+export interface LoadedGame {
+  state: GameState;
+  reveal: RevealState;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -48,8 +57,8 @@ function isGameState(value: unknown): value is GameState {
 }
 
 /** Writes the game to localStorage. Returns false when storage is unavailable or full. */
-export function saveGame(state: GameState): boolean {
-  const file: SaveFile = { version: SAVE_VERSION, state };
+export function saveGame(state: GameState, reveal: RevealState): boolean {
+  const file: SaveFile = { version: SAVE_VERSION, state, reveal };
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(file));
     return true;
@@ -59,8 +68,8 @@ export function saveGame(state: GameState): boolean {
   }
 }
 
-/** Returns the saved game, or null when there is none, the JSON is corrupt, the version differs or the shape is invalid. */
-export function loadGame(): GameState | null {
+/** Returns the saved game, or null when there is none, the JSON is corrupt, the version is unknown or the shape is invalid. A v1 save gets its reveal state seeded from the game state. */
+export function loadGame(): LoadedGame | null {
   let raw: string | null;
   try {
     raw = localStorage.getItem(SAVE_KEY);
@@ -77,8 +86,11 @@ export function loadGame(): GameState | null {
     // Corrupt JSON is treated as no save.
     return null;
   }
-  if (!isRecord(parsed) || parsed.version !== SAVE_VERSION || !isGameState(parsed.state)) return null;
-  return parsed.state;
+  if (!isRecord(parsed) || !isGameState(parsed.state)) return null;
+  if (parsed.version === LEGACY_VERSION)
+    return { state: parsed.state, reveal: seedFromGameState(parsed.state) };
+  if (parsed.version !== SAVE_VERSION || !isRevealState(parsed.reveal)) return null;
+  return { state: parsed.state, reveal: parsed.reveal };
 }
 
 /** Removes the save. Returns false when storage is unavailable. */
