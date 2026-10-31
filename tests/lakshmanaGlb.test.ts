@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AnimationMixer,
   Object3D,
+  Quaternion,
   SkinnedMesh,
   Vector3,
   type AnimationClip,
@@ -308,6 +309,33 @@ describe('Lakshmana GLB: his own identity (T44 4.3, 4.4 R4 R5 R7)', () => {
   it('R5_(BowNeverAimed)_ShouldStayWithin50DegreesOfUprightInEveryBoardClip', () => {
     for (const clip of ['idle', 'walk', 'run', 'leap', 'happy', 'excited', 'scared', 'sad'])
       expect(report[clip]!.max_bow_tilt, clip).toBeLessThanOrEqual(50);
+  });
+
+  it('BowPose_(LoadedClips)_ShouldMatchTheBlenderBuildSoHeldChannelsSurviveTheExport', async () => {
+    // T44.14: Blender drops channels that are constant through a clip unless static channels are kept; the idle bow
+    // hand is one, and without it the bow snaps to the rest pose in the game
+    const { scene, clips } = await load();
+    let prop: Object3D | null = null;
+    scene.traverse((o: Object3D) => {
+      if (o.name === 'prop.R' || o.name === 'propR') prop = o;
+    });
+    const mixer = new AnimationMixer(scene);
+    for (const name of ['idle', 'walk', 'run', 'happy', 'sad']) {
+      const clip = clips.find((c) => c.name === name)!;
+      let worst = 0;
+      for (let k = 0; k <= 24; k++) {
+        mixer.stopAllAction();
+        const action = mixer.clipAction(clip);
+        action.reset().play();
+        action.setEffectiveTimeScale(0);
+        action.time = (clip.duration * k) / 24;
+        mixer.update(0);
+        scene.updateMatrixWorld(true);
+        const up = new Vector3(0, 1, 0).applyQuaternion((prop as unknown as Object3D).getWorldQuaternion(new Quaternion()));
+        worst = Math.max(worst, (Math.acos(Math.min(1, Math.abs(up.y))) * 180) / Math.PI);
+      }
+      expect(Math.abs(worst - report[name]!.max_bow_tilt), `${name}: ${worst.toFixed(1)} vs ${report[name]!.max_bow_tilt}`).toBeLessThanOrEqual(2);
+    }
   });
 
   it('R4_(NoSomersault)_ShouldKeepTheHeadAboveTheHipsEvenInTheWinCheer', () => {

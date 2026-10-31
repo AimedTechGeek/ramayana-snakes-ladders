@@ -1,10 +1,11 @@
-// Builds every hero script in this folder (hanuman.py now; rama.py, sita.py, lakshmana.py later):
+// Builds every hero script in this folder (hanuman.py, rama.py, sita.py, lakshmana.py), then prunes rest-pose channels:
 //   node scripts/blender/heroes/build.mjs [name ...]      ->  public/models/heroes/<name>.glb
 // common.py and motion.py are shared modules, not heroes.
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pruneGlb } from '../prune-anim.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SHARED = new Set(['common', 'motion']);
@@ -26,4 +27,7 @@ for (const name of heroes) {
     { stdio: 'inherit' },
   );
   if (result.status !== 0) process.exit(result.status ?? 1);
+  // every hero exports with static channels kept (held poses survive); the rest-pose ones are dropped afterwards
+  const pruned = await pruneGlb(`public/models/heroes/${name}.glb`);
+  console.log(`pruned ${pruned.dropped} rest-pose channels: ${pruned.before} -> ${pruned.after} bytes`);
 }
