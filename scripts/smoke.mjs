@@ -1,5 +1,5 @@
 // Smoke test: serves the built app with `vite preview`, loads it in Microsoft Edge,
-// checks the game boots without console/page errors, and saves a screenshot.
+// checks the app boots and the 3D board takes a roll without console/page errors, and saves a screenshot.
 //
 // Env:
 //   SMOKE_SHOT    screenshot path (default: screenshots-tmp/smoke.png)
@@ -59,12 +59,31 @@ async function runSmoke(page, errors) {
   await page.goto(APP_URL + (process.env.SMOKE_PATH ?? ''), { waitUntil: 'load' });
 
   try {
-    await page.waitForFunction(() => window.__game?.registry.get('ready') === true, null, {
+    await page.waitForFunction(() => window.__app?.ready === true, null, {
       timeout: READY_TIMEOUT_MS,
     });
   } catch {
-    errors.push(`game did not report ready within ${READY_TIMEOUT_MS} ms (window.__game registry 'ready')`);
+    errors.push(`game did not report ready within ${READY_TIMEOUT_MS} ms (window.__app.ready)`);
   }
+
+  // Through Boot and Setup to the 3D board: the default seats are a human and a bot, so the game waits for a roll.
+  await page.click('[data-testid=play]');
+  await page.click('[data-testid=start]');
+  await page.waitForFunction(
+    () => window.__app.state().screen === 'game' && document.querySelector('canvas'),
+    null,
+    {
+      timeout: READY_TIMEOUT_MS,
+    },
+  );
+  await page.click('[data-testid=dice]');
+  await page.waitForFunction(
+    () => window.__app.state().lastEvent?.type === 'Moved' || window.__app.state().game?.current === 1,
+    null,
+    {
+      timeout: READY_TIMEOUT_MS,
+    },
+  );
 
   if (SCRIPT_PATH) {
     const extraSteps = await import(pathToFileURL(resolve(SCRIPT_PATH)).href);

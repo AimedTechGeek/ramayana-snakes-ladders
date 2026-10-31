@@ -1,4 +1,4 @@
-// Device check: serves the build on its own port, then for each viewport loads the game in Edge, plays turns
+// Device check: serves the build on its own port, then for each viewport loads the app in Edge, plays turns
 // in fast mode and asserts the canvas fits, nothing errors, the frame rate holds and portrait shows the rotate prompt.
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
@@ -41,26 +41,23 @@ async function waitForServer() {
   throw new Error(`no server at ${URL}`);
 }
 
-/** Starts a 1 human + 1 bot game via the game's own scenes and plays a few fast turns. */
+/** Starts a 1 human + 3 bot game through window.__app and plays a few Fast turns, counting frames. */
 async function playTurns(page) {
   await page.evaluate(() =>
-    window.__game.scene.start('Board', {
-      config: {
-        level: 'hard',
-        playOn: false,
-        players: [
-          { hero: 'rama', controller: 'human', name: 'Rama' },
-          { hero: 'hanuman', controller: 'bot', name: 'Hanuman' },
-          { hero: 'sita', controller: 'bot', name: 'Sita' },
-          { hero: 'lakshmana', controller: 'bot', name: 'Lakshmana' },
-        ],
-      },
+    window.__app.startGame({
+      level: 'hard',
+      playOn: false,
+      players: [
+        { hero: 'rama', controller: 'human', name: 'Rama' },
+        { hero: 'hanuman', controller: 'bot', name: 'Hanuman' },
+        { hero: 'sita', controller: 'bot', name: 'Sita' },
+        { hero: 'lakshmana', controller: 'bot', name: 'Lakshmana' },
+      ],
     }),
   );
-  await page.waitForFunction(() => window.__game.registry.get('board-ready') === true);
   return page.evaluate(async () => {
-    const board = window.__game.registry.get('board');
-    board.fastMode = true;
+    const app = window.__app;
+    app.setFast(true);
     let frames = 0;
     let counting = true;
     const tick = () => {
@@ -69,9 +66,9 @@ async function playTurns(page) {
     };
     requestAnimationFrame(tick);
     const start = performance.now();
-    for (let i = 0; i < 8 && !board.snapshot().over; i++) {
-      while (board.isBusy) await new Promise((r) => setTimeout(r, 30));
-      await board.requestRoll();
+    for (let i = 0; i < 8 && !app.state().game.over; i++) {
+      while (app.isBusy) await new Promise((r) => setTimeout(r, 30));
+      await app.requestRoll();
     }
     counting = false;
     return { fps: (frames * 1000) / (performance.now() - start) };
@@ -91,20 +88,20 @@ async function checkDevice(browser, device) {
       problems.push(`console: ${m.text()}`);
   });
   await page.goto(URL);
-  await page.waitForFunction(() => window.__game?.registry.get('ready') === true, null, { timeout: 15_000 });
+  await page.waitForFunction(() => window.__app?.ready === true, null, { timeout: 15_000 });
 
-  const box = await page.locator('canvas').boundingBox();
-  if (!box || box.width > device.width + 1 || box.height > device.height + 1) {
-    problems.push(`canvas ${JSON.stringify(box)} does not fit ${device.width}x${device.height}`);
-  }
   if (device.portrait) {
-    const rotating = await page.evaluate(() => window.__game.scene.isVisible('Rotate'));
+    const rotating = await page.locator('[data-testid=rotate]').isVisible();
     if (!rotating) problems.push('portrait viewport does not show the rotate prompt');
   } else {
     const { fps } = await playTurns(page);
+    const box = await page.locator('canvas').boundingBox();
+    if (!box || box.width > device.width + 1 || box.height > device.height + 1) {
+      problems.push(`canvas ${JSON.stringify(box)} does not fit ${device.width}x${device.height}`);
+    }
     if (fps < MIN_FPS) problems.push(`frame rate ${fps.toFixed(0)} < ${MIN_FPS}`);
     console.log(
-      `  ${device.name}: ${fps.toFixed(0)} fps, canvas ${Math.round(box.width)}x${Math.round(box.height)}`,
+      `  ${device.name}: ${fps.toFixed(0)} fps, canvas ${Math.round(box?.width ?? 0)}x${Math.round(box?.height ?? 0)}`,
     );
   }
   await page.screenshot({ path: `${OUT}/${device.name}.png` });

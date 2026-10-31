@@ -1,43 +1,40 @@
-// SMOKE_SCRIPT step: start a game via Boot and Setup, play turns until a ladder or snake has happened or 40 rolls,
-// then roll in fast mode until the game is over and the Win overlay is up.
+// SMOKE_SCRIPT step: start a 1 human + 1 bot game through window.__app, roll until a token passes square 30 or
+// 40 rolls, then switch to Fast and roll until the game is over and the Win dialog is up.
 export default async function playSomeTurns(page) {
-  await page.mouse.click(640, 440); // Boot: Play
-  await page.waitForFunction(
-    () => window.__game?.scene.isActive('Setup') && window.__game.registry.get('setup'),
-    null,
-    {
-      timeout: 10_000,
-    },
+  await page.evaluate(() =>
+    window.__app.startGame({
+      level: 'easy',
+      playOn: false,
+      players: [
+        { hero: 'rama', controller: 'human', name: 'Rama' },
+        { hero: 'hanuman', controller: 'bot', name: 'Hanuman' },
+      ],
+    }),
   );
-  await page.mouse.click(1108, 620); // Setup: Start
-  await page.waitForFunction(() => window.__game?.registry.get('board-ready') === true, null, {
-    timeout: 10_000,
-  });
   const rolls = await page.evaluate(async () => {
-    const board = window.__game.registry.get('board');
+    const app = window.__app;
     const idle = () => new Promise((r) => setTimeout(r, 30));
     let count = 0;
-    while (count < 40 && !board.snapshot().over) {
-      while (board.isBusy) await idle();
-      await board.requestRoll();
+    while (count < 40 && !app.state().game.over) {
+      while (app.isBusy) await idle();
+      await app.requestRoll();
       count++;
-      if (board.snapshot().players.some((p) => p.position > 30)) break;
+      if (app.state().game.players.some((p) => p.position > 30)) break;
     }
     return count;
   });
   if (rolls === 0) throw new Error('no rolls happened');
 
-  // Keep playing in fast mode until the game is over (bots roll themselves), then wait for the Win overlay.
   await page.evaluate(async () => {
-    const board = window.__game.registry.get('board');
+    const app = window.__app;
     const idle = () => new Promise((r) => setTimeout(r, 30));
-    board.fastMode = true;
+    app.setFast(true);
     let count = 0;
-    while (!board.snapshot().over && count < 400) {
-      while (board.isBusy) await idle();
-      await board.requestRoll();
+    while (!app.state().game.over && count < 400) {
+      while (app.isBusy) await idle();
+      await app.requestRoll();
       count++;
     }
   });
-  await page.waitForFunction(() => window.__game?.registry.get('win'), null, { timeout: 60_000 });
+  await page.waitForFunction(() => window.__app.state().winShown, null, { timeout: 60_000 });
 }

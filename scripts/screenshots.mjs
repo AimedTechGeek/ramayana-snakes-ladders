@@ -1,5 +1,5 @@
 // Screenshots for the README and the user guide: serves the build on its own port, drives Edge through the
-// game's own scenes and writes PNGs to docs/images/. Run `npm run build` first.
+// app's own screens and writes PNGs to docs/images/. Run `npm run build` first.
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
@@ -11,14 +11,6 @@ const LANDSCAPE = { width: 1280, height: 720 };
 const PORTRAIT = { width: 390, height: 844 };
 const SERVER_TIMEOUT_MS = 30_000;
 const TURN_LIMIT = 400;
-
-// Click points on the 1280x720 canvas, from BootScene, SetupScene and the Board HUD.
-const AT = {
-  play: [640, 440], // Boot: Play
-  languageChip: [1184, 668], // Boot: language chip
-  seat3Bot: [796, 172], // Setup: seat 3, Bot segment
-  start: [1108, 620], // Setup: Start Game
-};
 
 function startServer() {
   return spawn(`npx vite preview --port ${PORT} --strictPort`, { shell: true, stdio: 'ignore' });
@@ -65,7 +57,7 @@ async function openGame(browser, { viewport = LANDSCAPE, touch = false, hash = '
       problems.push(`console: ${m.text()}`);
   });
   await page.goto(URL + hash);
-  await page.waitForFunction(() => window.__game?.registry.get('ready') === true, null, { timeout: 15_000 });
+  await page.waitForFunction(() => window.__app?.ready === true, null, { timeout: 15_000 });
   return { context, page, problems };
 }
 
@@ -76,39 +68,38 @@ async function shoot(page, name) {
   console.log(`  wrote ${OUT}/${name}`);
 }
 
-/** Boot -> Setup (seat 3 set to Bot, so three seats show) -> Start. Resolves when the Board is ready. */
+/** Boot -> Setup (seat 3 set to Bot, so three seats show) -> Start. Resolves when the board is up. */
 async function startThreeSeatGame(page) {
-  await page.mouse.click(...AT.play);
-  await page.waitForFunction(() => window.__game.registry.get('setup'), null, { timeout: 10_000 });
-  await page.mouse.click(...AT.seat3Bot);
-  await page.mouse.click(...AT.start);
-  await page.waitForFunction(() => window.__game.registry.get('board-ready') === true, null, {
-    timeout: 10_000,
-  });
+  await page.click('[data-testid=play]');
+  await page.click('[data-testid=seat-2-bot]');
+  await page.click('[data-testid=start]');
+  await page.waitForFunction(
+    () => window.__app.state().screen === 'game' && document.querySelector('canvas'),
+  );
 }
 
-/** Rolls for the human until `rolls` human turns have been taken, fast, then waits until the board is idle. */
+/** Rolls for the human until `rolls` human turns have been taken, Fast, then waits until the board is idle. */
 async function playRolls(page, rolls) {
   await page.evaluate(async (target) => {
-    const board = window.__game.registry.get('board');
+    const app = window.__app;
     const idle = (ms = 30) => new Promise((r) => setTimeout(r, ms));
-    board.fastMode = true;
+    app.setFast(true);
     let taken = 0;
-    while (taken < target && !board.snapshot().over) {
-      if (board.isBusy) {
+    while (taken < target && !app.state().game.over) {
+      if (app.isBusy) {
         await idle();
         continue;
       }
-      const state = board.snapshot();
-      if (state.players[state.current]?.controller === 'bot') {
+      const { game } = app.state();
+      if (game.players[game.current]?.controller === 'bot') {
         await idle(100);
         continue;
       }
-      await board.requestRoll();
+      await app.requestRoll();
       taken++;
     }
-    while (board.isBusy) await idle();
-    board.fastMode = false;
+    while (app.isBusy) await idle();
+    app.setFast(false);
   }, rolls);
 }
 
@@ -121,9 +112,8 @@ async function shotTitle(browser) {
 
 async function shotSetup(browser) {
   const { context, page, problems } = await openGame(browser);
-  await page.mouse.click(...AT.play);
-  await page.waitForFunction(() => window.__game.registry.get('setup'), null, { timeout: 10_000 });
-  await page.mouse.click(...AT.seat3Bot);
+  await page.click('[data-testid=play]');
+  await page.click('[data-testid=seat-2-bot]');
   await shoot(page, '02-setup.png');
   await context.close();
   return problems;
@@ -141,51 +131,34 @@ async function shotBoard(browser) {
 /** Starts a two-player game and rolls until a ladder or a snake happens, then shoots 250 ms later. */
 async function shotReaction(browser) {
   const { context, page, problems } = await openGame(browser);
-  await page.mouse.click(...AT.play);
-  await page.waitForFunction(() => window.__game.registry.get('setup'), null, { timeout: 10_000 });
-  await page.mouse.click(...AT.start);
-  await page.waitForFunction(() => window.__game.registry.get('board-ready') === true, null, {
-    timeout: 10_000,
-  });
+  await page.click('[data-testid=play]');
+  await page.click('[data-testid=start]');
+  await page.waitForFunction(() => window.__app.state().screen === 'game');
   const kind = await page.evaluate(async (limit) => {
-    const board = window.__game.registry.get('board');
+    const app = window.__app;
     const idle = (ms = 30) => new Promise((r) => setTimeout(r, ms));
-    let stopped = false;
-    const hit = new Promise((resolve) => {
-      board.events.on('game-event', (event) => {
-        if (event.type === 'Laddered' || event.type === 'Bitten') {
-          stopped = true;
-          resolve(event.type);
-        }
-      });
-    });
-    void (async () => {
-      for (let turn = 0; turn < limit && !stopped; turn++) {
-        if (!board.isBusy) await board.requestRoll();
-        await idle(50);
+    for (let turn = 0; turn < limit; turn++) {
+      const type = app.state().lastEvent?.type;
+      if (type === 'Laddered' || type === 'Bitten') {
+        await idle(250);
+        return type;
       }
-    })();
-    const type = await hit;
-    await idle(250);
-    return type;
-  }, TURN_LIMIT);
+      if (!app.isBusy) await app.requestRoll();
+      await idle(20);
+    }
+    return 'none';
+  }, TURN_LIMIT * 20);
   console.log(`  reaction event: ${kind}`);
   await shoot(page, '04-reaction.png');
   await context.close();
   return problems;
 }
 
-/** Starts a Board straight from the Boot screen. Boot is stopped explicitly: scene.start leaves it drawn underneath. */
-async function startBoardDirectly(page, level, players) {
-  await page.evaluate(
-    ({ level, players }) => {
-      window.__game.scene.stop('Boot');
-      window.__game.scene.start('Board', { config: { level, playOn: false, players } });
-    },
-    { level, players },
-  );
-  await page.waitForFunction(() => window.__game.registry.get('board-ready') === true, null, {
-    timeout: 10_000,
+/** Starts a game straight from the Boot screen. */
+async function startGameDirectly(page, level, players) {
+  await page.evaluate(({ level, players }) => window.__app.startGame({ level, playOn: false, players }), {
+    level,
+    players,
   });
 }
 
@@ -197,7 +170,7 @@ const THREE_PLAYERS = [
 
 async function shotHardBoard(browser) {
   const { context, page, problems } = await openGame(browser);
-  await startBoardDirectly(page, 'hard', THREE_PLAYERS);
+  await startGameDirectly(page, 'hard', THREE_PLAYERS);
   await shoot(page, '05-hard-board.png');
   await context.close();
   return problems;
@@ -205,17 +178,17 @@ async function shotHardBoard(browser) {
 
 async function shotWin(browser) {
   const { context, page, problems } = await openGame(browser);
-  await startBoardDirectly(page, 'easy', THREE_PLAYERS);
+  await startGameDirectly(page, 'easy', THREE_PLAYERS);
   await page.evaluate(async (limit) => {
-    const board = window.__game.registry.get('board');
+    const app = window.__app;
     const idle = (ms = 30) => new Promise((r) => setTimeout(r, ms));
-    board.fastMode = true;
-    for (let turn = 0; turn < limit && !board.snapshot().over; turn++) {
-      if (!board.isBusy) await board.requestRoll();
+    app.setFast(true);
+    for (let turn = 0; turn < limit && !app.state().game.over; turn++) {
+      if (!app.isBusy) await app.requestRoll();
       await idle();
     }
-  }, TURN_LIMIT * 5);
-  await page.waitForFunction(() => window.__game.registry.get('win'), null, { timeout: 120_000 });
+  }, TURN_LIMIT * 50);
+  await page.waitForFunction(() => window.__app.state().winShown, null, { timeout: 180_000 });
   await page.waitForTimeout(1200);
   await shoot(page, '06-win.png');
   await context.close();
@@ -224,8 +197,7 @@ async function shotWin(browser) {
 
 async function shotHindi(browser) {
   const { context, page, problems } = await openGame(browser);
-  await page.mouse.click(...AT.languageChip);
-  await page.waitForTimeout(500);
+  await page.click('[data-testid=language]');
   await startThreeSeatGame(page);
   await playRolls(page, 4);
   await shoot(page, '07-hindi.png');
@@ -235,7 +207,6 @@ async function shotHindi(browser) {
 
 async function shotHeroes(browser) {
   const { context, page, problems } = await openGame(browser, { hash: '#gallery' });
-  await page.waitForTimeout(800);
   await shoot(page, '08-heroes.png');
   await context.close();
   return problems;
@@ -243,7 +214,7 @@ async function shotHeroes(browser) {
 
 async function shotRotate(browser) {
   const { context, page, problems } = await openGame(browser, { viewport: PORTRAIT, touch: true });
-  await page.waitForFunction(() => window.__game.scene.isVisible('Rotate'), null, { timeout: 10_000 });
+  await page.waitForSelector('[data-testid=rotate]', { timeout: 10_000 });
   await shoot(page, '09-rotate.png');
   await context.close();
   return problems;
