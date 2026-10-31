@@ -3,6 +3,7 @@
 //
 // Env:
 //   SMOKE_SHOT    screenshot path (default: screenshots-tmp/smoke.png)
+//   SMOKE_PORT    preview port (default: 4173)
 //   SMOKE_SCRIPT  optional JS module with `export default async (page) => {}`
 //                 run before the screenshot (for extra per-feature steps)
 
@@ -12,7 +13,9 @@ import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 
-const APP_URL = 'http://localhost:4173';
+// SMOKE_PORT lets parallel worktrees run smoke at the same time.
+const PORT = process.env.SMOKE_PORT || '4173';
+const APP_URL = `http://localhost:${PORT}`;
 const SERVER_TIMEOUT_MS = 30_000;
 const READY_TIMEOUT_MS = 15_000;
 const SHOT_PATH = process.env.SMOKE_SHOT || 'screenshots-tmp/smoke.png';
@@ -20,7 +23,7 @@ const SCRIPT_PATH = process.env.SMOKE_SCRIPT;
 const IS_WINDOWS = process.platform === 'win32';
 
 function startPreviewServer() {
-  return spawn('npx vite preview --port 4173 --strictPort', {
+  return spawn(`npx vite preview --port ${PORT} --strictPort`, {
     shell: true,
     stdio: 'ignore',
   });
