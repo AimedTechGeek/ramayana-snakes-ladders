@@ -17,6 +17,57 @@ const INK = '#2a1a0f';
 type Ctx = CanvasRenderingContext2D;
 type Look = 'idle' | 'blink' | 'happy' | 'excited' | 'scared' | 'sad';
 
+/**
+ * Two face sets over the same atlas layout. 'restrained' is for Rama and Sita (T44 4.4 R2): `scared` keeps the idle
+ * brows (concern, not fright), no sweat drop, no tear, no sparkles, `excited` is a calm raised-brow smile. The other
+ * heroes keep the comic set (Lakshmana and Hanuman, R4).
+ */
+export type FaceSet = 'comic' | 'restrained';
+export const RESTRAINED_HEROES: readonly string[] = ['rama', 'sita'];
+export function faceSetOf(hero: string): FaceSet {
+  return RESTRAINED_HEROES.includes(hero) ? 'restrained' : 'comic';
+}
+
+/** What a frame draws, as data (Vitest asserts R2 on this without a canvas). */
+export interface FaceSpec {
+  sweatDrop: boolean;
+  tear: boolean;
+  sparkles: boolean;
+  /** Brow tilt and lift of the frame; `scared` of the restrained set equals `idle`. */
+  browTilt: number;
+  browLift: number;
+}
+
+export function faceSpec(set: FaceSet, look: Look): FaceSpec {
+  if (set === 'restrained') {
+    const calm = { sweatDrop: false, tear: false, sparkles: false };
+    switch (look) {
+      case 'happy':
+        return { ...calm, browTilt: 0.05, browLift: 0.4 };
+      case 'excited':
+        return { ...calm, browTilt: 0.05, browLift: 0.6 };
+      case 'sad':
+        return { ...calm, browTilt: 0.1, browLift: -0.1 };
+      default: // idle, blink, scared
+        return { ...calm, browTilt: 0.12, browLift: look === 'blink' ? -0.1 : 0 };
+    }
+  }
+  switch (look) {
+    case 'idle':
+      return { sweatDrop: false, tear: false, sparkles: false, browTilt: 0.35, browLift: 0 };
+    case 'blink':
+      return { sweatDrop: false, tear: false, sparkles: false, browTilt: 0.3, browLift: -0.1 };
+    case 'happy':
+      return { sweatDrop: false, tear: false, sparkles: false, browTilt: 0.05, browLift: 0.5 };
+    case 'excited':
+      return { sweatDrop: false, tear: false, sparkles: true, browTilt: -0.15, browLift: 0.85 };
+    case 'scared':
+      return { sweatDrop: true, tear: false, sparkles: false, browTilt: -0.55, browLift: 0.9 };
+    case 'sad':
+      return { sweatDrop: false, tear: true, sparkles: false, browTilt: 0, browLift: 0 };
+  }
+}
+
 /** Patch design coordinates -> canvas pixels inside frame `index`. */
 function px(index: number, x: number, z: number): [number, number] {
   return [index * FRAME_W + FRAME_W / 2 + x * PX_X, ATLAS_H - (z - 55.2) * PX_Z];
@@ -105,7 +156,11 @@ function smile(ctx: Ctx, index: number, width: number, depth: number, z = 56.9):
   ctx.stroke();
 }
 
-function drawFrame(ctx: Ctx, index: number, look: Look): void {
+function drawFrame(ctx: Ctx, index: number, look: Look, set: FaceSet = 'comic'): void {
+  if (set === 'restrained') {
+    drawRestrained(ctx, index, look);
+    return;
+  }
   ctx.save();
   ctx.beginPath();
   ctx.rect(index * FRAME_W, 0, FRAME_W, ATLAS_H);
@@ -221,32 +276,91 @@ function drawFrame(ctx: Ctx, index: number, look: Look): void {
   ctx.restore();
 }
 
-export function drawFaceAtlas(ctx: Ctx): void {
-  ctx.clearRect(0, 0, ATLAS_W, ATLAS_H);
-  FACE_FRAMES.forEach((look, index) => drawFrame(ctx, index, look));
+/** The restrained set (Rama, Sita): the comic idle eyes, calmer brows, and only gentle mouths, per `faceSpec`. */
+function drawRestrained(ctx: Ctx, index: number, look: Look): void {
+  const spec = faceSpec('restrained', look);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(index * FRAME_W, 0, FRAME_W, ATLAS_H);
+  ctx.clip();
+  const eyeZ = 62.5;
+  if (look === 'blink') {
+    stroke(ctx, 0.5);
+    for (const sx of [-1, 1]) {
+      curve(ctx, index, [sx * 1.6, eyeZ + 0.1], [sx * 2.9, eyeZ - 0.9], [sx * 4.2, eyeZ + 0.1]);
+      ctx.stroke();
+    }
+  } else if (look === 'happy') {
+    stroke(ctx, 0.62);
+    for (const sx of [-1, 1]) {
+      curve(ctx, index, [sx * 1.4, eyeZ - 0.4], [sx * 2.9, eyeZ + 1.5], [sx * 4.4, eyeZ - 0.4]);
+      ctx.stroke();
+    }
+  } else {
+    const heavy = look === 'sad';
+    for (const sx of [-1, 1]) {
+      glossyEye(ctx, index, sx * 2.9, eyeZ - (heavy ? 0.2 : 0), 1.3, heavy ? 1.55 : 1.75, heavy);
+      if (heavy) {
+        ctx.fillStyle = '#f0c08f';
+        ctx.beginPath(); // soft lid over the top of each eye, no tear
+        const [cx, cy] = px(index, sx * 2.9, eyeZ + 0.5);
+        ctx.ellipse(cx, cy, 1.5 * PX_X, 0.9 * PX_Z, 0, Math.PI, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+  }
+  brows(ctx, index, spec.browTilt, spec.browLift);
+  switch (look) {
+    case 'happy':
+    case 'excited':
+      stroke(ctx, 0.42);
+      curve(ctx, index, [-2.3, 57.4], [0, 55.9], [2.3, 57.4]); // a wider closed smile, no tongue
+      ctx.stroke();
+      break;
+    case 'scared': // concern: a small level mouth, eyes and brows as at idle
+      stroke(ctx, 0.4);
+      curve(ctx, index, [-1.2, 56.6], [0, 56.4], [1.2, 56.6]);
+      ctx.stroke();
+      break;
+    case 'sad':
+      stroke(ctx, 0.42);
+      curve(ctx, index, [-1.6, 56.3], [0, 57.3], [1.6, 56.3]);
+      ctx.stroke();
+      break;
+    default:
+      smile(ctx, index, 2.0, 0.85);
+  }
+  blush(ctx, index, look === 'excited' || look === 'happy' ? 0.45 : 0.3);
+  ctx.restore();
 }
 
-let shared: CanvasTexture | null = null;
+export function drawFaceAtlas(ctx: Ctx, set: FaceSet = 'comic'): void {
+  ctx.clearRect(0, 0, ATLAS_W, ATLAS_H);
+  FACE_FRAMES.forEach((look, index) => drawFrame(ctx, index, look, set));
+}
 
-/** One atlas texture for the page; each hero clones it (shared image) to keep its own frame offset. */
-export function faceAtlasTexture(): CanvasTexture {
-  if (shared) return shared;
+const shared: Partial<Record<FaceSet, CanvasTexture>> = {};
+
+/** One atlas texture per face set for the page; each hero clones it (shared image) to keep its own frame offset. */
+export function faceAtlasTexture(set: FaceSet = 'comic'): CanvasTexture {
+  const cached = shared[set];
+  if (cached) return cached;
   const canvas = document.createElement('canvas');
   canvas.width = ATLAS_W;
   canvas.height = ATLAS_H;
   const ctx = canvas.getContext('2d');
-  if (ctx) drawFaceAtlas(ctx);
+  if (ctx) drawFaceAtlas(ctx, set);
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.flipY = false; // glTF UVs: v = 0 is the top of the image
   texture.anisotropy = 4;
-  shared = texture;
+  shared[set] = texture;
   return texture;
 }
 
 /** A hero's own texture object over the shared atlas, showing frame `index`. */
-export function faceTextureFor(): CanvasTexture {
-  const t = faceAtlasTexture().clone();
+export function faceTextureFor(set: FaceSet = 'comic'): CanvasTexture {
+  const t = faceAtlasTexture(set).clone();
   t.flipY = false;
   t.colorSpace = SRGBColorSpace;
   t.repeat.set(1 / FACE_FRAMES.length, 1);

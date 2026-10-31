@@ -45,9 +45,9 @@ import {
   type HeroClip,
 } from './heroClips';
 import { HeroDirector } from './heroDirector';
-import { faceTextureFor, showFrame } from './heroFace';
+import { faceSetOf, faceTextureFor, showFrame } from './heroFace';
 
-export type HeroId = 'hanuman' | 'lakshmana';
+export type HeroId = 'hanuman' | 'rama' | 'lakshmana';
 
 export interface PlayOptions {
   /** Defaults: idle, walk, run, cheer loop; the rest play once and hold their last pose. */
@@ -162,7 +162,7 @@ export function Hero({
     const mixer = new AnimationMixer(root);
     const actions = new Map<HeroClip, AnimationAction>();
     for (const clip of gltf.animations) actions.set(clip.name as HeroClip, mixer.clipAction(clip));
-    const face = faceTextureFor();
+    const face = faceTextureFor(faceSetOf(hero));
     const owned: Material[] = [];
     root.traverse((o) => {
       const mesh = o as Mesh;
@@ -183,7 +183,7 @@ export function Hero({
       }
     });
     return { root, mixer, actions, face, owned, extras: readExtras(gltf.scene) };
-  }, [gltf]);
+  }, [gltf, hero]);
 
   useEffect(
     () => () => {
