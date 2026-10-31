@@ -1,7 +1,6 @@
 // Where a token is drawn on the isometric board (T40 spec section 5). Pure, no Phaser.
 
-import { fieldCentre, type Vec2, type Vec3 } from './jumps';
-import { depthKey, toScreen, type Screen } from './boardIso';
+import { depthKey, fieldCentre, toScreen, type Screen, type Vec2, type Vec3 } from './boardIso';
 import { FAN_WORLD, TOP_Z } from './world';
 
 /** Tokens draw at 1000 + depth key (1027..1585): always above the board texture (0) and the shadows (500). */

@@ -5,8 +5,6 @@ export function mixHex(from: string, to: string, amount: number): string;
 export const TOKENS: { white: string; hi: string; mid: string };
 export const SEAT_COLOURS: Record<string, string>;
 export function seatBand(hero: string): { top: string; shades: [string, string, string, string] };
-export function snakeInks(): Record<string, { edge: string; head: string }>;
-export function ladderInks(): Record<string, { rail: string; rung: string }>;
 export function extraCss(): string;
 export function exportSvg(options: {
   width: number;

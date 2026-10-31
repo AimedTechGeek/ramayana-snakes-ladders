@@ -8,8 +8,7 @@ import { boardFor } from '../../core/boards';
 import type { Level } from '../../core/types';
 import type { Audio } from '../audio';
 import { dustPuff } from '../fx';
-import { fieldCentre, type Vec2 } from '../iso/jumps';
-import { toScreen } from '../iso/boardIso';
+import { fieldCentre, toScreen, type Vec2 } from '../iso/boardIso';
 import { TOP_Z } from '../iso/world';
 import { worldPose, type TokenPose } from '../iso/tokenPose';
 import type { BoardCameraRig } from '../ui/BoardCameraRig';
@@ -59,15 +58,17 @@ const TOKEN_STRIKE_DEPTH = 0.4;
 const SHAKE = { ms: 120, intensity: 0.004 };
 const CULL_MARGIN = 60;
 const CULL_EVERY_MS = 250;
+/** Reduced motion: how long each of the three static beats of a bite is held (Fast: none). */
+const STATIC_BEAT_MS = 350;
 
 export interface BiteHooks {
   /** World (x, y) the token stands at on the head square. */
   tokenSpot: Vec2;
   /** Draws the token (and its shadow) at a pose with an overall alpha. */
   drawToken(pose: TokenPose, alpha: number): void;
-  /** The swallow is over: send the camera to the tail square. */
+  /** The swallow is over: send the camera to the tail square and lift the fog on it (both start together). */
   panToTail(): void;
-  /** The token is about to reappear: move it to the tail square, lift that fog, and return its resting pose there. */
+  /** The token is about to reappear: move it to the tail square and return its resting pose there. */
   landAtTail(): TokenPose;
 }
 
@@ -295,6 +296,7 @@ export class SnakeActor {
   bite(jumpId: number, hooks: BiteHooks): Promise<void> {
     const snake = this.standing.get(jumpId);
     if (!snake) return Promise.reject(new Error(`No snake on square ${jumpId}`));
+    if (this.reduced) return this.biteStatic(snake, hooks);
     const fast = this.isFast();
     const first = !snake.shown;
     const line = snakeTimeline(fast, first);
@@ -380,7 +382,7 @@ export class SnakeActor {
       if (t >= S.swallow.start && t < S.swallow.end) {
         once('swallow', true, () => {
           this.audio.gulp(fast);
-          if (!fast) this.rig.board.shake(SHAKE.ms, SHAKE.intensity);
+          if (!fast && !this.reduced) this.rig.board.shake(SHAKE.ms, SHAKE.intensity);
         });
         const u = Phaser.Math.Easing.Quadratic.In(progress(t, 'swallow'));
         const fade = dur('swallow') / 4;
@@ -444,6 +446,31 @@ export class SnakeActor {
         },
       });
     });
+  }
+
+  /**
+   * Reduced motion (T42 owner decision 11): the three static beats without the strike. The snake stands (first reveal),
+   * the token vanishes, then the camera and the fog go to the tail square and the token is there.
+   */
+  private async biteStatic(snake: Standing, hooks: BiteHooks): Promise<void> {
+    const fast = this.isFast();
+    const beat = (): Promise<void> =>
+      new Promise((resolve) => (fast ? resolve() : this.scene.time.delayedCall(STATIC_BEAT_MS, resolve)));
+    const rest = worldPose(hooks.tokenSpot[0], hooks.tokenSpot[1]);
+    const depth = standingDepth(snake.coilKey) + TOKEN_STRIKE_DEPTH;
+    if (!snake.shown) {
+      this.showIdle(snake);
+      this.audio.hiss(fast);
+    }
+    await beat();
+    hooks.drawToken({ ...rest, depth }, 0);
+    this.audio.gulp(fast);
+    await beat();
+    hooks.panToTail();
+    const tail = hooks.landAtTail();
+    this.audio.pop(fast);
+    hooks.drawToken(tail, 1);
+    await beat();
   }
 
   /** The bulge running mouth, neck points, collar (spec 5.4 step 4); it follows the head and fades at the end. */

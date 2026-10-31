@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import easyMeta from '../public/assets/iso/bridges-easy.meta.json';
 import { boardFor } from '../src/core/boards';
-import { depthKey, toScreen } from '../src/game/iso/boardIso';
-import { fieldCentre } from '../src/game/iso/jumps';
+import { depthKey, fieldCentre, toScreen } from '../src/game/iso/boardIso';
 import { TOKEN_DEPTH_BASE } from '../src/game/iso/tokenPose';
 import { TOP_Z } from '../src/game/iso/world';
 import { BAND, NUMERAL_DEPTH } from '../src/game/board/boardBands';

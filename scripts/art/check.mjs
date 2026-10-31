@@ -75,13 +75,4 @@ for (const file of walk(root)) {
     console.log(`FAIL ${rel}: ${[...new Set(problems)].join('; ')}`);
   } else console.log(`ok   ${rel} (${kb.toFixed(1)} KB)`);
 }
-for (const j of ['snakes/palette.json', 'ladders/palette.json']) {
-  try {
-    const o = JSON.parse(readFileSync(join(root, j), 'utf8'));
-    console.log(`ok   ${j} (${Object.keys(o).length} entries)`);
-  } catch (e) {
-    fail++;
-    console.log(`FAIL ${j}: ${e.message}`);
-  }
-}
 process.exitCode = fail ? 1 : 0;

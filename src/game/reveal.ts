@@ -21,6 +21,11 @@ export function createRevealState(initiallyRevealed: readonly number[] = []): Re
   return state;
 }
 
+/** Owner decision T42 10.1: the gate (square 1) and the throne (square 144) are known before the first roll. */
+export function newGameReveal(): RevealState {
+  return createRevealState([1, FINAL_SQUARE]);
+}
+
 export function isTerrainRevealed(state: RevealState, square: number): boolean {
   return state.terrain.includes(square);
 }

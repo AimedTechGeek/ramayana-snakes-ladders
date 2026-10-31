@@ -7,11 +7,6 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    // jumps.ts is the numeric twin of jumps.mjs and opts out of noUncheckedIndexedAccess with @ts-nocheck.
-    files: ['src/game/iso/jumps.ts'],
-    rules: { '@typescript-eslint/ban-ts-comment': 'off' },
-  },
-  {
     languageOptions: {
       globals: {
         ...globals.browser,

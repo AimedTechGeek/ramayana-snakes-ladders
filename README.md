@@ -50,7 +50,7 @@ Requires Node.js 22 (see `.nvmrc`).
 | `src/i18n/`       | English and Hindi strings.                                                                     |
 | `sim/`            | Monte Carlo simulator that drives the real rules engine.                                       |
 | `scripts/`        | Smoke, device and screenshot checks, and the art generator in `scripts/art/`.                  |
-| `public/assets/`  | Vector art: board, tokens, snakes, ladder palettes and the favicon.                            |
+| `public/assets/`  | Art: board and figurine atlases, tokens and the favicon.                                       |
 | `tests/`          | Unit tests.                                                                                    |
 | `docs/design/`    | Design documents: heroes, style guide, board art, UX and emotion timing.                       |
 | `docs/review/`    | Review and playtest notes.                                                                     |

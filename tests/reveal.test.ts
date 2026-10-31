@@ -9,6 +9,7 @@ import {
   isJumpRevealed,
   isRevealState,
   isTerrainRevealed,
+  newGameReveal,
   seedFromGameState,
 } from '../src/game/reveal';
 
@@ -130,6 +131,20 @@ describe('createRevealState', () => {
   it('createRevealState_WithInitialSquares_Should_RevealOnlyOnBoardSquares', () => {
     const reveal = createRevealState([1, 144, 0]);
     expect(sorted(reveal.terrain)).toEqual([1, 144]);
+  });
+});
+
+describe('newGameReveal', () => {
+  it('newGameReveal_NewGame_Should_ShowTheGateAndTheThroneAndNothingElse', () => {
+    const reveal = newGameReveal();
+    expect(sorted(reveal.terrain)).toEqual([1, 144]);
+    expect(reveal.jumps).toEqual([]);
+    expect(isRevealState(reveal)).toBe(true);
+  });
+
+  it('newGameReveal_FirstMoveOntoSquare1_Should_ReportNoNewTerrain', () => {
+    const reveal = newGameReveal();
+    expect(applyEvent(reveal, { type: 'Moved', player: 0, from: 0, to: 1, path: [1] })).toEqual([]);
   });
 });
 

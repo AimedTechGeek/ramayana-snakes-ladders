@@ -18,8 +18,7 @@ import { estimateTextureMb, LivingBoard } from '../board/LivingBoard';
 import { SnakeActor, snakeSheetKey } from '../board/SnakeActor';
 import { HEROES, heroName } from '../heroes';
 import { PANEL, SEAT, seatTokenSpot, seatTop } from '../layout';
-import { squareScreen } from '../iso/boardIso';
-import { fieldCentre, glidePoint, jumpPaths, type JumpPath, type Vec2 } from '../iso/jumps';
+import { fieldCentre, squareScreen, type Vec2 } from '../iso/boardIso';
 import {
   entryPoseTo,
   hopPoint,
@@ -30,10 +29,10 @@ import {
   type TokenPose,
 } from '../iso/tokenPose';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
-import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, sparkleTrail } from '../fx';
+import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse } from '../fx';
 import {
   applyEvent,
-  createRevealState,
+  newGameReveal,
   seedFromGameState,
   type RevealChange,
   type RevealState,
@@ -101,7 +100,6 @@ export class BoardScene extends Phaser.Scene {
   private dice: Dice = createRandomDice();
   private level: Level = 'easy';
   private heroes: Hero[] = [];
-  private paths: JumpPath[] = [];
   private tokens: BoardToken[] = [];
   /** World (x, y) each token stands at on the board; null while it waits on its seat card. */
   private worldAt: (Vec2 | null)[] = [];
@@ -137,7 +135,6 @@ export class BoardScene extends Phaser.Scene {
 
   init(data: BoardSceneData): void {
     this.level = data.state ? data.state.level : data.config.level;
-    this.paths = jumpPaths(this.level);
     this.heroes = (data.state ?? data.config).players.map((player) => player.hero);
     if (data.state) {
       this.board = boardFor(data.state.level);
@@ -146,7 +143,7 @@ export class BoardScene extends Phaser.Scene {
     } else {
       this.board = boardFor(data.config.level);
       this.engine = Game.create(data.config, this.board, this.dice);
-      this.reveal = createRevealState();
+      this.reveal = newGameReveal();
     }
     this.tokens = [];
     this.worldAt = [];
@@ -367,7 +364,7 @@ export class BoardScene extends Phaser.Scene {
       case 'TripleSixVoid':
         this.audio.tripleSix();
         this.setHint(t('ui.tripleSix'));
-        await this.slideTo(event.player, event.restoredTo, 'void'); // a penalty: plain slide, no celebration
+        await this.slideTo(event.player, event.restoredTo); // a penalty: plain slide, no celebration
         return;
       case 'Won':
         this.audio.win();
@@ -545,6 +542,13 @@ export class BoardScene extends Phaser.Scene {
     return this.fastMode ? FAST_STEP_MS : STEP_MS;
   }
 
+  /** The player asked the system for reduced motion: the bridge walk is skipped (the token appears on the top square). */
+  private get reducedMotion(): boolean {
+    return typeof window !== 'undefined' && !!window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
+  }
+
   /** Slide and settle durations are halved in fast mode. */
   private scaled(ms: number): number {
     return this.fastMode ? ms / 2 : ms;
@@ -652,66 +656,26 @@ export class BoardScene extends Phaser.Scene {
     await this.relayout(player);
   }
 
-  private async slideTo(
-    player: number,
-    square: number,
-    kind: 'ladder' | 'snake' | 'void',
-    jump?: Jump,
-  ): Promise<void> {
+  /** The triple-six penalty: a plain slide back to the last square (or to or from a seat card), no celebration. */
+  private async slideTo(player: number, square: number): Promise<void> {
     const start = this.worldAt[player] ?? null;
     this.shownSquare[player] = square;
     const end = square === 0 ? null : this.spotOf(player);
-    const path = jump ? this.paths.find((p) => p.from === jump.from && p.to === jump.to) : undefined;
-    const trail =
-      kind === 'ladder' ? this.rig.within('board', () => sparkleTrail(this, this.fastMode)) : undefined;
     const crossing = start === null || end === null;
-    let lastSparkle = 0;
-    let poseAt: (u: number) => TokenPose;
-    if (path && start && end) {
-      // Along the jump's own path; the fan offset eases from the old slot to the new one.
-      const [fromX, fromY] = fieldCentre(path.from);
-      const [toX, toY] = fieldCentre(path.to);
-      const startFan = [start[0] - fromX, start[1] - fromY];
-      const endFan = [end[0] - toX, end[1] - toY];
-      poseAt = (u) => {
-        const [x, y, z] = glidePoint(path, u);
-        const dx = startFan[0]! + (endFan[0]! - startFan[0]!) * u;
-        const dy = startFan[1]! + (endFan[1]! - startFan[1]!) * u;
-        return worldPose(x + dx, y + dy, z);
-      };
-    } else {
-      // A straight line at tile height. To or from a seat card it runs on the HUD camera, the board end tracking the board camera.
-      const at = (spot: Vec2 | null) => (crossing ? this.hudPose(player, spot) : this.restPose(player, spot));
-      poseAt = (u) => blendPose(at(start), at(end), u);
-    }
+    // A straight line at tile height. To or from a seat card it runs on the HUD camera, the board end tracking the board camera.
+    const at = (spot: Vec2 | null) => (crossing ? this.hudPose(player, spot) : this.restPose(player, spot));
+    const poseAt = (u: number) => blendPose(at(start), at(end), u);
     if (crossing) this.setTokenLayer(player, 'hud');
     const boardEnd = end ?? start;
     const focus = crossing && boardEnd ? worldPose(boardEnd[0], boardEnd[1]).feet : undefined;
-    const ladderMs = Math.max(400, 25 * Math.abs((jump?.to ?? 0) - (jump?.from ?? 0)));
-    await this.travel(
-      player,
-      this.scaled(kind === 'snake' ? 700 : kind === 'ladder' ? ladderMs : 500),
-      kind === 'snake' ? 'Quad.easeIn' : 'Sine.easeInOut',
-      poseAt,
-      (u, pose) => {
-        if (trail && u - lastSparkle >= 0.04) {
-          lastSparkle = u;
-          trail.emit(pose.feet.x, pose.feet.y);
-        }
-      },
-      focus,
-    );
-    trail?.stop();
+    await this.travel(player, this.scaled(500), 'Sine.easeInOut', poseAt, undefined, focus);
     this.worldAt[player] = end;
     if (crossing) {
       this.setTokenLayer(player, end ? 'board' : 'hud');
       this.tokenAt(player).place(this.restPose(player, end));
     }
     const landed = this.restPose(player, end).feet;
-    this.rig.within(end ? 'board' : 'hud', () => {
-      if (kind === 'ladder') goldBurst(this, landed.x, landed.y, this.fastMode);
-      else dustPuff(this, landed.x, landed.y, this.fastMode);
-    });
+    this.rig.within(end ? 'board' : 'hud', () => dustPuff(this, landed.x, landed.y, this.fastMode));
     await this.relayout(player);
   }
 
@@ -727,7 +691,7 @@ export class BoardScene extends Phaser.Scene {
     // One tween drives every hop, so they run back to back by the clock (vishwamitra's seven deck hops take 980 ms).
     await this.travel(
       player,
-      hops.length * hopMs(this.fastMode),
+      this.reducedMotion ? 0 : hops.length * hopMs(this.fastMode),
       'Linear',
       (progress) => {
         const at = hopAtProgress(hops.length, progress);
@@ -770,11 +734,14 @@ export class BoardScene extends Phaser.Scene {
         token.place(pose);
         for (const object of objects) (object as Phaser.GameObjects.Image).setAlpha(alpha);
       },
-      panToTail: () => this.followToken(player, worldPose(...fieldCentre(jump.to)).feet),
+      // The pan and the fog lifting on the tail square start together, so the player sees where they land.
+      panToTail: () => {
+        this.revealTerrain(jump.to);
+        this.followToken(player, worldPose(...fieldCentre(jump.to)).feet);
+      },
       landAtTail: () => {
         this.shownSquare[player] = jump.to;
         this.worldAt[player] = this.spotOf(player);
-        this.revealTerrain(jump.to);
         return this.restPose(player, this.worldAt[player]);
       },
     });

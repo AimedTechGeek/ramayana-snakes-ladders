@@ -77,6 +77,10 @@ export class BridgeActor {
   private lastResting = '';
   private readonly risen = new Map<number, Promise<void>>();
   private readonly sheetKey: string;
+  private readonly reduced =
+    typeof window !== 'undefined' && !!window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -141,7 +145,7 @@ export class BridgeActor {
     // The board numeral of the top square would double up the number engraved on the bridge's stele.
     this.living.setNumeralHidden(bridge.meta.to, true);
     const sprites = this.build(bridge);
-    if (!animate) {
+    if (!animate || this.reduced) {
       for (const sprite of sprites) this.settle(sprite);
       return;
     }
@@ -153,7 +157,7 @@ export class BridgeActor {
     const duration = fast ? FAST_RISE_MS : RISE_MS;
     const stagger = fast ? 0 : RISE_STAGGER_MS;
     this.options.audio.stone(fast);
-    if (!fast) this.scene.cameras.main.shake(100, 0.003);
+    if (!fast) this.rig.board.shake(100, 0.003);
     const resting = fadedSegments(
       sprites.map((sprite) => sprite.segment),
       this.options.restingSquares(),
@@ -199,6 +203,7 @@ export class BridgeActor {
 
   /** A bridge that is already revealed answers a landing on its foot with a 120 ms `1.0 -> 1.03 -> 1.0` thud. */
   private async thud(jumpId: number): Promise<void> {
+    if (this.reduced) return;
     const sprites = this.bridgeOf(jumpId).sprites ?? [];
     const duration = this.options.isFast() ? FAST_THUD_MS : THUD_MS;
     await Promise.all(
@@ -239,7 +244,8 @@ export class BridgeActor {
         if (target === sprite.alpha) continue;
         sprite.alpha = target;
         this.scene.tweens.killTweensOf(sprite.image);
-        this.scene.tweens.add({ targets: sprite.image, alpha: target, duration: FADE_MS, ease: 'Linear' });
+        if (this.reduced) sprite.image.setAlpha(target);
+        else this.scene.tweens.add({ targets: sprite.image, alpha: target, duration: FADE_MS, ease: 'Linear' });
       }
     }
   }

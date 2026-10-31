@@ -394,7 +394,8 @@ export class LivingBoard {
 
   private lift(block: Block, animate: boolean): void {
     const fast = this.options.isFast();
-    const duration = !animate ? 0 : fast ? FAST_REVEAL_MS : REVEAL_MS;
+    const instant = !animate || this.reduced; // reduced motion: the fog is simply gone
+    const duration = instant ? 0 : fast ? FAST_REVEAL_MS : REVEAL_MS;
     const { fog, mist } = block;
     block.ambient = block.ambient.filter((item) => {
       // the mist drift ends with the fog
@@ -429,7 +430,7 @@ export class LivingBoard {
         });
     }
     this.crossfadeNumerals(block, duration);
-    this.furnish(block, animate);
+    this.furnish(block, !instant);
   }
 
   /** Numerals turn from the fog `dark` ink to the region's ink (a no-op for dark regions). */
@@ -536,7 +537,11 @@ export class LivingBoard {
       });
     };
     if (animate) {
-      this.scene.tweens.add({ targets: sprite, alpha: 0.3, duration: REVEAL_MS });
+      this.scene.tweens.add({
+        targets: sprite,
+        alpha: 0.3,
+        duration: this.options.isFast() ? FAST_REVEAL_MS : REVEAL_MS,
+      });
     }
     this.tweenItem(block, block.at.x, block.at.y, sprite, make);
   }

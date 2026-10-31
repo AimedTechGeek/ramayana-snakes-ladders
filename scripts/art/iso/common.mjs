@@ -1,13 +1,11 @@
 // Shared helpers of the isometric art build (T40 spec sections 2.5, 3.1, 7.2-7.4, 8): standalone light SVG export,
-// ink and seat colour classes, the single-stroke numeral font, a crop helper and the manifest writer.
+// seat colour classes, the single-stroke numeral font, a crop helper and the manifest writer.
 // Build scripts import the anatomy kit from ../anatomy and the projection from ../iso-board.mjs.
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { figureSvg, ISO_CSS, iso, lineSvg, onTop } from '../anatomy/iso-kit.mjs';
 import { TOP_Z } from './world.mjs';
-
-const readJson = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
 
 // ---------------------------------------------------------------- colour
 
@@ -40,35 +38,10 @@ export function seatBand(hero) {
   };
 }
 
-/** Snake inks (spec 7.3): edge/ring = body 50% to mid, head crease = body 35% to hi. Bodies from the snake palette. */
-export function snakeInks() {
-  const palette = readJson('../../../public/assets/snakes/palette.json');
-  return Object.fromEntries(
-    Object.entries(palette).map(([id, look]) => [
-      id,
-      { edge: mixHex(look.body, TOKENS.mid, 0.5), head: mixHex(look.body, TOKENS.hi, 0.35) },
-    ]),
-  );
-}
-
-/** Ladder inks (spec 7.4): rail and rung colour 50% to mid. Colours from the ladder palette. */
-export function ladderInks() {
-  const palette = readJson('../../../public/assets/ladders/palette.json');
-  return Object.fromEntries(
-    Object.entries(palette).map(([id, look]) => [
-      id,
-      { rail: mixHex(look.rail, TOKENS.mid, 0.5), rung: mixHex(look.rung, TOKENS.mid, 0.5) },
-    ]),
-  );
-}
-
-const LINES = (scope) => `${scope} .iso-line,${scope} .tb-ring,${scope} .iso-edge{stroke:`;
-
 /**
  * Classes the build adds after the kit's own rules (so they win at equal specificity):
- * vector-effect none (spec 8), numerals, odd-tile top, seat bands, snake / ladder ink classes.
- * Usage: `.iso-solid ink-<snake>` on a snake's pieces, `hink-<snake>` on its head, `rail-<ladder>` and `rung-<ladder>`
- * on the ladder's rails and rungs, `seat-<hero>` on the seat band, `sq-b` on odd tiles, `open` on a ring band cut with a bore (its fill needs even-odd).
+ * vector-effect none (spec 8), numerals, odd-tile top, seat bands.
+ * Usage: `seat-<hero>` on the seat band, `sq-b` on odd tiles, `open` on a ring band cut with a bore (its fill needs even-odd).
  */
 export function extraCss() {
   const rules = [
@@ -81,14 +54,6 @@ export function extraCss() {
     const { top, shades } = seatBand(hero);
     const vars = shades.map((v, i) => `--anatomy-shade-${i}:${v}`).join(';');
     rules.push(`.seat-${hero}{--anatomy-top:${top};${vars}}`);
-  }
-  for (const [id, ink] of Object.entries(snakeInks())) {
-    rules.push(`${LINES(`.ink-${id}`)}${ink.edge}}`);
-    rules.push(`${LINES(`.hink-${id}`)}${ink.head}}`);
-  }
-  for (const [id, ink] of Object.entries(ladderInks())) {
-    rules.push(`${LINES(`.rail-${id}`)}${ink.rail}}`);
-    rules.push(`${LINES(`.rung-${id}`)}${ink.rung}}`);
   }
   return rules.join('\n');
 }

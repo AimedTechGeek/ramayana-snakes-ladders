@@ -1,4 +1,4 @@
-// The recorded board scene shared by board.mjs (base), ladders.mjs and snakes.mjs (T40.3-T40.5).
+// The recorded board scene, now used by frame.mjs (T42.4; first written for the T40 board, ladders and snakes).
 // Every drawn item is put into one anatomy recorder together with its true shape, so A.settle can measure the
 // painter's order from geometry and A.auditOrExit can prove clearance, crowding and depth order (--audit).
 

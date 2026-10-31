@@ -583,7 +583,7 @@ ignored. Ids come from `STORY_JUMPS`.
 
 ---
 
-## 8. Obsolete from T40 (delete at integration, T42.10)
+## 8. Obsolete from T40 (deleted in T42.10)
 
 | T40 item | Replaced by |
 |---|---|

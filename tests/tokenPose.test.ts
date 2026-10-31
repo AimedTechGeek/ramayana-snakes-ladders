@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { squareScreen } from '../src/game/iso/boardIso';
-import { fieldCentre } from '../src/game/iso/jumps';
+import { fieldCentre, squareScreen } from '../src/game/iso/boardIso';
 import {
   HOP_HEIGHT,
   hopPoint,

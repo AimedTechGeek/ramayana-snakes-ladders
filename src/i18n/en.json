@@ -53,7 +53,7 @@
 
   "lakshmana.self.roll6": ["A six! Again, quickly!", "Ha! Stand aside!", "The dice obey me today."],
   "lakshmana.self.ladder": ["Up! No time to waste!", "Finally, some progress.", "Climb faster, feet!"],
-  "lakshmana.self.ladderBig": ["Now THIS is a ladder!", "Out of my way, I'm flying!", "Brother, did you see that?"],
+  "lakshmana.self.ladderBig": ["Now THIS is a bridge!", "Out of my way, I'm flying!", "Brother, did you see that?"],
   "lakshmana.self.snake": ["Grr! Treachery!", "Who put this snake here?!", "Not fair! Not fair at all!"],
   "lakshmana.self.snakeBig": ["No! All that climbing!", "I'll cut that snake in half!", "This is Ravana's doing!"],
   "lakshmana.self.overtake": ["Move aside! Coming through!", "Ha! The wind is with me!", "Faster, feet! Faster!"],
@@ -78,7 +78,7 @@
   "lakshmana.other.lose": ["Chin up. Rematch soon.", "You fought well, friend.", "Next game, we win!"],
 
   "hanuman.self.roll6": ["Six! Watch me hop!", "Wheee! Again, again!", "My tail is tingling!"],
-  "hanuman.self.ladder": ["Up, up, up I go!", "Ladders? I prefer leaping!", "Hooray, a shortcut!"],
+  "hanuman.self.ladder": ["Up, up, up I go!", "Bridges? I prefer leaping!", "Hooray, a shortcut!"],
   "hanuman.self.ladderBig": ["I'm FLYING! Look at me!", "Over the ocean in one bound!", "Mountains? Easy. Watch this!"],
   "hanuman.self.snake": ["Oops! Slipped on a snake!", "Hey! That tickles!", "Down I go, wheee... oh no."],
   "hanuman.self.snakeBig": ["Waaah! My tail! My tail!", "Whoops. Big slide, big splash.", "Ravana, you sneaky fellow!"],
@@ -91,7 +91,7 @@
   "hanuman.self.lose": ["Well played! Let's go again!", "You win! I'll bring the sweets.", "Next time I'll leap faster!"],
 
   "hanuman.other.roll6": ["Ooh, a six! Lucky you!", "Roll again, roll again!", "My turn next, please!"],
-  "hanuman.other.ladder": ["Climb, climb, climb!", "Hooray for ladders!", "Nice one! Up you go!"],
+  "hanuman.other.ladder": ["Climb, climb, climb!", "Hooray for bridges!", "Nice one! Up you go!"],
   "hanuman.other.ladderBig": ["WOW! Were you flying?!", "That's MY kind of jump!", "Teach me that trick!"],
   "hanuman.other.snake": ["Oops! Watch your tail!", "Snake got you! Shake it off!", "Boo, you sneaky snake!"],
   "hanuman.other.snakeBig": ["Ooooh. That's a long slide.", "I felt that from here!", "Don't worry, I've fallen too!"],

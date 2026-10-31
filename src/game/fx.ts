@@ -40,27 +40,6 @@ function destroyAfter(
   scene.time.delayedCall(ms + 50, () => emitter.destroy());
 }
 
-/** Gold sparkle trail: returns a function that drops one sparkle at a point, and a function that ends the trail. */
-export function sparkleTrail(
-  scene: Phaser.Scene,
-  fast: boolean,
-): { emit: (x: number, y: number) => void; stop: () => void } {
-  const lifespan = life(380, fast);
-  const emitter = scene.add
-    .particles(0, 0, GOLD_DOT, {
-      lifespan,
-      speed: { min: 8, max: 30 },
-      scale: { start: 0.9, end: 0 },
-      alpha: { start: 1, end: 0 },
-      emitting: false,
-    })
-    .setDepth(FX_DEPTH);
-  return {
-    emit: (x, y) => emitter.emitParticleAt(x, y, 1),
-    stop: () => destroyAfter(scene, emitter, lifespan),
-  };
-}
-
 /** 12-particle gold and saffron burst. */
 export function goldBurst(scene: Phaser.Scene, x: number, y: number, fast: boolean): void {
   const lifespan = life(600, fast);

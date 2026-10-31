@@ -2,8 +2,24 @@
 // real coils are drawn by T42.5; the bridges only need their envelope: the coil cylinder and the raised head cylinder.
 import { STORY_JUMPS } from '../../../../src/core/boards.ts';
 import { squareWorld } from '../../iso-board.mjs';
-import { SNAKE_RADIUS } from '../jumps.mjs';
 import { TOP_Z } from '../world.mjs';
+
+/** Body radius R per snake (T42 spec 5.1 size table). */
+const SNAKE_RADIUS = {
+  tataka: 2.8,
+  manthara: 2.2,
+  kaikeyi: 2.8,
+  viradha: 3.0,
+  shurpanakha: 2.8,
+  'golden-deer': 2.8,
+  abduction: 3.0,
+  kabandha: 3.0,
+  'indrajit-arrows': 2.6,
+  prahasta: 3.0,
+  kumbhakarna: 3.4,
+  brahmastra: 2.2,
+  ravana: 4.0,
+};
 
 /** Coil envelope of spec 5.1 for a body radius R: outer radius, stack height 5R and head top over TOP_Z. */
 export function coilEnvelope(R) {

@@ -1,9 +1,7 @@
 // Typed manifest of the vector art under public/assets. URLs are relative so the GitHub Pages sub-path works.
 import type Phaser from 'phaser';
-import ladderPalette from '../../public/assets/ladders/palette.json';
-import snakePalette from '../../public/assets/snakes/palette.json';
 import type { Emotion } from '../characters/reactions';
-import type { Hero, Level } from '../core/types';
+import type { Hero } from '../core/types';
 import figurineManifest from '../../public/assets/iso/figurines.json';
 
 export interface SvgAsset {
@@ -13,60 +11,20 @@ export interface SvgAsset {
   size: number;
 }
 
-export type SnakePattern = 'bands' | 'spots' | 'diamonds';
-export type LadderStyle = 'wood' | 'rope' | 'vine' | 'stone' | 'bow' | 'tail';
-
-export interface SnakeLook {
-  body: string;
-  belly: string;
-  pattern: SnakePattern;
-}
-
-export interface LadderLook {
-  rail: string;
-  rung: string;
-  style: LadderStyle;
-}
-
-export const SNAKE_LOOKS: Readonly<Record<string, SnakeLook>> = snakePalette as Record<string, SnakeLook>;
-export const LADDER_LOOKS: Readonly<Record<string, LadderLook>> = ladderPalette as Record<string, LadderLook>;
-
-export const BOARD_BACKGROUND_KEY = 'board-background';
-
 export const HERO_IDS: readonly Hero[] = ['rama', 'sita', 'lakshmana', 'hanuman'];
 
 export function tokenKey(hero: Hero): string {
   return `token-${hero}`;
 }
 
-export function snakeHeadKey(id: string): string {
-  return `snake-head-${id}`;
-}
-
 export const FAVICON_URL = 'assets/icons/favicon.svg';
 
 export const ASSETS: readonly SvgAsset[] = [
-  { key: BOARD_BACKGROUND_KEY, url: 'assets/board/background.svg', size: 672 },
   ...HERO_IDS.map((hero) => ({ key: tokenKey(hero), url: `assets/tokens/${hero}.svg`, size: 80 })),
-  ...Object.keys(SNAKE_LOOKS).map((id) => ({
-    key: snakeHeadKey(id),
-    url: `assets/snakes/${id}.svg`,
-    size: 96,
-  })),
   { key: 'favicon', url: FAVICON_URL, size: 64 },
 ];
 
-// ---- Isometric art (T40): the board per difficulty (SVG, rasterised at 2x) and the figurine PNGs (already 2x).
-
-export const BOARD_STAGE = { width: 784, height: 720, scale: 2 } as const;
-
-export function boardKey(level: Level): string {
-  return `board-${level}`;
-}
-
-export function boardUrl(level: Level): string {
-  return `assets/iso/board-${level}.svg`;
-}
+// ---- Isometric art (T40): the figurine PNGs (already 2x).
 
 /** Heroes whose token and seat figure are an iso figurine; the others keep the old medallion until T40.10. */
 export const FIGURINE_HEROES: readonly Hero[] = ['hanuman'];

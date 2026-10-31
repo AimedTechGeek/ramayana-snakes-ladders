@@ -1,5 +1,23 @@
 # T40 — Anatomy redesign: the board as a crafted isometric object
 
+> **Superseded in part by T42 (`docs/design/T42-living-board.md`).** Read T42 first for anything below that is listed here.
+> The T42.10 cleanup deleted the code and art these T40 parts described.
+>
+> | T40 part | Now |
+> |---|---|
+> | 1.3 F2-F7 (tiles, alternation, engraved numerals, inlays, threshold as one SVG) | 144 block sprites, numeral glyphs, water tiles, threshold prop (T42 1) |
+> | 2.6 depth table (board texture at 0, tokens always above) | depth bands (T42 1.4) |
+> | 3 whole section (tube snakes, humps, crossings, hard cap, low-relief ladders, 3.1-3.3 inks) | standing snakes (T42 5) and stone bridges (T42 6), full colour |
+> | 5 rows "Ladder glide", "Snake glide", "trail = mid dots", "puff at the tail" | T42 5.4 and 6.6 |
+> | 7.3, 7.4 ink tables | `tones(hex)` per body / stone (T42 2, 5.5, 6.3) |
+> | 8 "Board" row (3 SVGs, 1568 x 1440), GPU budget 20 MB | atlases (T42 3.3), budget 48 MB |
+> | 9 item 7 wording | T42 5.6 |
+> | Appendix 2 (engraved numerals) and 4 (Ravana humps) | T42 3.5; moot |
+>
+> Deleted: `board-<level>.svg`, `boards.json`, `sample-tiles.svg`, `src/game/iso/jumps.ts` (`fieldCentre`, `Vec2` and `Vec3` live in `boardIso.ts`),
+> `scripts/art/iso/{board,ladders,snakes,jumps}.mjs`, the T40 board build in `build.mjs` (it now builds the figurines only), the 2D board
+> background and snake heads. Camera, projection (`boardIso.ts`, `iso-board.mjs`), figurines, tokens, HUD and screens are unchanged.
+
 Scope: every drawn thing in the game (board, snakes, ladders, tokens, heroes, HUD, screens) redone
 in the anatomy style: one invented crafted object built from many small precise parts, four-tone
 isometric shading, 0.6 px lines, one `lit` accent, light theme first. Phaser stays; all 3D is
