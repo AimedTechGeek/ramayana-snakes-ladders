@@ -1,7 +1,10 @@
 import { rankingOf } from '../../core/game';
-import { HEROES } from '../../game/heroes';
-import { t } from '../../i18n/i18n';
-import type { GameResult } from '../turn/ports';
+import { getLocale, t } from '../../i18n/i18n';
+import { SeatCard } from '../hud/SeatCard';
+import type { GameResult, SeatInfo } from '../turn/ports';
+import { Divider, IconButton, LangSwitch, Pill, Segmented, Sparkle, Toggle } from '../ui/Controls';
+import { Dialog } from '../ui/Dialog';
+import { Icon } from '../ui/Icon';
 
 interface MenuDialogProps {
   fast: boolean;
@@ -9,31 +12,76 @@ interface MenuDialogProps {
   onContinue: () => void;
   onFast: () => void;
   onMute: () => void;
-  onMainMenu: () => void;
+  /** New Game: leaves for Setup (the autosave stays until a new game starts). */
+  onNewGame: () => void;
+  onFit: () => void;
+  onFocus: () => void;
+  onLanguage: () => void;
 }
 
-/** Pause menu: the game holds (no roll starts) while it is open; the game is autosaved, so Main Menu can Resume. */
-export function MenuDialog({ fast, muted, onContinue, onFast, onMute, onMainMenu }: MenuDialogProps) {
+/** Pause menu: the game holds (no roll starts) while it is open. */
+export function MenuDialog({
+  fast,
+  muted,
+  onContinue,
+  onFast,
+  onMute,
+  onNewGame,
+  onFit,
+  onFocus,
+  onLanguage,
+}: MenuDialogProps) {
   return (
-    <div className="dialog-scrim" data-testid="menu-dialog">
-      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="menu-title">
-        <h2 id="menu-title">{t('ui.paused')}</h2>
-        <button className="btn primary" data-testid="continue" onClick={onContinue} autoFocus>
-          {t('ui.continue')}
-        </button>
-        <div className="dialog-row">
-          <button className={`btn chip${fast ? ' on' : ''}`} onClick={onFast}>
-            {t('ui.fast')}
-          </button>
-          <button className={`btn chip${muted ? ' on' : ''}`} onClick={onMute}>
-            {muted ? t('ui.muted') : t('ui.mute')}
-          </button>
+    <Dialog labelledBy="menu-title" testId="menu-dialog" className="menu-dialog">
+      <h2 id="menu-title">{t('ui.menu')}</h2>
+      <Divider />
+      <div className="dialog-rows">
+        <div className="row">
+          <span className="row-label">{t('ui.speed')}</span>
+          <Segmented
+            label={t('ui.speed')}
+            value={fast ? 'fast' : 'normal'}
+            onChange={(next) => {
+              if (next !== (fast ? 'fast' : 'normal')) onFast();
+            }}
+            options={[
+              { value: 'normal', label: t('ui.normal'), testId: 'speed-normal' },
+              { value: 'fast', label: t('ui.fast'), testId: 'speed-fast' },
+            ]}
+          />
         </div>
-        <button className="btn" data-testid="main-menu" onClick={onMainMenu}>
-          {t('ui.mainMenu')}
-        </button>
+        <div className="row">
+          <span className="row-label">{t('ui.mute')}</span>
+          <Toggle
+            checked={muted}
+            onChange={onMute}
+            label={t('ui.mute')}
+            onIcon="speaker-off"
+            offIcon="speaker"
+            testId="menu-mute"
+          />
+        </div>
+        <div className="row">
+          <span className="row-label">{t('ui.language')}</span>
+          <LangSwitch locale={getLocale()} onToggle={onLanguage} />
+        </div>
+        <div className="row">
+          <span className="row-label">{t('ui.camera')}</span>
+          <span className="row-actions">
+            <IconButton icon="fit" label={t('ui.fit')} data-testid="menu-fit" onClick={onFit} />
+            <IconButton icon="focus" label={t('ui.focus')} data-testid="menu-focus" onClick={onFocus} />
+          </span>
+        </div>
       </div>
-    </div>
+      <div className="dialog-actions">
+        <Pill variant="outline" data-testid="main-menu" onClick={onNewGame}>
+          {t('ui.newGame')}
+        </Pill>
+        <Pill variant="primary" data-testid="continue" data-autofocus arrow onClick={onContinue}>
+          {t('ui.resume')}
+        </Pill>
+      </div>
+    </Dialog>
   );
 }
 
@@ -50,43 +98,46 @@ export function WinDialog({ result, onPlayAgain, onPlayOn, onMenu }: WinDialogPr
   const places = rankingOf(players);
   const winner = players.find((player) => player.rank === 1) ?? players[places[0] ?? 0];
   return (
-    <div className="dialog-scrim" data-testid="win">
-      <div className="dialog win-dialog" role="dialog" aria-modal="true" aria-labelledby="win-title">
-        <div className="confetti" aria-hidden="true" />
-        <h2 id="win-title">
-          <span
-            className="seat-dot big"
-            style={{ background: winner ? HEROES[winner.hero].cssColor : undefined }}
-          />
-          {t('ui.winner', { name: winner?.name ?? '' })}
-        </h2>
-        <ol className="places">
-          {places.map((index, place) => {
-            const player = players[index];
-            if (!player) return null;
-            return (
-              <li key={index}>
-                <span className="seat-dot" style={{ background: HEROES[player.hero].cssColor }} />
-                <span className="place">{t(`ui.rank${place + 1}`)}</span> {player.name}
-              </li>
-            );
-          })}
-        </ol>
-        <div className="dialog-row">
-          <button className="btn primary" data-testid="play-again" onClick={onPlayAgain}>
-            {t('ui.playAgain')}
-          </button>
-          {result.canContinue && (
-            <button className="btn" data-testid="play-on" onClick={onPlayOn}>
-              {t('ui.playOn')}
-            </button>
-          )}
-          <button className="btn" data-testid="win-menu" onClick={onMenu}>
-            {t('ui.menu')}
-          </button>
-        </div>
+    <Dialog labelledBy="win-title" testId="win" className="win-screen" bare light>
+      <div className="win-sparkles" aria-hidden="true">
+        {Array.from({ length: 14 }, (_, i) => (
+          <i key={i} style={{ ['--i' as string]: i }} />
+        ))}
       </div>
-    </div>
+      <h1 id="win-title" className="win-title">
+        <Sparkle size={16} />
+        <span>{t('ui.winner', { name: winner?.name ?? '' })}</span>
+        <Sparkle size={16} />
+      </h1>
+      <Divider className="win-divider" />
+      <ol className="win-places">
+        {places.map((index, place) => {
+          const player = players[index];
+          if (!player) return null;
+          const seat: SeatInfo = {
+            name: player.name,
+            hero: player.hero,
+            controller: player.controller,
+            position: player.position,
+            rank: player.rank ?? null,
+          };
+          return <SeatCard key={index} seat={seat} index={place} result active={place === 0} />;
+        })}
+      </ol>
+      <div className="win-actions">
+        <Pill variant="primary" data-testid="play-again" data-autofocus arrow onClick={onPlayAgain}>
+          {t('ui.playAgain')}
+        </Pill>
+        {result.canContinue && (
+          <Pill variant="outline" data-testid="play-on" onClick={onPlayOn}>
+            {t('ui.playOn')}
+          </Pill>
+        )}
+        <Pill variant="outline" data-testid="win-menu" onClick={onMenu}>
+          {t('ui.menu')}
+        </Pill>
+      </div>
+    </Dialog>
   );
 }
 
@@ -94,11 +145,9 @@ export function WinDialog({ result, onPlayAgain, onPlayOn, onMenu }: WinDialogPr
 export function RotatePrompt() {
   return (
     <div className="rotate" data-testid="rotate" role="alert">
-      <svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
-        <rect x="40" y="26" width="40" height="68" rx="8" fill="none" stroke="#f3e3b8" strokeWidth="6" />
-        <path d="M20 70 A42 42 0 0 1 60 18" fill="none" stroke="#f0a35e" strokeWidth="6" />
-      </svg>
-      <p>{t('ui.rotate')}</p>
+      <Icon name="rotate-phone" size={120} className="rotate-icon" />
+      <h2>{t('ui.rotate')}</h2>
+      <Divider />
     </div>
   );
 }

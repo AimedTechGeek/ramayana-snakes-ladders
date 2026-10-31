@@ -1,15 +1,18 @@
 // The game: the 3D board, the HUD over it, the pause menu and the Win dialog, around one TurnController.
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { GameConfig } from '../../core/types';
 import { getAudio } from '../../game/audio';
 import { clearSave } from '../../game/save';
+import { t } from '../../i18n/i18n';
 import { bridge, controllerStarted } from '../appHooks';
 import { BoardCanvas } from '../board3d/BoardCanvas';
 import { DioramaView } from '../board3d/DioramaView';
+import type { ScreenPoint } from '../hud/bubbleLayout';
 import { Hud } from '../hud/Hud';
 import { HudStore } from '../hud/HudStore';
 import { TurnController, type TurnStart } from '../turn/TurnController';
+import { Toast } from '../ui/Toast';
 import { MenuDialog, WinDialog } from './Dialogs';
 
 interface GameScreenProps {
@@ -20,8 +23,17 @@ interface GameScreenProps {
   portrait: boolean;
   onFast: () => void;
   onMute: () => void;
+  onLanguage: () => void;
+  /** Leave for Setup (the menu's New Game). */
+  onNewGame: () => void;
   onExit: () => void;
   onPlayAgain: (config: GameConfig) => void;
+  /** Speech-bubble anchors (a token's head in viewport px, per seat); see `HudProps.bubbleAnchors`. */
+  bubbleAnchors?: readonly (ScreenPoint | null | undefined)[];
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function GameScreen({
@@ -31,15 +43,22 @@ export function GameScreen({
   portrait,
   onFast,
   onMute,
+  onLanguage,
+  onNewGame,
   onExit,
   onPlayAgain,
+  bubbleAnchors,
 }: GameScreenProps) {
   const [view] = useState(() => new DioramaView(getAudio()));
   const [hudStore] = useState(() => new HudStore());
   const controller = useRef<TurnController | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(() =>
+    prefersReducedMotion() ? t('ui.reducedMotion') : null,
+  );
   const hud = useSyncExternalStore(hudStore.subscribe, hudStore.getSnapshot);
   useSyncExternalStore(view.subscribe, view.getVersion);
+  const level = 'config' in start ? start.config.level : start.state.level;
 
   // One controller per game; Fast and Mute are read once here and followed by the effects below.
   useEffect(() => {
@@ -71,6 +90,10 @@ export function GameScreen({
     bridge.menuOpen = menuOpen;
     bridge.winShown = hud.result !== null;
   }, [menuOpen, hud.result]);
+  useEffect(() => {
+    if (hud.hint === t('ui.tripleSix')) setToast(hud.hint);
+  }, [hud.hint]);
+  const clearToast = useCallback(() => setToast(null), []);
 
   const roll = () => void controller.current?.requestRoll();
 
@@ -79,7 +102,8 @@ export function GameScreen({
       if (event.target instanceof HTMLInputElement) return;
       getAudio().unlock();
       if (event.key === ' ' || event.key === 'Enter') {
-        if (menuOpen || hud.result) return;
+        // A focused button keeps its own Space / Enter; elsewhere they roll.
+        if (menuOpen || hud.result || event.target instanceof HTMLButtonElement) return;
         event.preventDefault();
         void controller.current?.requestRoll();
       } else if (event.key === 'f' || event.key === 'F') onFast();
@@ -92,19 +116,26 @@ export function GameScreen({
   }, [menuOpen, hud.result, onFast, onMute, view]);
 
   const result = hud.result;
+  const focusCurrent = () => view.camera?.focus(Math.max(0, hud.current));
   return (
     <main className="screen game" data-testid="game">
       <BoardCanvas view={view} onBoardTap={roll} />
-      <Hud
-        hud={hud}
-        view={view}
-        onRoll={roll}
-        onFast={onFast}
-        onMute={onMute}
-        onMenu={() => setMenuOpen(true)}
-        onFit={() => view.camera?.fit()}
-        onFocus={() => view.camera?.focus(Math.max(0, hud.current))}
-      />
+      {!result && (
+        <Hud
+          hud={hud}
+          view={view}
+          level={level}
+          bubbleAnchors={bubbleAnchors}
+          onRoll={roll}
+          onFast={onFast}
+          onMute={onMute}
+          onMenu={() => setMenuOpen(true)}
+          onFit={() => view.camera?.fit()}
+          onFocus={focusCurrent}
+          onLanguage={onLanguage}
+        />
+      )}
+      {toast && <Toast message={toast} onDone={clearToast} />}
       {menuOpen && (
         <MenuDialog
           fast={fast}
@@ -112,7 +143,10 @@ export function GameScreen({
           onContinue={() => setMenuOpen(false)}
           onFast={onFast}
           onMute={onMute}
-          onMainMenu={onExit}
+          onNewGame={onNewGame}
+          onFit={() => view.camera?.fit()}
+          onFocus={focusCurrent}
+          onLanguage={onLanguage}
         />
       )}
       {result && (

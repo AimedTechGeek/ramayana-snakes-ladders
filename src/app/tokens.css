@@ -1,0 +1,113 @@
+/* Design tokens, self-hosted fonts and the glass styles (docs/design/T44-diorama-3d.md section 8). */
+
+@font-face {
+  font-family: 'Rozha One';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/RozhaOne-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Eczar';
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Eczar-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Eczar';
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Eczar-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Poppins-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Poppins-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Poppins-600.woff2') format('woff2');
+}
+
+:root {
+  --bg-top: #9aa3d9;
+  --bg-mid: #8c96c8;
+  --bg-bottom: #7e88bc;
+  --ink: #2b2f5c;
+  --text: #ffffff;
+  --text-2: rgba(255, 255, 255, 0.74);
+  --text-3: rgba(255, 255, 255, 0.56);
+  --saffron: #f39c2b;
+  --gold: #e9c12f;
+  --parchment: #f3e3b8;
+
+  --font-display: 'Rozha One', Georgia, 'Noto Serif Devanagari', serif;
+  --font-head: 'Eczar', Georgia, 'Noto Serif Devanagari', serif;
+  --font-body: 'Poppins', system-ui, 'Noto Sans Devanagari', sans-serif;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --enter: 180ms var(--ease);
+  --exit: 120ms ease-in;
+
+  /* Type scale: desktop; the phone block below overrides it. */
+  --fs-display: 64px;
+  --fs-h1: 36px;
+  --fs-h2: 24px;
+  --fs-body: 16px;
+  --fs-label: 13px;
+  --fs-caption: 12px;
+  --lh-body: 1.45;
+  --pill-h: 44px;
+  --gutter: 24px;
+
+  color-scheme: light;
+}
+
+html[lang='hi'] {
+  --lh-body: 1.6;
+}
+
+/* 844x390 and its kin: landscape phones. */
+@media (max-height: 520px) {
+  :root {
+    --fs-display: 40px;
+    --fs-h1: 24px;
+    --fs-h2: 18px;
+    --fs-body: 14px;
+    --fs-label: 12px;
+    --fs-caption: 11px;
+    --gutter: 16px;
+  }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border-radius: 16px;
+  box-shadow:
+    0 10px 30px rgba(38, 44, 102, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
