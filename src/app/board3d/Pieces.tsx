@@ -1,4 +1,4 @@
-// Pieces on the board: Hanuman and Sita (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
+// Pieces on the board: Hanuman, Lakshmana and Sita (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
 // placeholder bridges and snakes that rise when revealed, bounce puffs, and the head anchors of the speech bubbles.
 
 import { useFrame, useThree } from '@react-three/fiber';
@@ -80,16 +80,20 @@ function useTokenPlacement(view: DioramaView, player: number) {
   return group;
 }
 
-/** A rigged clay hero (Hanuman, Sita), driven by the view through heroDirector (useHeroActor). */
+/** Heroes with a rigged clay GLB (the others are pegs until their models land). */
+const RIGGED: readonly Hero[] = ['hanuman', 'lakshmana', 'sita'];
+const isRigged = (hero: Hero): hero is HeroId => RIGGED.includes(hero);
+
+/** A rigged clay hero (Hanuman, Lakshmana, Sita), driven by the view through heroDirector (useHeroActor). */
 function RiggedToken({
-  hero: heroId,
   view,
   player,
+  hero: heroId,
   reducedMotion,
 }: {
-  hero: HeroId;
   view: DioramaView;
   player: number;
+  hero: HeroId;
   reducedMotion: boolean;
 }) {
   const group = useTokenPlacement(view, player);
@@ -102,7 +106,7 @@ function RiggedToken({
   );
 }
 
-// ---- placeholder peg figures (Rama, Sita, Lakshmana until their GLBs land in T44.9-11)
+// ---- placeholder peg figures (Rama and Sita until their GLBs land in T44.9-10)
 
 const PEG_SKIN: Record<Hero, string> = {
   rama: '#E8B58C',
@@ -257,12 +261,12 @@ export function Tokens({ view, reducedMotion }: { view: DioramaView; reducedMoti
   return (
     <group>
       {players.map((player, i) =>
-        player.hero === 'hanuman' || player.hero === 'sita' ? (
+        isRigged(player.hero) ? (
           <Suspense
             key={i}
             fallback={<PegToken view={view} player={i} hero={player.hero} reducedMotion={reducedMotion} />}
           >
-            <RiggedToken hero={player.hero} view={view} player={i} reducedMotion={reducedMotion} />
+            <RiggedToken view={view} player={i} hero={player.hero} reducedMotion={reducedMotion} />
           </Suspense>
         ) : (
           <PegToken key={i} view={view} player={i} hero={player.hero} reducedMotion={reducedMotion} />

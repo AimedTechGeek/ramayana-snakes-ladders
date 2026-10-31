@@ -166,6 +166,7 @@ describe('Sita GLB: respect numbers from the Blender build (T44 4.4 R1 and R3)',
       min_head_over_hips: number;
       min_shoulder_top: number;
       max_shoulder_swing: number;
+      max_elbow: number;
       max_free_swing: number;
       max_free_elbow: number;
       max_knee: number;
@@ -188,7 +189,9 @@ describe('Sita GLB: respect numbers from the Blender build (T44 4.4 R1 and R3)',
     for (const clip of HERO_CLIPS) expect(report[clip]!.min_shoulder_top, clip).toBeGreaterThan(0.75 * 56);
   });
 
-  it('R3_(SwiftStrideRun)_ShouldSwingTheFreeArmAtMost25DegreesAndBendTheElbowsAtMost60', () => {
+  it('R3_(SwiftStrideRun)_ShouldSwingEitherArmAtMost25DegreesAndBendTheElbowsAtMost60', () => {
+    expect(report.run!.max_shoulder_swing).toBeLessThanOrEqual(25);
+    expect(report.run!.max_elbow).toBeLessThanOrEqual(60);
     expect(report.run!.max_free_swing).toBeLessThanOrEqual(25);
     expect(report.run!.max_free_elbow).toBeLessThanOrEqual(60);
   });

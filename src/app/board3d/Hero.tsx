@@ -48,7 +48,7 @@ import { HeroDirector } from './heroDirector';
 import { faceTextureFor, showFrame } from './heroFace';
 import { drawSitaAtlas } from './heroFaceSita';
 
-export type HeroId = 'hanuman' | 'sita';
+export type HeroId = 'hanuman' | 'lakshmana' | 'sita';
 
 export interface PlayOptions {
   /** Defaults: idle, walk, run, cheer loop; the rest play once and hold their last pose. */

@@ -60,7 +60,7 @@ HEAD_R = 7.2
 # ---------------------------------------------------------------- the lotus (prop.R, rest pose in design units)
 GRIP = V(HERO_BONES["prop.R"][1])       # fist centre; the stem runs along +Z through it
 LOTUS_BASE = 15.5                        # bloom centre height above the grip
-CARRY_WRIST = V((-6.9, -8.4, 36.2))      # chest-attached wrist target: lotus held before the waist
+CARRY_WRIST = V((-7.2, -7.8, 34.6))      # chest-attached wrist target: lotus held before the waist
 CARRY_POLE = V((-0.7, 0.2, -1.0))
 CARRY_TILT = rot_y(-27) @ rot_x(2)       # the bloom leans out to her right, clear of the face and the garland
 
@@ -498,8 +498,8 @@ def happy_pose(f):
     pose.rot("head", rot_x(-3))
     pose.rot("spine", rot_x(-1.5))
     kin = motion.SKEL.kin(pose)
-    reach(pose, "L", kin.point("chest", V((3.0, -6.4, 40.5))), V((1.0, 0.3, -0.5)))
-    hold_lotus(pose, wrist=V((-4.6, -7.6, 43.5)), tilt=rot_y(-20) @ rot_x(-4), pole=V((-0.6, 0.2, -1.0)))
+    reach(pose, "L", kin.point("chest", V((2.0, -7.0, 38.5))), V((1.0, 0.3, -0.5)))
+    hold_lotus(pose, wrist=V((-6.2, -7.8, 39.5)), tilt=rot_y(-27) @ rot_x(-2), pole=V((-0.6, 0.2, -1.0)))
     sway = 2 * math.pi * f / 36
     pose.rot("chest", rot_z(1.5 * math.sin(sway)))
     pose.hop = 0.35 * abs(math.sin(sway * 2))
@@ -569,10 +569,10 @@ def cheer_pose(f):
     pose.rot("head", rot_z(3.0 * math.sin(turn * 2)))
     pose.rot("chest", rot_z(2.0 * math.sin(turn * 2)))
     kin = motion.SKEL.kin(pose)
-    apart = V((5.4, -6.6, 42.5))
-    meet = V((-1.4, -8.6, 41.0))
+    apart = V((5.4, -6.6, 40.5))
+    meet = V((-2.6, -8.6, 38.4))
     reach(pose, "L", kin.point("chest", apart.lerp(meet, c)), V((1.0, 0.3, -0.6)))
-    hold_lotus(pose, wrist=V((-3.6, -8.6, 40.6)), tilt=rot_y(-30) @ rot_x(-3), pole=V((-0.6, 0.3, -1.0)))
+    hold_lotus(pose, wrist=V((-4.8, -8.6, 37.8)), tilt=rot_y(-34) @ rot_x(-3), pole=V((-0.6, 0.3, -1.0)))
     sway_hair(pose, turn * 4, 3.0)
     return pose
 
