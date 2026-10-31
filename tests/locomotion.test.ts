@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import easyMeta from '../public/assets/iso/bridges-easy.meta.json';
-import rawMeta from '../public/assets/iso/hanuman-s.meta.json';
 import { fieldCentre } from '../src/game/iso/boardIso';
 import {
   distanceAt,
@@ -17,10 +15,7 @@ import {
   type Facing,
 } from '../src/game/iso/locomotion';
 
-/** The easy bridges' routes in world units (art meta). */
-const bridges = (easyMeta as unknown as { bridges: Record<string, { route: [number, number][] }> }).bridges;
 const SQUARE = 56;
-const PX_PER_UNIT_AT_ZOOM_2 = 0.7621 * 2;
 
 /** A move of `n` squares that starts and ends on field centres: n x 56 units. */
 const lengthOf = (n: number) => n * SQUARE;
@@ -38,26 +33,6 @@ describe('facingOf (spec 2)', () => {
   });
 
   it('NoMove_Should_KeepThePreviousFacing', () => expect(facingOf([0, 0], 'NW')).toBe('NW'));
-
-  it('AllNineEasyBridgeRoutes_Should_FaceAsTheSpecTableSays', () => {
-    const expected: Record<string, Facing> = {
-      vishwamitra: 'NW',
-      sugriva: 'NW',
-      wedding: 'SE',
-      'rama-setu': 'SE',
-      'shiva-bow': 'NE',
-      guha: 'NE',
-      shabari: 'NE',
-      'hanuman-meeting': 'NE',
-      'hanuman-leap': 'NE',
-    };
-    expect(Object.keys(bridges).sort()).toEqual(Object.keys(expected).sort());
-    for (const [id, bridge] of Object.entries(bridges)) {
-      const first = bridge.route[0]!;
-      const last = bridge.route[bridge.route.length - 1]!;
-      expect(facingOf([last[0] - first[0], last[1] - first[1]], 'SW'), id).toBe(expected[id]);
-    }
-  });
 });
 
 describe('gaitFor (spec 4)', () => {
@@ -199,56 +174,6 @@ describe('pathOf and sampleAt', () => {
 });
 
 describe('distance-driven phase (spec 4, no sliding)', () => {
-  const frames = rawMeta.frames as unknown as Record<
-    string,
-    { planted: { foot: string | null; offset: number | null } }
-  >;
-
-  /** Planted foot ground position along the travel axis (units) at distance d, taken at the start of the frame shown. */
-  function plantedAt(clip: 'walk' | 'run', facing: Facing, d: number) {
-    const gait = gaitFor(clip === 'walk' ? 1 : 3, false);
-    const index = frameIndexOf(phaseAt(d + 1e-6, gait.cycle), gait.frames);
-    const meta = frames[`${clip}.${facing}.${index}`]!.planted;
-    return meta.foot && meta.foot !== 'both' ? { foot: meta.foot, index, ground: d + meta.offset! } : null;
-  }
-
-  for (const clip of ['walk', 'run'] as const) {
-    it(`${clip}_(Multi_Square_Move)_Should_PlantEachFootWithin1PxAtZoom2WhileItsFrameChanges`, () => {
-      const gait = gaitFor(clip === 'walk' ? 1 : 3, false);
-      const step = gait.cycle / gait.frames;
-      const squares = clip === 'walk' ? 2 : 6;
-      // d at the first display instant of each frame
-      const stances = new Map<string, number[]>();
-      let stance = 0;
-      let lastFoot: string | null = null;
-      for (let k = 0; k <= Math.round(lengthOf(squares) / step); k++) {
-        const planted = plantedAt(clip, 'SE', k * step);
-        if (!planted) {
-          lastFoot = null;
-          continue;
-        }
-        if (planted.foot !== lastFoot) stance++;
-        lastFoot = planted.foot;
-        const key = `${stance}`;
-        stances.set(key, [...(stances.get(key) ?? []), planted.ground]);
-      }
-      expect(stances.size).toBeGreaterThan(2);
-      for (const [key, grounds] of stances) {
-        const drift = (Math.max(...grounds) - Math.min(...grounds)) * PX_PER_UNIT_AT_ZOOM_2;
-        expect(drift, `stance ${key}`).toBeLessThanOrEqual(1);
-      }
-    });
-
-    it(`${clip}_(One_Cycle)_Should_AdvanceThePlantedFootByExactlyOneCycleLength`, () => {
-      const gait = gaitFor(clip === 'walk' ? 1 : 3, false);
-      const first = plantedAt(clip, 'SE', 0)!;
-      const next = plantedAt(clip, 'SE', gait.cycle)!;
-      expect(next.foot).toBe(first.foot);
-      const drift = (next.ground - first.ground - gait.cycle) * PX_PER_UNIT_AT_ZOOM_2;
-      expect(Math.abs(drift)).toBeLessThanOrEqual(1);
-    });
-  }
-
   it('FrameIndex_(Start_Of_Move)_Should_BeFrameZeroContact', () => {
     expect(frameIndexOf(phaseAt(0, 32), 8)).toBe(0);
     expect(frameIndexOf(phaseAt(0, 56), 6)).toBe(0);

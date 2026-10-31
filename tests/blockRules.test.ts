@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import * as node from '../scripts/art/iso/blocks.mjs';
-import propsMeta from '../public/assets/iso/props.meta.json';
+import { CATALOG } from '../src/app/board3d/propLayout';
 import {
   BACK_MAX_HEIGHT,
   REGION_INK,
   STRIP,
   fogFrameOf,
-  frameNameOf,
   layoutProps,
-  patternOf,
-  propCountOf,
   randomKindsOf,
   regionOf,
   seedOf,
@@ -20,26 +16,13 @@ import {
 import { gridOf } from '../src/game/layout';
 
 const SQUARES = Array.from({ length: 144 }, (_, i) => i + 1);
-const catalog = Object.values(propsMeta.frames) as unknown as PropKind[];
+/** The 3D props manifest the game places (the 2D sprite atlas it replaced had the same kinds and heights). */
+const catalog: readonly PropKind[] = CATALOG;
 const layout = layoutProps(catalog);
 const heightOf = (kind: string) => catalog.find((k) => k.kind === kind)!.height;
 const isLandmark = (square: number) => catalog.some((k) => k.squares?.includes(square));
 
-describe('block rules twin (TS vs scripts/art/iso/blocks.mjs)', () => {
-  it('BlockRules_(All144Squares)_Should_AgreeWithTheNodeTwin', () => {
-    for (const square of SQUARES) {
-      expect(seedOf(square), `seed ${square}`).toBe(node.seedOf(square));
-      expect(patternOf(square), `pattern ${square}`).toBe(node.patternOf(square));
-      expect(propCountOf(square), `count ${square}`).toBe(node.propCountOf(square));
-      expect(regionOf(square), `region ${square}`).toBe(node.regionOf(square));
-      expect(frameNameOf(square), `frame ${square}`).toBe(node.frameNameOf(square));
-    }
-  });
-
-  it('BlockRules_(RegionInk)_Should_MatchTheNodeRegionTable', () => {
-    for (const [region, ink] of Object.entries(REGION_INK)) expect(node.REGIONS[region]!.ink).toBe(ink);
-  });
-
+describe('block rules', () => {
   it('FogFrame_(AnySquare)_Should_BeItsRegionFogFrame', () => {
     expect(fogFrameOf(49)).toBe('ganga-fog');
     expect(fogFrameOf(130)).toBe('lanka-fog');

@@ -37,8 +37,7 @@ Requires Node.js 22 (see `.nvmrc`).
 | `npm run smoke`       | Serve the last build, play it in Microsoft Edge and fail on any error.           |
 | `npm run devices`     | Check the canvas fit, errors and frame rate at five device sizes.                |
 | `npm run screenshots` | Regenerate the images in `docs/images/` (run `npm run build` first).             |
-| `npm run art`         | Regenerate the vector art in `public/assets/`.                                   |
-| `npm run art:check`   | Validate the vector art.                                                         |
+| `npm run blender:*`   | Rebuild the 3D models in `public/models/` with headless Blender 5.2.            |
 
 ## Project structure
 
@@ -50,8 +49,8 @@ Requires Node.js 22 (see `.nvmrc`).
 | `src/characters/` | Reactions and how engine events map to them.                                                        |
 | `src/i18n/`       | English and Hindi strings.                                                                          |
 | `sim/`            | Monte Carlo simulator that drives the real rules engine.                                            |
-| `scripts/`        | Smoke, device and screenshot checks, and the art generator in `scripts/art/`.                       |
-| `public/assets/`  | Art: board and figurine atlases, tokens and the favicon.                                            |
+| `scripts/`        | Smoke, device and screenshot checks, review captures, and the Blender model builds.                |
+| `public/models/`  | 3D models (GLB): board, props, landmarks, die, the four heroes, snakes and bridges.                 |
 | `tests/`          | Unit tests.                                                                                         |
 | `docs/design/`    | Design documents: heroes, style guide, board art, UX and emotion timing.                            |
 | `docs/review/`    | Review and playtest notes.                                                                          |

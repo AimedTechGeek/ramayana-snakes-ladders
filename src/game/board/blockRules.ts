@@ -1,6 +1,5 @@
 // Pure rules of the living board's blocks (T42 spec 1.3, 1.5, 2): region, pattern and prop choice per square.
-// TS twin of scripts/art/iso/blocks.mjs (seedOf, patternOf, propCountOf, regionOf, frameNameOf, REGIONS); a test
-// proves the two agree for all 144 squares. No Phaser.
+// The 3D board places its props and block variants from these rules. No three, no React.
 
 import { gridOf } from '../layout';
 

@@ -8,10 +8,9 @@ export default defineConfig({
     outDir: 'dist',
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
-      // multi-page: the game, the D3 Blender-GLB spike page and the hero preview
+      // multi-page: the game and the hero preview page
       input: {
         main: 'index.html',
-        spike: 'spike.html',
         hero: 'hero.html',
       },
     },

@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import * as node from '../scripts/art/iso-board.mjs';
-import * as nodeWorld from '../scripts/art/iso/world.mjs';
 import camera from '../src/game/iso/camera.json';
 import { boxCorners } from '../src/game/iso/isoKit';
 import {
@@ -103,40 +101,6 @@ describe('FAN_WORLD', () => {
 
   it('FanOffsets_Count3_Should_HaveThreeDistinctSpots', () => {
     expect(new Set(world.FAN_WORLD[3].map((p) => JSON.stringify(p))).size).toBe(3);
-  });
-});
-
-describe('node and TypeScript projections', () => {
-  it('BoardProjection_Should_MatchBetweenNodeAndTypeScript', () => {
-    expect(node.boardProjection()).toEqual(boardProjection());
-  });
-
-  it('SquareScreen_AllSquares_Should_MatchBetweenNodeAndTypeScript', () => {
-    for (const n of squares) {
-      expect(node.squareScreen(n)).toEqual(squareScreen(n));
-      expect(node.toScreen(node.squareWorld(n))).toEqual(toScreen(squareWorld(n)));
-    }
-  });
-
-  it('WorldConstants_Should_MatchBetweenNodeAndTypeScript', () => {
-    const names = [
-      'CELL',
-      'SIZE',
-      'RIM',
-      'BASE_H',
-      'FOOT_H',
-      'FIELD_Z',
-      'TOP_Z',
-      'RIM_Z',
-      'SILL_D',
-      'FIELD_C_OFFSET',
-      'FIG_H',
-      'HEADROOM',
-      'FAN_WORLD',
-    ] as const;
-    for (const name of names) {
-      expect(nodeWorld[name]).toEqual(world[name]);
-    }
   });
 });
 

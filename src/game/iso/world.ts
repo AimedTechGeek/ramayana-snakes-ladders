@@ -1,4 +1,4 @@
-// World constants of the isometric board (T40 spec section 2.1). Mirrored in scripts/art/iso/world.mjs: keep the two identical.
+// World constants of the isometric board (T40 spec section 2.1), still the unit of the 3D layout (coords.ts).
 // World: x to the right along a row, y toward the viewer (row 0 is the nearest row), z up. Units are world units.
 
 export const CELL = 56;

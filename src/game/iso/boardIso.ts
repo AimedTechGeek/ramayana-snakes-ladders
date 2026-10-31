@@ -1,4 +1,4 @@
-// Isometric board projection shared with scripts/art/iso-board.mjs (keep the two identical). Pure, no Phaser.
+// Isometric board projection of the T40 board; the 3D board still takes its square positions and field centres from it. Pure.
 // Geometry comes from ./world; the camera comes from ./camera.json.
 
 import { gridOf } from '../layout';
