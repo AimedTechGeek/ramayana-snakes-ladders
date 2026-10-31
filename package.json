@@ -31,7 +31,9 @@
     "blender:dice": "node scripts/blender/run.mjs scripts/blender/die.py public/models/dice/die.glb",
     "blender:props": "node scripts/blender/run.mjs scripts/blender/props.py public/models/props src/app/board3d/propsManifest.json",
     "blender:board": "node scripts/blender/run.mjs scripts/blender/board.py public/models/board/board.glb",
-    "blender:spike:check": "node scripts/blender/spike-check.mjs screenshots-tmp/spike"
+    "blender:spike:check": "node scripts/blender/spike-check.mjs screenshots-tmp/spike",
+    "blender:heroes": "node scripts/blender/heroes/build.mjs",
+    "blender:heroes:check": "node scripts/blender/hero-check.mjs screenshots-tmp/heroes"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",
