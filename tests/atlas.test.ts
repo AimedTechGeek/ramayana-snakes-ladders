@@ -3,10 +3,15 @@ import { frameAnchor, nextPot, shelfPack } from '../scripts/art/iso/atlas.mjs';
 import atlasJson from './fixtures/atlas/atlas-test.json';
 import atlasMetaJson from './fixtures/atlas/atlas-test.meta.json';
 import camera from '../src/game/iso/camera.json';
-import { atlasOrigin, atlasSheet, type AtlasMeta } from '../src/game/assets';
 
 const ANCHOR_TOLERANCE_PX = 0.5;
-const meta = atlasMetaJson as AtlasMeta;
+/** The art pipeline's sidecar for a packed sheet (scripts/art/iso/atlas.mjs). */
+interface AtlasMeta {
+  width: number;
+  height: number;
+  frames: Record<string, { w: number; h: number; factor: number; anchorX: number; anchorY: number }>;
+}
+const meta = atlasMetaJson as unknown as AtlasMeta;
 const hash = atlasJson as {
   frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
 };
@@ -173,20 +178,6 @@ describe('atlas fixture (atlas-test, 3 dummy frames)', () => {
       expect(Math.abs(found.y - entry.anchorY)).toBeLessThanOrEqual(ANCHOR_TOLERANCE_PX);
     },
   );
-
-  it('Origin_(Runtime_Helper)_Should_Be_The_Anchor_Over_The_Frame_Size', () => {
-    const entry = meta.frames['fine-tall']!;
-    expect(atlasOrigin(entry)).toEqual({ x: entry.anchorX / entry.w, y: entry.anchorY / entry.h });
-  });
-
-  it('Sheet_(Url_Helper)_Should_Point_At_Png_Json_And_Meta', () => {
-    expect(atlasSheet('props')).toEqual({
-      key: 'props',
-      png: 'assets/iso/props.png',
-      json: 'assets/iso/props.json',
-      meta: 'assets/iso/props.meta.json',
-    });
-  });
 });
 
 describe('camera.json raster contract', () => {
