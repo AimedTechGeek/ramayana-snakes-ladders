@@ -1,7 +1,10 @@
 // Where a token is drawn on the isometric board (T40 spec section 5). Pure, no Phaser.
 
 import { depthKey, fieldCentre, toScreen, type Screen, type Vec2, type Vec3 } from './boardIso';
+import type { Motion } from './locomotion';
 import { FAN_WORLD, TOP_Z } from './world';
+
+export type { ClipName, Facing, Motion } from './locomotion';
 
 /** Tokens draw at 1000 + depth key (1027..1585): always above the board texture (0) and the shadows (500). */
 export const TOKEN_DEPTH_BASE = 1000;
@@ -29,6 +32,8 @@ export interface TokenPose {
   lift: number;
   /** Drawn size factor, default 1; above 1 while a token crosses the HUD on its way to a zoomed board camera. */
   scale?: number;
+  /** What the figure is doing (walk, run, leap, with its facing and clip phase); absent means rest: facing SW, the current emotion. */
+  motion?: Motion;
 }
 
 /** Resting point of the `slot`-th of `count` tokens sharing a square: the field centre plus its fan offset (world x, y). */

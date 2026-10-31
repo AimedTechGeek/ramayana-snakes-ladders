@@ -2,6 +2,16 @@
 // timeline and the depth of a token on a bridge. The sprites and tweens live in BridgeActor.ts.
 
 import { toScreen } from '../iso/boardIso';
+import {
+  facingOf,
+  gaitFor,
+  leapMs,
+  longLeapBeats,
+  stepLeapBeats,
+  type Facing,
+  type LeapBeats,
+  type Motion,
+} from '../iso/locomotion';
 import { HOP_HEIGHT, type TokenPose } from '../iso/tokenPose';
 import { CELL, SIZE, TOP_Z } from '../iso/world';
 import { BAND } from './boardBands';
@@ -209,5 +219,89 @@ export function bridgePose(
     ground: toScreen([x, y, z - arcHeight * arc]),
     depth: crossingDepth(segments, y),
     lift: arc,
+  };
+}
+
+// ---- T43.2: Hanuman leaps on, runs the deck and leaps off (spec 4). The hop walk above stays for the medallions.
+
+/** A footbridge shorter than this is one leap, not leap-run-leap (spec 4, shabari 15). */
+export const SINGLE_LEAP_BELOW = 28;
+/** Apex over the chord of a step on or off (spec 4: +8) and of a single leap over a short footbridge. */
+export const STEP_LEAP_APEX = 8;
+/** `hanuman-leap`: apex z = deck apex 22.4 + 14 (spec 4), as height over the chord between two tile tops. */
+export const LONG_LEAP_APEX_Z = 22.4 + 14;
+
+/** The facing the token keeps all the way over the bridge: the route direction (spec 2). */
+export function routeFacing(bridge: BridgeMeta): Facing {
+  const first = bridge.route[0]!;
+  const last = bridge.route[bridge.route.length - 1]!;
+  return facingOf([last[0] - first[0], last[1] - first[1]], 'SW');
+}
+
+/** `hanuman-leap` (his own story) and any footbridge shorter than 28 units are one leap, no run. */
+export function isSingleLeap(bridge: BridgeMeta, id: string): boolean {
+  return id === 'hanuman-leap' || bridge.length < SINGLE_LEAP_BELOW;
+}
+
+export interface CrossingTimeline {
+  single: boolean;
+  /** Beats of the one leap, or of the step on. */
+  onBeats: LeapBeats;
+  /** Time of the run along the deck (0 for a single leap). */
+  runMs: number;
+  /** Beats of the step off (absent for a single leap). */
+  offBeats: LeapBeats | null;
+  totalMs: number;
+}
+
+/** The three phases of a crossing (leap on, run, leap off) or the one leap; Fast halves the leaps and doubles the run speed. */
+export function crossingTimeline(bridge: BridgeMeta, id: string, fast: boolean): CrossingTimeline {
+  if (isSingleLeap(bridge, id)) {
+    const beats = id === 'hanuman-leap' ? longLeapBeats(fast) : stepLeapBeats(fast);
+    return { single: true, onBeats: beats, runMs: 0, offBeats: null, totalMs: leapMs(beats) };
+  }
+  const beats = stepLeapBeats(fast);
+  const runMs = (bridge.length / gaitFor(3, fast).speed) * 1000;
+  return { single: false, onBeats: beats, runMs, offBeats: beats, totalMs: leapMs(beats) * 2 + runMs };
+}
+
+/** The pose of a leap from `from` to `to` (world x, y, z) at air progress `u`, over a chord apex of `apex` units. */
+export function leapPose(
+  segments: readonly BridgeSegment[],
+  from: Vec3,
+  to: Vec3,
+  apex: number,
+  u: number,
+  motion: Motion,
+): TokenPose {
+  const arc = 4 * u * (1 - u);
+  const at = (k: number) => from[k]! + (to[k]! - from[k]!) * u;
+  const x = at(0);
+  const y = at(1);
+  const ground = at(2);
+  return {
+    feet: toScreen([x, y, ground + apex * arc]),
+    ground: toScreen([x, y, ground]),
+    depth: crossingDepth(segments, y),
+    lift: arc,
+    motion,
+  };
+}
+
+/** The pose of the run along the deck at arc length `s`: on the deck, shadow under the feet. */
+export function runPose(
+  bridge: BridgeMeta,
+  segments: readonly BridgeSegment[],
+  s: number,
+  motion: Motion,
+): TokenPose {
+  const [x, y] = routeAt(bridge, s);
+  const z = deckHeight(bridge, s);
+  return {
+    feet: toScreen([x, y, z]),
+    ground: toScreen([x, y, z]),
+    depth: crossingDepth(segments, y),
+    lift: 0,
+    motion,
   };
 }

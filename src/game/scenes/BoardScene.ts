@@ -11,14 +11,31 @@ import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
 import type { GameConfig, GameState, Hero, Jump, Level } from '../../core/types';
 import { getAudio, type Audio } from '../audio';
-import { atlasSheet, FIGURINE_HEROES, figurineAssets, loadAtlas } from '../assets';
+import { atlasSheet, FIGURINE_HEROES, HANUMAN_SHEET, loadAtlas } from '../assets';
 import { BridgeActor, bridgeSheet } from '../board/BridgeActor';
-import { bridgePose, hopAtProgress, hopMs, walkHops } from '../board/bridgeRules';
+import {
+  bridgePose,
+  crossingTimeline,
+  hopAtProgress,
+  hopMs,
+  leapPose,
+  LONG_LEAP_APEX_Z,
+  routeAt,
+  routeFacing,
+  runPose,
+  STEP_LEAP_APEX,
+  deckHeight,
+  walkHops,
+  type BridgeMeta,
+  type BridgeSegment,
+  type CrossingTimeline,
+} from '../board/bridgeRules';
 import { estimateTextureMb, LivingBoard } from '../board/LivingBoard';
 import { SnakeActor, snakeSheetKey } from '../board/SnakeActor';
 import { HEROES, heroName } from '../heroes';
 import { PANEL, SEAT, seatTokenSpot, seatTop } from '../layout';
-import { fieldCentre, squareScreen, type Vec2 } from '../iso/boardIso';
+import { TOP_Z } from '../iso/world';
+import { fieldCentre, squareScreen, type Vec2, type Vec3 } from '../iso/boardIso';
 import {
   entryPoseTo,
   hopPoint,
@@ -28,6 +45,21 @@ import {
   worldPose,
   type TokenPose,
 } from '../iso/tokenPose';
+import {
+  distanceAt,
+  durationOf,
+  facingOf,
+  frameIndexOf,
+  gaitFor,
+  leapAirProgress,
+  leapMs,
+  leapPhaseAt,
+  pathOf,
+  phaseAt,
+  sampleAt,
+  type Facing,
+  type LeapBeats,
+} from '../iso/locomotion';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse } from '../fx';
 import {
@@ -160,13 +192,12 @@ export class BoardScene extends Phaser.Scene {
     this.tokenLayer = [];
   }
 
-  /** Loads the seated Hanuman's figurine textures (the board atlases load in PreloadScene). */
+  /** Loads the level's bridge and snake sheets and, with Hanuman seated, his walking sheet (the shared board atlases load in PreloadScene). */
   preload(): void {
     const bridgeAtlas = bridgeSheet(this.level);
     if (!this.textures.exists(bridgeAtlas.key)) loadAtlas(this, bridgeAtlas);
-    for (const asset of figurineAssets(this.heroes, ['s', 'm'])) {
-      if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.url);
-    }
+    if (this.heroes.some((hero) => FIGURINE_HEROES.includes(hero)) && !this.textures.exists(HANUMAN_SHEET))
+      loadAtlas(this, atlasSheet(HANUMAN_SHEET));
     if (!this.textures.exists(snakeSheetKey(this.level)))
       loadAtlas(this, atlasSheet(snakeSheetKey(this.level)));
   }
@@ -348,10 +379,7 @@ export class BoardScene extends Phaser.Scene {
           );
         return;
       case 'Moved':
-        for (const [i, square] of event.path.entries()) {
-          await this.stepTo(event.player, square);
-          if (i === event.path.length - 1 && this.landedOnHidden) this.audio.reveal(this.fastMode);
-        }
+        await this.advance(event.player, event.path);
         return;
       case 'Laddered':
         await this.bridges.reveal(event.jump.from);
@@ -372,7 +400,8 @@ export class BoardScene extends Phaser.Scene {
         return;
       case 'Bounced':
         this.audio.bounce();
-        this.bounceEffect();
+        if (!this.bouncePuffed) this.bounceEffect(); // a walking token puffs as it turns round at 144
+        this.bouncePuffed = false;
         return;
       case 'GameOver':
         this.audio.drone(false);
@@ -624,6 +653,80 @@ export class BoardScene extends Phaser.Scene {
     return spot ? worldPose(spot[0], spot[1]) : screenPose(seatTokenSpot(player), TOKEN_DEPTH_BASE);
   }
 
+  /** A move: a medallion hops square by square; Hanuman enters from his seat card, then walks or runs the rest (T43 section 4). */
+  private async advance(player: number, path: number[]): Promise<void> {
+    if (path.length === 0) return;
+    if (!this.tokenAt(player).walks) {
+      for (const [i, square] of path.entries()) {
+        await this.stepTo(player, square);
+        if (i === path.length - 1 && this.landedOnHidden) this.audio.reveal(this.fastMode);
+      }
+      return;
+    }
+    let rest = path;
+    if (this.worldAt[player] === null) {
+      await this.stepTo(player, path[0]!); // the HUD to board arc, drawn in the idle frame
+      rest = path.slice(1);
+    }
+    if (rest.length > 0) await this.moveAlong(player, rest, path.length);
+    if (this.landedOnHidden) this.audio.reveal(this.fastMode);
+  }
+
+  /**
+   * Hanuman walks (up to 2 squares) or runs (3 and more) along the polyline through the squares' field centres in one
+   * tween. The frame comes from the distance walked, so the feet do not slide; fog lifts as each centre is passed.
+   */
+  private async moveAlong(player: number, squares: number[], moveSquares: number): Promise<void> {
+    const token = this.tokenAt(player);
+    const from = this.worldAt[player];
+    if (!from) throw new Error(`Player ${player} walks from no square`);
+    this.shownSquare[player] = squares[squares.length - 1]!;
+    const finalSpot = this.spotOf(player);
+    const path = pathOf(from, squares, finalSpot);
+    const fast = this.fastMode;
+    const glide = this.reducedMotion;
+    const gait = glide ? gaitFor(3, false) : gaitFor(moveSquares, fast);
+    const duration = glide ? (path.length / gait.speed) * 1000 : durationOf(path.length, gait, fast);
+    let facing: Facing = 'SW';
+    let walked = 0;
+    let revealed = 0;
+    let lastFrame = -1;
+    const poseAt = (u: number): TokenPose => {
+      walked = glide ? u * path.length : distanceAt(u, path.length, gait, fast);
+      const at = sampleAt(path, walked);
+      facing = facingOf(at.dir, facing);
+      const pose = worldPose(at.point[0], at.point[1]);
+      if (glide) return pose;
+      return { ...pose, motion: { facing, clip: gait.clip, phase: phaseAt(walked, gait.cycle) } };
+    };
+    await this.travel(player, duration, 'Linear', poseAt, (_u, pose) => {
+      while (revealed < squares.length - 1 && walked >= path.centreAt[revealed]!) {
+        const square = squares[revealed]!;
+        // The turn-around at 144: the token passes the last square and comes back (spec 4, Bounce).
+        if (square === 144 && revealed < squares.length - 1) this.puffBounce();
+        this.revealTerrain(square);
+        revealed++;
+      }
+      if (!pose.motion) return;
+      const frame = frameIndexOf(pose.motion.phase, gait.frames);
+      if (frame !== lastFrame && frame % (gait.frames / 2) === 0) this.audio.step(); // a foot contact
+      lastFrame = frame;
+    });
+    this.worldAt[player] = finalSpot;
+    this.revealTerrain(squares[squares.length - 1]!);
+    token.place(this.restPose(player, finalSpot)); // arrival: back to SW
+    token.squash(this.scaled(60));
+    await this.relayout(player);
+  }
+
+  /** Set once a walking token has puffed at 144, so the Bounced event does not puff again. */
+  private bouncePuffed = false;
+
+  private puffBounce(): void {
+    this.bouncePuffed = true;
+    this.bounceEffect();
+  }
+
   private async stepTo(player: number, square: number): Promise<void> {
     this.audio.step();
     const token = this.tokenAt(player);
@@ -652,7 +755,7 @@ export class BoardScene extends Phaser.Scene {
     }
     this.worldAt[player] = to;
     this.revealTerrain(square);
-    token.squash(this.scaled(60));
+    token.squash(this.scaled(token.walks ? 100 : 60));
     await this.relayout(player);
   }
 
@@ -668,7 +771,10 @@ export class BoardScene extends Phaser.Scene {
     if (crossing) this.setTokenLayer(player, 'hud');
     const boardEnd = end ?? start;
     const focus = crossing && boardEnd ? worldPose(boardEnd[0], boardEnd[1]).feet : undefined;
+    const token = this.tokenAt(player);
+    if (token instanceof Figurine) token.tilt(-6); // pulled back while he slides
     await this.travel(player, this.scaled(500), 'Sine.easeInOut', poseAt, undefined, focus);
+    if (token instanceof Figurine) token.tilt(0);
     this.worldAt[player] = end;
     if (crossing) {
       this.setTokenLayer(player, end ? 'board' : 'hud');
@@ -686,24 +792,28 @@ export class BoardScene extends Phaser.Scene {
     if (!start) throw new Error(`Player ${player} is not on the board at the foot of ${model.id}`);
     this.shownSquare[player] = jump.to;
     const end = this.spotOf(player);
-    const hops = walkHops(model.meta, start, end);
-    let stepped = -1;
-    // One tween drives every hop, so they run back to back by the clock (vishwamitra's seven deck hops take 980 ms).
-    await this.travel(
-      player,
-      this.reducedMotion ? 0 : hops.length * hopMs(this.fastMode),
-      'Linear',
-      (progress) => {
-        const at = hopAtProgress(hops.length, progress);
-        return bridgePose(model.meta, model.segments, hops[at.index]!, at.u);
-      },
-      (progress) => {
-        const { index } = hopAtProgress(hops.length, progress);
-        if (index === stepped) return;
-        stepped = index;
-        this.audio.step();
-      },
-    );
+    if (this.tokenAt(player).walks) {
+      await this.leapAndRun(player, model, start, end);
+    } else {
+      const hops = walkHops(model.meta, start, end);
+      let stepped = -1;
+      // One tween drives every hop, so they run back to back by the clock (vishwamitra's seven deck hops take 980 ms).
+      await this.travel(
+        player,
+        this.reducedMotion ? 0 : hops.length * hopMs(this.fastMode),
+        'Linear',
+        (progress) => {
+          const at = hopAtProgress(hops.length, progress);
+          return bridgePose(model.meta, model.segments, hops[at.index]!, at.u);
+        },
+        (progress) => {
+          const { index } = hopAtProgress(hops.length, progress);
+          if (index === stepped) return;
+          stepped = index;
+          this.audio.step();
+        },
+      );
+    }
     this.worldAt[player] = end;
     this.tokenAt(player).place(this.restPose(player, end));
     this.revealTerrain(jump.to);
@@ -712,6 +822,69 @@ export class BoardScene extends Phaser.Scene {
     this.rig.within('board', () => goldBurst(this, landed.x, landed.y, this.fastMode));
     this.tokenAt(player).squash(this.scaled(60));
     await this.relayout(player);
+  }
+
+  /**
+   * Hanuman on a bridge (T43 section 4): a leap onto the foot abutment, a run along the deck at 280 u/s (560 Fast) facing
+   * the route, a leap down to the top square. `hanuman-leap` and footbridges under 28 units are one leap.
+   */
+  private async leapAndRun(
+    player: number,
+    model: { id: string; meta: BridgeMeta; segments: readonly BridgeSegment[] },
+    start: Vec2,
+    end: Vec2,
+  ): Promise<void> {
+    if (this.reducedMotion) {
+      await this.travel(player, 0, 'Linear', () => this.restPose(player, end));
+      return;
+    }
+    const { meta, segments } = model;
+    const fast = this.fastMode;
+    const plan: CrossingTimeline = crossingTimeline(meta, model.id, fast);
+    const facing = routeFacing(meta);
+    const leap = (from: Vec3, to: Vec3, beats: LeapBeats, apex: number) => {
+      const total = leapMs(beats);
+      let landed = false;
+      return this.travel(
+        player,
+        total,
+        'Linear',
+        (u) =>
+          leapPose(segments, from, to, apex, leapAirProgress(u * total, beats), {
+            facing,
+            clip: 'leap',
+            phase: leapPhaseAt(u * total, beats),
+          }),
+        (u) => {
+          if (landed || u * total < total - beats[3]) return;
+          landed = true;
+          this.audio.step();
+        },
+      );
+    };
+    const atTop = (spot: Vec2): Vec3 => [spot[0], spot[1], TOP_Z];
+    if (plan.single) {
+      const apex = model.id === 'hanuman-leap' ? LONG_LEAP_APEX_Z - TOP_Z : STEP_LEAP_APEX;
+      await leap(atTop(start), atTop(end), plan.onBeats, apex);
+      return;
+    }
+    const [x0, y0] = routeAt(meta, 0);
+    const [x1, y1] = routeAt(meta, meta.length);
+    await leap(atTop(start), [x0, y0, deckHeight(meta, 0)], plan.onBeats, STEP_LEAP_APEX);
+    const gait = gaitFor(3, fast);
+    let lastFrame = -1;
+    await this.travel(
+      player,
+      plan.runMs,
+      'Linear',
+      (u) => runPose(meta, segments, u * meta.length, { facing, clip: 'run', phase: phaseAt(u * meta.length, gait.cycle) }),
+      (u) => {
+        const frame = frameIndexOf(phaseAt(u * meta.length, gait.cycle), gait.frames);
+        if (frame !== lastFrame && frame % (gait.frames / 2) === 0) this.audio.step();
+        lastFrame = frame;
+      },
+    );
+    await leap([x1, y1, deckHeight(meta, meta.length)], atTop(end), plan.offBeats ?? plan.onBeats, STEP_LEAP_APEX);
   }
 
   /** Squares tokens stand still on: the square a token is drawn on once it has reached its field (not while it hops to it). */
@@ -728,6 +901,10 @@ export class BoardScene extends Phaser.Scene {
   private async snakeBite(player: number, jump: Jump): Promise<void> {
     const token = this.tokenAt(player);
     const objects = this.tokenObjects[player] ?? [];
+    if (token instanceof Figurine) {
+      token.pin('scared'); // the snake eats the scared pose (T43 section 4)
+      token.place(this.restPose(player, this.worldAt[player] ?? null));
+    }
     await this.snakes.bite(jump.from, {
       tokenSpot: this.worldAt[player] ?? fieldCentre(jump.from),
       drawToken: (pose, alpha) => {
@@ -745,6 +922,11 @@ export class BoardScene extends Phaser.Scene {
         return this.restPose(player, this.worldAt[player]);
       },
     });
+    if (token instanceof Figurine) {
+      token.unpin();
+      const seat = this.characters[player];
+      token.setEmotion(seat instanceof Figurine ? seat.emotion : 'idle');
+    }
     await this.relayout(player);
   }
 

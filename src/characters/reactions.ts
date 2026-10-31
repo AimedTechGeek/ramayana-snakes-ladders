@@ -42,6 +42,10 @@ export interface Reaction {
 export interface Timing {
   stepMs: number;
   fastStepMs: number;
+  walkUnitsPerS: number;
+  runUnitsPerS: number;
+  fastRunUnitsPerS: number;
+  walkMaxSquares: number;
   botDelayMs: number;
   bystanderStaggerMs: [number, number];
   bubbleMs: number;

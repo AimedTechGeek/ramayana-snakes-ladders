@@ -2,6 +2,10 @@
   "timing": {
     "stepMs": 120,
     "fastStepMs": 40,
+    "walkUnitsPerS": 80,
+    "runUnitsPerS": 280,
+    "fastRunUnitsPerS": 560,
+    "walkMaxSquares": 2,
     "botDelayMs": 1000,
     "bystanderStaggerMs": [80, 150],
     "bubbleMs": 1800,

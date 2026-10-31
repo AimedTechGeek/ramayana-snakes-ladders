@@ -7,6 +7,8 @@ import type { Emotion } from './reactions';
 
 /** What BoardScene moves around the isometric board: a figurine, or the old medallion until T40.10. */
 export interface BoardToken {
+  /** True for a token that walks, runs and leaps with legs (Hanuman); a medallion hops square by square. */
+  readonly walks: boolean;
   /** Puts the token at a pose: feet, shadow, depth. */
   place(pose: TokenPose): void;
   /** Landing squash after a hop: scaleX 1.06, scaleY 0.92, then back (T40 spec 5). */
@@ -19,6 +21,7 @@ const MEDALLION_SIZE = 28; // about the figurine token (39 px for 80 units), so 
 
 /** The 2D medallion of Rama, Sita and Lakshmana, standing on the iso board by its bottom centre. */
 export class MedallionToken implements BoardToken {
+  readonly walks = false;
   private readonly image: Phaser.GameObjects.Image;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly baseScale: { x: number; y: number };

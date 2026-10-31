@@ -117,6 +117,10 @@ export function atlasSheet(name: string, base = 'assets/iso'): AtlasSheet {
   };
 }
 
+/** Hanuman's walking figure (T43): every clip, facing and rest pose; loaded by BoardScene when he is seated. */
+export const HANUMAN_SHEET = 'hanuman-s';
+export const SHARED_SHEET = 'shared';
+
 /**
  * Sheets every scene loads. Art tasks append theirs here (T42.2 `blocks`, `shared`; T42.3 `props`; T42.4 `frame`);
  * level-specific `snakes-<level>` and `bridges-<level>` are loaded per level with `loadAtlas`.
