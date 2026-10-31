@@ -6,7 +6,7 @@ import {
   clampZoom,
   easeView,
   fitView,
-  followTarget,
+  followGoal,
   isDrag,
   keepInView,
   panBy,
@@ -135,18 +135,21 @@ export class BoardCameraRig {
     return this.shown.zoom;
   }
 
-  /** A turn starts: follow resumes and eases to the token's board point, or to the whole board when it is on its seat card. */
+  /** A turn starts: follow resumes and eases to the token's board point, or to the whole board when it is on its seat card. No-op while auto follow is off. */
   startTurn(world: Point | null): void {
+    const goal = followGoal(world);
+    if (!goal) return;
     this.followPaused = false;
     this.followPoint = world;
-    this.goal = world ? followTarget(world) : fitView();
+    this.goal = goal;
   }
 
-  /** While a token moves: eases the camera to keep `world` centred at the follow zoom. No-op once the player took manual control. */
+  /** While a token moves: eases the camera to keep `world` centred at the follow zoom. No-op once the player took manual control, or while auto follow is off. */
   follow(world: Point): void {
-    if (this.followPaused) return;
+    const goal = followGoal(world);
+    if (this.followPaused || !goal) return;
     this.followPoint = world;
-    this.goal = followTarget(world);
+    this.goal = goal;
   }
 
   zoomIn(): void {

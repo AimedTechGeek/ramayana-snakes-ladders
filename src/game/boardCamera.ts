@@ -27,6 +27,11 @@ export const MIN_ZOOM = 1;
 export const MAX_ZOOM = 2.5;
 /** User zoom the camera eases to while it follows the current token. */
 export const FOLLOW_ZOOM = 2;
+/**
+ * Automatic follow (turn start, token moves, snake pans) is off by owner request: the board camera moves only for the
+ * player's own wheel, drag, pinch, + / − and Fit. Set to true to bring the follow camera back.
+ */
+export const AUTO_FOLLOW = false;
 /** Time a follow pan or fit takes to settle (about 95 % of the way). */
 export const EASE_MS = 350;
 /** A pointer must travel this far (logical px) before a press is a drag instead of a tap. */
@@ -123,6 +128,15 @@ export function pinchView(
 /** The view that centres a world point at `zoom` (pan bounds applied). */
 export function followTarget(world: Point, zoom: number = FOLLOW_ZOOM): View {
   return clampView({ zoom, cx: world.x, cy: world.y });
+}
+
+/**
+ * Where an automatic follow eases the camera: the token's point, or the whole board when there is none (a seat card).
+ * Null while auto follow is off, so the camera does not move by itself.
+ */
+export function followGoal(world: Point | null, enabled: boolean = AUTO_FOLLOW): View | null {
+  if (!enabled) return null;
+  return world ? followTarget(world) : fitView();
 }
 
 /** True once a pointer has moved far enough from where it went down to count as a drag. */

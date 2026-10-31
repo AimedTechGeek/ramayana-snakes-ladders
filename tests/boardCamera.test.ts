@@ -11,6 +11,7 @@ import {
   easeFactor,
   easeView,
   fitView,
+  followGoal,
   followTarget,
   isDrag,
   keepInView,
@@ -77,6 +78,23 @@ describe('followTarget', () => {
     const bottomLeft = viewToWorld(view, { x: 0, y: BOARD_VIEWPORT.height });
     near(bottomLeft.x, 0);
     near(bottomLeft.y, BOARD_WORLD.height);
+  });
+});
+
+describe('followGoal', () => {
+  const token = { x: 400, y: 300 };
+  it('followGoal_DefaultSetting_Should_NotMoveTheCamera', () => {
+    expect(followGoal(token)).toBeNull();
+    expect(followGoal(null)).toBeNull();
+  });
+  it('followGoal_AutoFollowOff_Should_NotMoveTheCameraForAToken', () => {
+    expect(followGoal(token, false)).toBeNull();
+  });
+  it('followGoal_AutoFollowOn_Should_CentreTheToken', () => {
+    expect(followGoal(token, true)).toEqual(followTarget(token));
+  });
+  it('followGoal_AutoFollowOnAndSeatCard_Should_FitTheBoard', () => {
+    expect(followGoal(null, true)).toEqual(fitView());
   });
 });
 
