@@ -76,7 +76,8 @@ async function runSmoke(page, errors) {
       timeout: READY_TIMEOUT_MS,
     },
   );
-  await page.click('[data-testid=dice]');
+  // The Roll pill pulses while it waits for a tap, so it never counts as "stable" for Playwright.
+  await page.click('[data-testid=dice]', { force: true });
   await page.waitForFunction(
     () => window.__app.state().lastEvent?.type === 'Moved' || window.__app.state().game?.current === 1,
     null,
