@@ -554,8 +554,8 @@ def _angle(a, b):
     return math.degrees(a.angle(b))
 
 
-def clip_report(poses):
-    """Respect-checklist numbers for a clip (design units / degrees)."""
+def clip_report(poses, free="L"):
+    """Respect-checklist numbers for a clip (design units / degrees). `free` = the arm that carries nothing."""
     lean = head_over_hips = shoulder_swing = elbow = knee = shoulder_top = None
     out = {"max_lean": 0.0, "min_head_over_hips": 1e9, "max_shoulder_swing": 0.0, "max_elbow": 0.0,
            "max_free_swing": 0.0, "max_free_elbow": 0.0, "max_knee": 0.0, "min_shoulder_top": 1e9, "max_z": 0.0}
@@ -569,8 +569,8 @@ def clip_report(poses):
             out["max_shoulder_swing"] = max(out["max_shoulder_swing"], _angle(k.dir(f"upperArm.{s}"), V((0, 0, -1))))
             out["max_elbow"] = max(out["max_elbow"], _angle(k.dir(f"upperArm.{s}"), k.dir(f"foreArm.{s}")))
             out["max_knee"] = max(out["max_knee"], _angle(k.dir(f"thigh.{s}"), k.dir(f"shin.{s}")))
-        out["max_free_swing"] = max(out["max_free_swing"], _angle(k.dir("upperArm.L"), -k.dir("chest")))   # the arm that is not carrying, measured from the torso
-        out["max_free_elbow"] = max(out["max_free_elbow"], _angle(k.dir("upperArm.L"), k.dir("foreArm.L")))
+        out["max_free_swing"] = max(out["max_free_swing"], _angle(k.dir(f"upperArm.{free}"), -k.dir("chest")))   # the arm that is not carrying, measured from the torso
+        out["max_free_elbow"] = max(out["max_free_elbow"], _angle(k.dir(f"upperArm.{free}"), k.dir(f"foreArm.{free}")))
         top = max(k.head("head").z + 7.2, k.head("prop.R").z)
         out["max_z"] = max(out["max_z"], top)
     return {k: round(v, 2) for k, v in out.items()}

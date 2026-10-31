@@ -642,7 +642,7 @@ def main():
     arm["report"] = json.dumps(report)
     t1 = time.time()
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
-    export.export_glb(out, [arm, obj], meshopt=True, image_format="AUTO", keep_static_channels=False)
+    export.export_glb(out, [arm, obj], meshopt=True, image_format="AUTO", keep_static_channels=True)
     metrics = {
         "triangles": lib.triangle_count(obj),
         "vertices": len(obj.data.vertices),
