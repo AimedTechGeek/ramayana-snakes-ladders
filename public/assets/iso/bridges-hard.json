@@ -1,0 +1,375 @@
+{
+  "frames": {
+    "hanuman-leap.r10": {
+      "frame": {
+        "x": 429,
+        "y": 0,
+        "w": 197,
+        "h": 204
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 197,
+        "h": 204
+      },
+      "sourceSize": {
+        "w": 197,
+        "h": 204
+      }
+    },
+    "hanuman-leap.r11": {
+      "frame": {
+        "x": 706,
+        "y": 501,
+        "w": 123,
+        "h": 85
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 123,
+        "h": 85
+      },
+      "sourceSize": {
+        "w": 123,
+        "h": 85
+      }
+    },
+    "hanuman-leap.r8": {
+      "frame": {
+        "x": 914,
+        "y": 501,
+        "w": 78,
+        "h": 74
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 78,
+        "h": 74
+      },
+      "sourceSize": {
+        "w": 78,
+        "h": 74
+      }
+    },
+    "hanuman-leap.r9": {
+      "frame": {
+        "x": 626,
+        "y": 0,
+        "w": 174,
+        "h": 184
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 174,
+        "h": 184
+      },
+      "sourceSize": {
+        "w": 174,
+        "h": 184
+      }
+    },
+    "hanuman-meeting.r10": {
+      "frame": {
+        "x": 396,
+        "y": 501,
+        "w": 121,
+        "h": 90
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 121,
+        "h": 90
+      },
+      "sourceSize": {
+        "w": 121,
+        "h": 90
+      }
+    },
+    "hanuman-meeting.r8": {
+      "frame": {
+        "x": 517,
+        "y": 501,
+        "w": 66,
+        "h": 89
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 66,
+        "h": 89
+      },
+      "sourceSize": {
+        "w": 66,
+        "h": 89
+      }
+    },
+    "hanuman-meeting.r9": {
+      "frame": {
+        "x": 342,
+        "y": 0,
+        "w": 87,
+        "h": 222
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 87,
+        "h": 222
+      },
+      "sourceSize": {
+        "w": 87,
+        "h": 222
+      }
+    },
+    "rama-setu.r10": {
+      "frame": {
+        "x": 277,
+        "y": 378,
+        "w": 390,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 390,
+        "h": 114
+      }
+    },
+    "rama-setu.r11": {
+      "frame": {
+        "x": 800,
+        "y": 0,
+        "w": 189,
+        "h": 138
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 189,
+        "h": 138
+      },
+      "sourceSize": {
+        "w": 189,
+        "h": 138
+      }
+    },
+    "rama-setu.r9": {
+      "frame": {
+        "x": 96,
+        "y": 605,
+        "w": 89,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 89,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 89,
+        "h": 64
+      }
+    },
+    "shabari.r8": {
+      "frame": {
+        "x": 829,
+        "y": 501,
+        "w": 85,
+        "h": 82
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 85,
+        "h": 82
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 82
+      }
+    },
+    "shabari.r9": {
+      "frame": {
+        "x": 583,
+        "y": 501,
+        "w": 123,
+        "h": 87
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 123,
+        "h": 87
+      },
+      "sourceSize": {
+        "w": 123,
+        "h": 87
+      }
+    },
+    "vishwamitra.r1": {
+      "frame": {
+        "x": 0,
+        "y": 378,
+        "w": 114,
+        "h": 123
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 123
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 123
+      }
+    },
+    "vishwamitra.r2": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 342,
+        "h": 378
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 342,
+        "h": 378
+      },
+      "sourceSize": {
+        "w": 342,
+        "h": 378
+      }
+    },
+    "vishwamitra.r3": {
+      "frame": {
+        "x": 114,
+        "y": 378,
+        "w": 163,
+        "h": 115
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 163,
+        "h": 115
+      },
+      "sourceSize": {
+        "w": 163,
+        "h": 115
+      }
+    },
+    "wedding.r3": {
+      "frame": {
+        "x": 0,
+        "y": 605,
+        "w": 96,
+        "h": 65
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 65
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 65
+      }
+    },
+    "wedding.r4": {
+      "frame": {
+        "x": 0,
+        "y": 501,
+        "w": 396,
+        "h": 104
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 396,
+        "h": 104
+      },
+      "sourceSize": {
+        "w": 396,
+        "h": 104
+      }
+    },
+    "wedding.r5": {
+      "frame": {
+        "x": 667,
+        "y": 378,
+        "w": 153,
+        "h": 106
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 153,
+        "h": 106
+      },
+      "sourceSize": {
+        "w": 153,
+        "h": 106
+      }
+    }
+  },
+  "meta": {
+    "app": "ramayana atlas.mjs",
+    "version": "1",
+    "image": "bridges-hard.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1"
+  }
+}
