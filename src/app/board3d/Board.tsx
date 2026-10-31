@@ -3,7 +3,7 @@
 // Meshes come from public/models/board/board.glb (scripts/blender/board.py). Props, landmarks and the die mount as
 // `children` inside this group, in board coordinates (see boardLayout.ts: PROPS_ORIGIN, TRAY_ANCHOR).
 
-import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import {
@@ -31,8 +31,6 @@ import { FogField } from './fogField';
 import { Chips, Mist } from './Fog';
 
 export const BOARD_URL = `${import.meta.env.BASE_URL}models/board/board.glb`;
-const TAP_MS = 300;
-const TAP_PX = 8;
 
 /** A fog field that carries a version so instanced meshes know when to re-upload. */
 export interface FogState {
@@ -165,13 +163,11 @@ function WaterSurface({ region, fog }: { region: 'ganga' | 'sea'; fog: FogState 
 
 interface BoardProps {
   view: DioramaView;
-  /** A tap (not a drag) on the board. */
-  onTap: () => void;
-  /** Props, landmarks, the die: mounted in board coordinates. */
+  /** Props and landmarks: mounted in board coordinates. */
   children?: ReactNode;
 }
 
-export function Board({ view, onTap, children }: BoardProps) {
+export function Board({ view, children }: BoardProps) {
   const gltf = useGLTF(BOARD_URL, false);
   const nodes = gltf.nodes as Record<string, Mesh>;
   const clay = useMemo(clayMaterial, []);
@@ -204,17 +200,9 @@ export function Board({ view, onTap, children }: BoardProps) {
   }, [view, fog, gl]);
 
   useSyncExternalStore(view.subscribe, view.getVersion);
-  const down = useRef({ at: 0 });
-  const onPointerDown = (event: ThreeEvent<PointerEvent>) => {
-    down.current.at = event.nativeEvent.timeStamp;
-  };
-  const onClick = (event: ThreeEvent<MouseEvent>) => {
-    const elapsed = event.nativeEvent.timeStamp - down.current.at;
-    if (event.delta <= TAP_PX && elapsed <= TAP_MS) onTap();
-  };
 
   return (
-    <group name="board" onPointerDown={onPointerDown} onClick={onClick}>
+    <group name="board">
       <mesh name="plinth" geometry={nodes.Plinth!.geometry} material={clay} receiveShadow castShadow />
       <mesh name="slab" geometry={nodes.Slab!.geometry} material={clay} receiveShadow />
       <mesh name="brass" geometry={nodes.Brass!.geometry} material={brass} receiveShadow castShadow />

@@ -2,6 +2,7 @@
 
 import type { GameEvent } from '../core/events';
 import type { GameConfig, GameState } from '../core/types';
+import type { CameraPose, DioramaView } from './board3d/DioramaView';
 import type { TurnController } from './turn/TurnController';
 
 export type ScreenName = 'boot' | 'setup' | 'game' | 'gallery';
@@ -31,6 +32,28 @@ export interface AppHooks {
   requestRoll(): Promise<void>;
   state(): AppSnapshot;
   setFast(on: boolean): void;
+  /** The board camera (game screen only): Fit, Focus on the current player, or an exact pose for screenshots. */
+  readonly camera: {
+    fit(): void;
+    focus(): void;
+    set(pose: CameraPose): void;
+    get(): CameraPose | null;
+  };
+  /** Renderer counters of the last frame and the measured frame rate; null outside a game. */
+  metrics(): AppMetrics | null;
+  /** Review hook: lifts the fog from every block on screen (the game's own reveal state is untouched). */
+  revealAll(): void;
+}
+
+export interface AppMetrics {
+  fps: number;
+  /** Draw calls of the last frame, shadow pass included. */
+  drawCalls: number;
+  /** Shadow-pass draw calls (visible shadow casters). */
+  shadowCalls: number;
+  triangles: number;
+  textures: number;
+  geometries: number;
 }
 
 declare global {
@@ -44,6 +67,10 @@ export const bridge = {
   ready: false,
   screen: 'boot' as ScreenName,
   controller: null as TurnController | null,
+  /** The board on screen (GameScreen keeps it current). */
+  view: null as DioramaView | null,
+  /** Set by the board canvas while it is mounted. */
+  metrics: null as (() => AppMetrics) | null,
   winShown: false,
   menuOpen: false,
   rotatePrompt: false,
@@ -96,6 +123,27 @@ export function installAppHooks(): void {
     },
     setFast(on) {
       bridge.setFast?.(on);
+    },
+    camera: {
+      fit() {
+        bridge.view?.camera?.fit();
+      },
+      focus() {
+        const view = bridge.view;
+        if (view) view.camera?.focus(Math.max(0, view.current));
+      },
+      set(pose) {
+        bridge.view?.camera?.set(pose);
+      },
+      get() {
+        return bridge.view?.camera?.get() ?? null;
+      },
+    },
+    metrics() {
+      return bridge.metrics?.() ?? null;
+    },
+    revealAll() {
+      bridge.view?.revealAll();
     },
   };
 }

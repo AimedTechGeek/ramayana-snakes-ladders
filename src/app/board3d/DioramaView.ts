@@ -18,9 +18,10 @@ import {
 } from '../../game/iso/locomotion';
 import { restingSpot } from '../../game/iso/tokenPose';
 import type { RevealChange } from '../../game/reveal';
-import { CELL } from '../../game/iso/world';
 import { bridgeCurve } from './jumpCurves';
-import { toThree, waitingSpot } from './coords';
+import { toThree, toWorld, waitingSpot } from './coords';
+import { crossingPlan, hopHeight, leapProgress } from './crossing';
+import type { Beats } from './heroClips';
 
 export interface TokenState {
   /** Square the token is drawn on (0: waiting off the board). Trails the engine while animations run. */
@@ -34,6 +35,16 @@ export interface TokenState {
   heading: number;
   /** A three-space position that wins over `spot` (on a bridge arch). */
   override: [number, number, number] | null;
+  /** Sliding or arcing without steps (entry arc, triple-six slide, re-fan): the figure keeps its rest pose. */
+  gliding: boolean;
+  /** A leap in progress (onto or off a bridge deck, Hanuman's leap to Lanka): `ms` into its four beats. */
+  leap: { ms: number; beats: Beats } | null;
+}
+
+/** A point in viewport CSS pixels (a token's head, for its speech bubble). */
+export interface ScreenAnchor {
+  x: number;
+  y: number;
 }
 
 export interface Puff {
@@ -45,6 +56,8 @@ export interface Puff {
 export interface SeatMood {
   emotion: Emotion;
   until: number;
+  /** The reaction behind the mood: its tween picks the clip, its intensity the clip weight. */
+  reaction: Reaction;
 }
 
 export interface Bubble {
@@ -57,6 +70,17 @@ export interface Bubble {
 export interface CameraApi {
   fit(): void;
   focus(player: number): void;
+  /** Test hooks (`window.__app.camera`): an exact pose, angles in radians, instantly. */
+  set(pose: CameraPose): void;
+  get(): CameraPose;
+}
+
+export interface CameraPose {
+  azimuth: number;
+  polar: number;
+  distance: number;
+  /** Look-at point; the current one when absent. */
+  target?: [number, number, number];
 }
 
 interface StepSound {
@@ -83,7 +107,13 @@ export class DioramaView implements BoardView {
   bubbles: (Bubble | null)[] = [];
   puffs: Puff[] = [];
   ranking: readonly number[] | null = null;
+  /** The Win dialog is up: the winner may play its cheer (Win screen only, R4). */
+  winShown = false;
   camera: CameraApi | null = null;
+  /** Speech-bubble anchors (each token's head in viewport px, null when off screen), refreshed by the canvas. */
+  anchors: readonly (ScreenAnchor | null)[] = [];
+  private anchorVersion = 0;
+  private anchorListeners = new Set<() => void>();
   /** Fog lift duration of the reveal in progress, ms: 420, Fast 120, 0 under reduced motion. */
   revealMs = 420;
   private version = 0;
@@ -105,6 +135,35 @@ export class DioramaView implements BoardView {
   private changed(): void {
     this.version++;
     this.listeners.forEach((listener) => listener());
+  }
+
+  /** Anchors change often (10 Hz while a bubble shows), so only the bubbles subscribe to them. */
+  readonly subscribeAnchors = (listener: () => void): (() => void) => {
+    this.anchorListeners.add(listener);
+    return () => this.anchorListeners.delete(listener);
+  };
+
+  readonly getAnchorVersion = (): number => this.anchorVersion;
+
+  setAnchors(anchors: readonly (ScreenAnchor | null)[]): void {
+    this.anchors = anchors;
+    this.anchorVersion++;
+    this.anchorListeners.forEach((listener) => listener());
+  }
+
+  /** Review and test hook: lifts the fog from every block on screen (the engine's reveal state is untouched). */
+  revealAll(): void {
+    for (let square = 1; square <= 144; square++) this.revealedTerrain.add(square);
+    this.changed();
+  }
+
+  setWinShown(shown: boolean): void {
+    this.winShown = shown;
+  }
+
+  /** Story id of a bridge (`hanuman-leap`, ...) on the current board. */
+  private bridgeId(jump: Jump): string {
+    return this.setup?.board.ladders.find((ladder) => ladder.from === jump.from)?.id ?? '';
   }
 
   dispose(): void {
@@ -139,6 +198,8 @@ export class DioramaView implements BoardView {
       scale: 1,
       heading: 0,
       override: null,
+      gliding: false,
+      leap: null,
     }));
     this.tokens.forEach((token, i) => (token.spot = this.spotOf(i)));
     this.moods = players.map(() => null);
@@ -158,12 +219,14 @@ export class DioramaView implements BoardView {
     token.square = square;
     const to = this.spotOf(player);
     this.sound?.step();
+    token.gliding = true;
     await this.tween(this.ms(ENTER_MS, motion), (u) => {
       token.spot = lerp2(from, to, u);
       token.lift = ENTER_ARC * 4 * u * (1 - u);
       token.heading = headingOf(from, to, token.heading);
     });
     token.lift = 0;
+    token.gliding = false;
     arrive(square);
     await this.refan(player, motion);
   }
@@ -207,15 +270,49 @@ export class DioramaView implements BoardView {
     const curve = bridgeCurve(jump);
     token.square = jump.to;
     const end = this.spotOf(player);
-    const speed = motion.fast ? TIMING.fastRunUnitsPerS : TIMING.runUnitsPerS;
-    const duration = motion.reducedMotion ? 0 : ((curve.getLength() * CELL) / speed) * 1000;
-    await this.tween(duration, (u) => {
-      const point = curve.getPoint(u);
-      const ahead = curve.getPoint(Math.min(1, u + 0.01));
-      token.override = [point.x, point.y, point.z];
-      token.heading = Math.atan2(ahead.x - point.x, ahead.z - point.z) || token.heading;
-    });
+    // Reduced motion: the token appears at the top (T44 4.6).
+    if (!motion.reducedMotion) {
+      const foot = curve.getPointAt(0);
+      const top = curve.getPointAt(1);
+      let apex = -Infinity;
+      for (let i = 0; i <= 20; i++) apex = Math.max(apex, curve.getPointAt(i / 20).y);
+      const plan = crossingPlan({
+        id: this.bridgeId(jump),
+        hero: this.setup?.state.players[player]?.hero ?? 'rama',
+        length: curve.getLength(),
+        apexRise: apex - (foot.y + top.y) / 2,
+        fast: motion.fast,
+      });
+      const place = (x: number, y: number, z: number): void => {
+        token.override = [x, y, z];
+        token.spot = toWorld(x, z); // the spot follows, so the figure's stride counts the deck distance
+      };
+      for (const segment of plan) {
+        if (segment.kind === 'run') {
+          await this.tween(segment.ms, (u) => {
+            const t = segment.t0 + (segment.t1 - segment.t0) * u;
+            const point = curve.getPointAt(t);
+            const ahead = curve.getPointAt(Math.min(1, t + 0.01));
+            place(point.x, point.y, point.z);
+            token.heading = Math.atan2(ahead.x - point.x, ahead.z - point.z) || token.heading;
+          });
+          continue;
+        }
+        const from = curve.getPointAt(segment.t0);
+        const to = curve.getPointAt(segment.t1);
+        token.heading = Math.atan2(to.x - from.x, to.z - from.z) || token.heading;
+        await this.tween(segment.ms, (u) => {
+          const ms = u * segment.ms;
+          const p = leapProgress(ms, segment.beats);
+          token.leap = { ms, beats: segment.beats };
+          const point = from.clone().lerp(to, p);
+          place(point.x, point.y + hopHeight(p, segment.hop), point.z);
+        });
+        token.leap = null;
+      }
+    }
     token.override = null;
+    token.leap = null;
     token.spot = end;
     arrive(jump.to);
     await this.refan(player, motion);
@@ -242,7 +339,9 @@ export class DioramaView implements BoardView {
     const from = token.spot;
     token.square = restoredTo;
     const to = this.spotOf(player);
+    token.gliding = true;
     await this.tween(this.ms(SLIDE_MS, motion), (u) => (token.spot = lerp2(from, to, easeInOut(u))));
+    token.gliding = false;
     await this.refan(player, motion);
   }
 
@@ -264,7 +363,11 @@ export class DioramaView implements BoardView {
   }
 
   react(seat: number, reaction: Reaction): Promise<void> {
-    this.moods[seat] = { emotion: reaction.emotion, until: performance.now() + reaction.durationMs };
+    this.moods[seat] = {
+      emotion: reaction.emotion,
+      until: performance.now() + reaction.durationMs,
+      reaction,
+    };
     this.changed();
     return this.after(reaction.durationMs, () => {
       const mood = this.moods[seat];
@@ -313,9 +416,11 @@ export class DioramaView implements BoardView {
       from: this.token(i).spot,
       to: this.spotOf(i),
     }));
+    moves.forEach(({ token }) => (token.gliding = true));
     await this.tween(this.ms(REFAN_MS, motion), (u) =>
       moves.forEach(({ token, from, to }) => (token.spot = lerp2(from, to, u))),
     );
+    moves.forEach(({ token }) => (token.gliding = false));
   }
 
   private puff(square: number, motion: MotionOptions): void {

@@ -22,8 +22,15 @@ export interface HudState {
 }
 
 const ROLL_MS = 600;
+/** The die's tumble clips: 1.0 s, Fast 0.4 s (T44 7); a roll that has not settled by then + slack is let go. */
+const DIE_MS = 1000;
+const DIE_FAST_MS = 400;
+const DIE_SLACK_MS = 600;
+
+export type DieRoller = (value: number, fast: boolean, turn: number) => Promise<void>;
 
 export class HudStore implements HudSink {
+  private die: DieRoller | null = null;
   private state: HudState = {
     seats: [],
     current: -1,
@@ -75,18 +82,33 @@ export class HudStore implements HudSink {
     this.set({ diceEnabled: enabled });
   }
 
+  /**
+   * The 3D die on the tray, once it is in the scene: `roll(value, fast, turn)` resolves when it has settled. Without
+   * it (still loading) the pill's own short tumble stands in.
+   */
+  setDie(roll: DieRoller | null): void {
+    this.die = roll;
+  }
+
   rollDice(value: number, fast: boolean): Promise<void> {
     const roll = this.state.dice.roll + 1;
     this.set({ dice: { value, rolling: true, roll } });
+    const settled = (): void => this.set({ dice: { value, rolling: false, roll } });
+    const die = this.die;
+    if (die) {
+      // The die settles on animation frames; never let a stalled frame loop hold the game.
+      const limit = (fast ? DIE_FAST_MS : DIE_MS) + DIE_SLACK_MS;
+      return Promise.race([die(value, fast, roll).catch(() => undefined), this.wait(limit)]).then(settled);
+    }
+    return this.wait(fast ? ROLL_MS / 2 : ROLL_MS).then(settled);
+  }
+
+  private wait(ms: number): Promise<void> {
     return new Promise((resolve) => {
-      this.timer = setTimeout(
-        () => {
-          this.timer = null;
-          this.set({ dice: { value, rolling: false, roll } });
-          resolve();
-        },
-        fast ? ROLL_MS / 2 : ROLL_MS,
-      );
+      this.timer = setTimeout(() => {
+        this.timer = null;
+        resolve();
+      }, ms);
     });
   }
 

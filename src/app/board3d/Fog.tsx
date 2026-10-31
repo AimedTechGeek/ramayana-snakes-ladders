@@ -16,7 +16,7 @@ import { seedOf } from '../../game/board/blockRules';
 import type { FogState } from './Board';
 import { SQUARES, blockTopY, chipAnchor, squareCentre } from './boardLayout';
 import { chipMaterial, mistMaterial } from './boardMaterials';
-import { CHIP_HEIGHT, CHIP_WIDTH, chipUvOrigin, drawChipAtlas } from './chips';
+import { CHIP_FONT, CHIP_HEIGHT, CHIP_WIDTH, chipUvOrigin, drawChipAtlas } from './chips';
 import type { DioramaView } from './DioramaView';
 
 const BLOBS_PER_BLOCK = 3;
@@ -107,9 +107,17 @@ export function Chips({ view }: { view: DioramaView }) {
     return map;
   }, []);
   useEffect(() => {
-    // Redraw once the web fonts are in, so the digits use the UI font.
+    // Redraw once the chip weight is in (fonts.ready alone does not fetch a weight no element uses yet).
     let live = true;
-    void document.fonts?.ready.then(() => {
+    const fonts = document.fonts;
+    void (
+      fonts
+        ? fonts
+            .load(CHIP_FONT)
+            .catch(() => [])
+            .then(() => fonts.ready)
+        : Promise.resolve()
+    ).then(() => {
       if (!live) return;
       drawChipAtlas(texture.image as HTMLCanvasElement);
       texture.needsUpdate = true;

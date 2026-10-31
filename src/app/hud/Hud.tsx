@@ -2,6 +2,7 @@
 // Fast, Mute, language, Menu) and the Roll pill. The overlay root lets pointer events through to the canvas; only
 // its controls take them.
 
+import { useSyncExternalStore } from 'react';
 import type { Level } from '../../core/types';
 import { HEROES } from '../../game/heroes';
 import { t } from '../../i18n/i18n';
@@ -32,6 +33,21 @@ export function Die({ value }: { value: number }) {
       ))}
     </span>
   );
+}
+
+/**
+ * Bubbles float over their token's head (the canvas projects the anchors ~10 times a second while one shows); a seat
+ * whose token is off screen or still waiting falls back to its card. Only this subtree re-renders with the anchors.
+ */
+function AnchoredBubbles({
+  view,
+  anchors,
+}: {
+  view: DioramaView;
+  anchors?: readonly (ScreenPoint | null | undefined)[];
+}) {
+  const projected = useSyncExternalStore(view.subscribeAnchors, () => view.anchors);
+  return <SpeechBubbles bubbles={view.bubbles} anchors={anchors ?? projected} />;
 }
 
 export interface HudProps {
@@ -100,7 +116,7 @@ export function Hud({
         {hint && <div className="hint">{hint}</div>}
       </div>
 
-      <SpeechBubbles bubbles={view.bubbles} anchors={bubbleAnchors} />
+      <AnchoredBubbles view={view} anchors={bubbleAnchors} />
 
       <div className="toolbar">
         <IconButton icon="fit" label={t('ui.fit')} caption data-testid="fit" onClick={onFit} />

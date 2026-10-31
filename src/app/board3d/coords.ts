@@ -16,6 +16,11 @@ export function toThree(world: Vec2, lift = 0): [number, number, number] {
   return [x, groundHeightAt(x, z) + lift, z];
 }
 
+/** World (x, y) of a three-space point's ground position: the inverse of `toThree` on the board plane. */
+export function toWorld(x: number, z: number): Vec2 {
+  return [x / UNIT + HALF, z / UNIT + HALF];
+}
+
 /** Where seat `seat`'s token waits before its first move: on the front rim strip, east of the gate. */
 export function waitingSpot(seat: number): Vec2 {
   return [HALF + (-3 + seat * 0.5) * CELL, SIZE + 0.15 * CELL];

@@ -7,6 +7,8 @@ export const ATLAS_GRID = 12;
 export const ATLAS_CELL = ATLAS_SIZE / ATLAS_GRID;
 export const CHIP_INK = '#2B2F5C';
 export const CHIP_PARCHMENT = '#F3E3B8';
+/** The chip digits' face (spec 2.8): Poppins 600, preloaded by main.tsx. */
+export const CHIP_FONT = '600 32px Poppins';
 
 /** World scale of a chip at a camera distance: grows with distance so digits stay legible, capped at 2.5. */
 export function chipScale(distance: number): number {
@@ -69,7 +71,7 @@ export function drawChipAtlas(canvas: HTMLCanvasElement): void {
     roundedRect(ctx, x + 1, y + 1, width - 2, height - 2, height * 0.3);
     ctx.stroke();
     ctx.fillStyle = CHIP_INK;
-    ctx.font = `700 ${height * 0.66}px Poppins, "Noto Sans", system-ui, sans-serif`;
+    ctx.font = `600 ${height * 0.66}px Poppins, "Noto Sans", system-ui, sans-serif`;
     ctx.fillText(String(square), x + width / 2, y + height / 2 + height * 0.04);
   }
 }

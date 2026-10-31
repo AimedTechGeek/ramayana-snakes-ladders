@@ -103,7 +103,7 @@ function FullBoard() {
   const view = useMemo(() => ({ revealedTerrain: ALL, setup: null }) as unknown as DioramaView, []);
   return (
     <group>
-      <Board view={view} onTap={() => undefined} />
+      <Board view={view} />
       <Suspense fallback={null}>
         <PropsLayer revealed={ALL} />
       </Suspense>

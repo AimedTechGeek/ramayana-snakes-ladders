@@ -7,6 +7,7 @@ import { clearSave } from '../../game/save';
 import { t } from '../../i18n/i18n';
 import { bridge, controllerStarted } from '../appHooks';
 import { BoardCanvas } from '../board3d/BoardCanvas';
+import type { DieHandle } from '../board3d/Die';
 import { DioramaView } from '../board3d/DioramaView';
 import type { ScreenPoint } from '../hud/bubbleLayout';
 import { Hud } from '../hud/Hud';
@@ -51,7 +52,9 @@ export function GameScreen({
 }: GameScreenProps) {
   const [view] = useState(() => new DioramaView(getAudio()));
   const [hudStore] = useState(() => new HudStore());
+  const [reducedMotion] = useState(prefersReducedMotion);
   const controller = useRef<TurnController | null>(null);
+  const die = useRef<DieHandle | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(() =>
     prefersReducedMotion() ? t('ui.reducedMotion') : null,
@@ -76,20 +79,25 @@ export function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [start, view, hudStore]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // The tray's 3D die tumbles every roll once it is mounted; until then the Roll pill stands in.
+    hudStore.setDie((value, fast, turn) => die.current?.roll(value, fast, turn) ?? Promise.resolve());
+    bridge.view = view;
+    return () => {
+      if (bridge.view === view) bridge.view = null;
+      hudStore.setDie(null);
       view.dispose();
       hudStore.dispose();
-    },
-    [view, hudStore],
-  );
+    };
+  }, [view, hudStore]);
   useEffect(() => controller.current?.setFast(fast), [fast]);
   useEffect(() => controller.current?.setMuted(muted), [muted]);
   useEffect(() => controller.current?.setPaused(menuOpen || portrait), [menuOpen, portrait]);
   useEffect(() => {
     bridge.menuOpen = menuOpen;
     bridge.winShown = hud.result !== null;
-  }, [menuOpen, hud.result]);
+    view.setWinShown(hud.result !== null);
+  }, [menuOpen, hud.result, view]);
   useEffect(() => {
     if (hud.hint === t('ui.tripleSix')) setToast(hud.hint);
   }, [hud.hint]);
@@ -119,7 +127,13 @@ export function GameScreen({
   const focusCurrent = () => view.camera?.focus(Math.max(0, hud.current));
   return (
     <main className="screen game" data-testid="game">
-      <BoardCanvas view={view} onBoardTap={roll} />
+      <BoardCanvas
+        view={view}
+        dieRef={die}
+        dieIdle={hud.diceEnabled && !result}
+        onDieTap={roll}
+        reducedMotion={reducedMotion}
+      />
       {!result && (
         <Hud
           hud={hud}

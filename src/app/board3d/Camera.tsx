@@ -4,7 +4,7 @@
 import { CameraControls } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
-import type { PerspectiveCamera } from 'three';
+import { Vector3, type PerspectiveCamera } from 'three';
 import {
   BOUNDARY_FRICTION,
   DOLLY_SPEED,
@@ -81,6 +81,22 @@ export function CameraRig({ view }: { view: DioramaView }) {
         moved.current = true;
         const { position, target } = focusPose(at, rig.azimuthAngle);
         void rig.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, !reduced);
+      },
+      set: ({ azimuth, polar, distance, target }) => {
+        moved.current = true;
+        if (target) void rig.setTarget(target[0], target[1], target[2], false);
+        void rig.rotateTo(azimuth, polar, false);
+        void rig.dollyTo(distance, false);
+        rig.update(0);
+      },
+      get: () => {
+        const target = rig.getTarget(new Vector3());
+        return {
+          azimuth: rig.azimuthAngle,
+          polar: rig.polarAngle,
+          distance: rig.distance,
+          target: [target.x, target.y, target.z],
+        };
       },
     };
     const onKey = (event: KeyboardEvent): void => {

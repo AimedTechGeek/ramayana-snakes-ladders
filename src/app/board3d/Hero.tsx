@@ -99,7 +99,7 @@ const PULSE_MS = 1200;
 let blobTexture: CanvasTexture | null = null;
 
 /** Radial soft blob, one texture for every hero (the board has one ContactShadows, heroes use this decal). */
-function blob(): CanvasTexture {
+export function blob(): CanvasTexture {
   if (blobTexture) return blobTexture;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 64;
@@ -360,22 +360,28 @@ export function useHeroActor(
     const token = view.tokens[player];
     if (!handle || !token) return;
     const mood = view.moods[player];
+    const winner = view.ranking?.[0] === player;
     const directive = director.update(delta * 1000, {
       spot: token.spot,
       scale: token.scale,
       onBridge: token.override !== null,
-      // the board winner is excited; `cheer` (the somersault) is the Win screen's, never the board's (R4)
-      emotion: mood?.emotion ?? (view.ranking?.[0] === player ? 'excited' : null),
-      glide: options.glide?.(player) === true || token.lift > ENTRY_ARC_LIFT,
+      // the board winner is excited; `cheer` (the somersault) only while the Win screen is up (R4)
+      emotion: mood?.emotion ?? (winner ? 'excited' : null),
+      reaction: mood?.reaction ?? null,
+      glide: token.gliding || options.glide?.(player) === true || token.lift > ENTRY_ARC_LIFT,
+      won: winner && view.winShown,
     });
     const reduced = options.reducedMotion === true;
     handle.setFacing(token.heading, reduced);
-    if (!reduced && (directive.clip === 'walk' || directive.clip === 'run')) {
+    if (token.leap && !reduced) {
+      handle.leap(token.leap.ms, token.leap.beats);
+    } else if (!reduced && (directive.clip === 'walk' || directive.clip === 'run')) {
       handle.setLocomotion(directive.clip, directive.distance / CELL);
     } else {
       // reduced motion: the token glides in the idle pose (T44 4.6), no steps
       const clip = directive.clip === 'walk' || directive.clip === 'run' ? 'idle' : directive.clip;
-      if (handle.clip !== clip) handle.play(clip);
+      const intensity = mood && clip !== 'idle' && clip !== 'cheer' ? mood.reaction.intensity : undefined;
+      if (handle.clip !== clip) handle.play(clip, { intensity });
     }
     handle.setEmotion(directive.emotion);
     handle.setLit(view.current === player && token.override === null);
