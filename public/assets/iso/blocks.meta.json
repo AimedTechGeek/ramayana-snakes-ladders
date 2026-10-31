@@ -1,0 +1,388 @@
+{
+  "sheet": "blocks",
+  "width": 1024,
+  "height": 1024,
+  "padding": 2,
+  "frames": {
+    "ayodhya-a": {
+      "kind": "tile",
+      "region": "ayodhya",
+      "pattern": "a",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "ayodhya-b": {
+      "kind": "tile",
+      "region": "ayodhya",
+      "pattern": "b",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "ayodhya-fog": {
+      "kind": "tile",
+      "region": "ayodhya",
+      "pattern": "fog",
+      "fog": true,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "dandaka-a": {
+      "kind": "tile",
+      "region": "dandaka",
+      "pattern": "a",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "dandaka-b": {
+      "kind": "tile",
+      "region": "dandaka",
+      "pattern": "b",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "dandaka-fog": {
+      "kind": "tile",
+      "region": "dandaka",
+      "pattern": "fog",
+      "fog": true,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "ganga": {
+      "kind": "tile",
+      "region": "ganga",
+      "pattern": "a",
+      "fog": false,
+      "numeralInk": "bone",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "ganga-fog": {
+      "kind": "tile",
+      "region": "ganga",
+      "pattern": "fog",
+      "fog": true,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "kishkindha-a": {
+      "kind": "tile",
+      "region": "kishkindha",
+      "pattern": "a",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "kishkindha-b": {
+      "kind": "tile",
+      "region": "kishkindha",
+      "pattern": "b",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "kishkindha-fog": {
+      "kind": "tile",
+      "region": "kishkindha",
+      "pattern": "fog",
+      "fog": true,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "lanka-a": {
+      "kind": "tile",
+      "region": "lanka",
+      "pattern": "a",
+      "fog": false,
+      "numeralInk": "bone",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "lanka-b": {
+      "kind": "tile",
+      "region": "lanka",
+      "pattern": "b",
+      "fog": false,
+      "numeralInk": "bone",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "lanka-fog": {
+      "kind": "tile",
+      "region": "lanka",
+      "pattern": "fog",
+      "fog": true,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "mithila-a": {
+      "kind": "tile",
+      "region": "mithila",
+      "pattern": "a",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "mithila-b": {
+      "kind": "tile",
+      "region": "mithila",
+      "pattern": "b",
+      "fog": false,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "mithila-fog": {
+      "kind": "tile",
+      "region": "mithila",
+      "pattern": "fog",
+      "fog": true,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "sea-a": {
+      "kind": "tile",
+      "region": "sea",
+      "pattern": "a",
+      "fog": false,
+      "numeralInk": "bone",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "sea-b": {
+      "kind": "tile",
+      "region": "sea",
+      "pattern": "b",
+      "fog": false,
+      "numeralInk": "bone",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    },
+    "sea-fog": {
+      "kind": "tile",
+      "region": "sea",
+      "pattern": "fog",
+      "fog": true,
+      "numeralInk": "dark",
+      "world": {
+        "pitch": 56,
+        "slab": 54,
+        "groove": 1,
+        "plateTop": 1.2,
+        "topZ": 2.4
+      },
+      "w": 252,
+      "h": 200,
+      "factor": 4,
+      "anchorX": 126,
+      "anchorY": 97.649
+    }
+  }
+}

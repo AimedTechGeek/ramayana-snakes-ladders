@@ -1,0 +1,502 @@
+{
+  "sheet": "shared",
+  "width": 512,
+  "height": 1024,
+  "padding": 2,
+  "frames": {
+    "bird-crow-1": {
+      "kind": "fx",
+      "w": 124,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 42
+    },
+    "bird-crow-2": {
+      "kind": "fx",
+      "w": 124,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 42
+    },
+    "bird-gull-1": {
+      "kind": "fx",
+      "w": 124,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 42
+    },
+    "bird-gull-2": {
+      "kind": "fx",
+      "w": 124,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 42
+    },
+    "bird-parrot-1": {
+      "kind": "fx",
+      "w": 124,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 42
+    },
+    "bird-parrot-2": {
+      "kind": "fx",
+      "w": 124,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 42
+    },
+    "bulge": {
+      "kind": "fx",
+      "w": 59,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 29.5,
+      "anchorY": 24.5
+    },
+    "mist-1": {
+      "kind": "mist",
+      "overhang": 0.2,
+      "w": 292,
+      "h": 228,
+      "factor": 4,
+      "anchorX": 146,
+      "anchorY": 114
+    },
+    "mist-2": {
+      "kind": "mist",
+      "overhang": 0.2,
+      "w": 292,
+      "h": 228,
+      "factor": 4,
+      "anchorX": 146,
+      "anchorY": 114
+    },
+    "num-0-bone": {
+      "kind": "numeral",
+      "digit": 0,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-0-dark": {
+      "kind": "numeral",
+      "digit": 0,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-1-bone": {
+      "kind": "numeral",
+      "digit": 1,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-1-dark": {
+      "kind": "numeral",
+      "digit": 1,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-2-bone": {
+      "kind": "numeral",
+      "digit": 2,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-2-dark": {
+      "kind": "numeral",
+      "digit": 2,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-3-bone": {
+      "kind": "numeral",
+      "digit": 3,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-3-dark": {
+      "kind": "numeral",
+      "digit": 3,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-4-bone": {
+      "kind": "numeral",
+      "digit": 4,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-4-dark": {
+      "kind": "numeral",
+      "digit": 4,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-5-bone": {
+      "kind": "numeral",
+      "digit": 5,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-5-dark": {
+      "kind": "numeral",
+      "digit": 5,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-6-bone": {
+      "kind": "numeral",
+      "digit": 6,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-6-dark": {
+      "kind": "numeral",
+      "digit": 6,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-7-bone": {
+      "kind": "numeral",
+      "digit": 7,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-7-dark": {
+      "kind": "numeral",
+      "digit": 7,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-8-bone": {
+      "kind": "numeral",
+      "digit": 8,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-8-dark": {
+      "kind": "numeral",
+      "digit": 8,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-9-bone": {
+      "kind": "numeral",
+      "digit": 9,
+      "ink": "bone",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "num-9-dark": {
+      "kind": "numeral",
+      "digit": 9,
+      "ink": "dark",
+      "sill": {
+        "x": -11.37,
+        "y": 12.43
+      },
+      "advance": {
+        "x": 7.18,
+        "y": 3.85
+      },
+      "advanceUnits": 11.5,
+      "w": 74,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 21.7,
+      "anchorY": 48.739
+    },
+    "puff": {
+      "kind": "fx",
+      "w": 54,
+      "h": 54,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 27
+    },
+    "shadow": {
+      "kind": "fx",
+      "w": 124,
+      "h": 74,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 37
+    },
+    "shimmer": {
+      "kind": "fx",
+      "w": 124,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 42
+    },
+    "tongue-long": {
+      "kind": "fx",
+      "w": 69,
+      "h": 44,
+      "factor": 5,
+      "anchorX": 7,
+      "anchorY": 22
+    },
+    "tongue-short": {
+      "kind": "fx",
+      "w": 49,
+      "h": 44,
+      "factor": 5,
+      "anchorX": 7,
+      "anchorY": 22
+    }
+  }
+}
