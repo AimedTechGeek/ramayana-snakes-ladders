@@ -1,5 +1,6 @@
 // Smoke test: serves the built app with `vite preview`, loads it in Microsoft Edge,
-// checks the app boots and the 3D board takes a roll without console/page errors, and saves a screenshot.
+// checks the app boots and the 3D board takes a roll without console/page errors, checks the spec 10 desktop
+// budgets with every snake and bridge standing, and saves a screenshot.
 //
 // Env:
 //   SMOKE_SHOT    screenshot path (default: screenshots-tmp/smoke.png)
@@ -89,6 +90,8 @@ async function runSmoke(page, errors) {
     },
   );
 
+  await checkBudgets(page, errors);
+
   if (SCRIPT_PATH) {
     const extraSteps = await import(pathToFileURL(resolve(SCRIPT_PATH)).href);
     await extraSteps.default(page);
@@ -96,6 +99,27 @@ async function runSmoke(page, errors) {
 
   await mkdir(dirname(resolve(SHOT_PATH)), { recursive: true });
   await page.screenshot({ path: SHOT_PATH });
+}
+
+/** Spec 10's desktop budgets with every block, snake and bridge of the board standing (the worst case). */
+const BUDGET = { mainCalls: 180, shadowCalls: 60, triangles: 500_000 };
+
+async function checkBudgets(page, errors) {
+  await page.evaluate(() => window.__app.revealAll(true));
+  await page.waitForTimeout(3000);
+  const m = await page.evaluate(() => window.__app.metrics());
+  if (!m) {
+    errors.push('no renderer metrics (window.__app.metrics)');
+    return;
+  }
+  const main = m.drawCalls - m.shadowCalls;
+  console.log(
+    `budgets: main ${main}/${BUDGET.mainCalls} calls, shadow ${m.shadowCalls}/${BUDGET.shadowCalls}, ` +
+      `${m.triangles}/${BUDGET.triangles} tris, textures ~${m.textureMb} MB, ${(m.bytesLoaded / 1e6).toFixed(2)} MB loaded`,
+  );
+  if (main > BUDGET.mainCalls) errors.push(`main-pass draw calls ${main} over ${BUDGET.mainCalls}`);
+  if (m.shadowCalls > BUDGET.shadowCalls) errors.push(`shadow-pass draw calls ${m.shadowCalls} over ${BUDGET.shadowCalls}`);
+  if (m.triangles > BUDGET.triangles) errors.push(`triangles ${m.triangles} over ${BUDGET.triangles}`);
 }
 
 /** A server already answering on the port would be tested instead of this build, so refuse to run. */

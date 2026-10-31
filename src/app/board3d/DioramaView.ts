@@ -171,9 +171,13 @@ export class DioramaView implements BoardView {
     this.anchorListeners.forEach((listener) => listener());
   }
 
-  /** Review and test hook: lifts the fog from every block on screen (the engine's reveal state is untouched). */
-  revealAll(): void {
+  /** Review and test hook: lifts the fog from every block on screen, and with `jumps` stands every snake and bridge (the engine's reveal state is untouched). */
+  revealAll(jumps = false): void {
     for (let square = 1; square <= 144; square++) this.revealedTerrain.add(square);
+    if (jumps && this.setup) {
+      // the worst case for the budgets (spec 10): every snake coiled and every bridge standing
+      for (const jump of [...this.setup.board.snakes, ...this.setup.board.ladders]) this.jumpRise.set(jump.from, 1);
+    }
     this.changed();
   }
 

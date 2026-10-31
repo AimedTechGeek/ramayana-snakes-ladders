@@ -16,6 +16,8 @@ import { isPhoneWidth } from './cameraConfig';
  * spec's front-right key sat beside the default camera and lit everything flat), so block sides and props show their
  * shading and cast soft shadows to the back-right; a lilac sky fill keeps the shadows pastel, not grey.
  */
+/** Cube face size of the prefiltered RoomEnvironment (PMREM). */
+const ENV_CUBE_SIZE = 64;
 const ENV_INTENSITY = 0.12;
 /** ACES exposure: a little under 1 keeps the pastel region colours from bleaching under the stronger key. */
 const EXPOSURE = 0.85;
@@ -31,7 +33,8 @@ export function Lighting() {
 
   useEffect(() => {
     const pmrem = new PMREMGenerator(gl);
-    const environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    // a 64 px cube is plenty for a 0.12 fill (T44.14): the default 256 made a 768 x 1024 half-float map, 6 MB of GPU
+    const environment = pmrem.fromScene(new RoomEnvironment(), 0.04, 0.1, 100, { size: ENV_CUBE_SIZE }).texture;
     scene.environment = environment;
     scene.environmentIntensity = ENV_INTENSITY;
     gl.toneMappingExposure = EXPOSURE;

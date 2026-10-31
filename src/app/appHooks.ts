@@ -41,8 +41,11 @@ export interface AppHooks {
   };
   /** Renderer counters of the last frame and the measured frame rate; null outside a game. */
   metrics(): AppMetrics | null;
-  /** Review hook: lifts the fog from every block on screen (the game's own reveal state is untouched). */
-  revealAll(): void;
+  /**
+   * Review hook: lifts the fog from every block on screen, and with `jumps` stands every snake and bridge of the board
+   * (the worst case of the budgets). The game's own reveal state is untouched.
+   */
+  revealAll(jumps?: boolean): void;
 }
 
 export interface AppMetrics {
@@ -54,6 +57,10 @@ export interface AppMetrics {
   triangles: number;
   textures: number;
   geometries: number;
+  /** GPU memory of the scene's textures, MB (width x height x 4 bytes, plus a third for mipmaps). */
+  textureMb: number;
+  /** Bytes the page has downloaded so far (resource timing: transfer size, or the body size when cached). */
+  bytesLoaded: number;
 }
 
 declare global {
@@ -142,8 +149,8 @@ export function installAppHooks(): void {
     metrics() {
       return bridge.metrics?.() ?? null;
     },
-    revealAll() {
-      bridge.view?.revealAll();
+    revealAll(jumps = false) {
+      bridge.view?.revealAll(jumps);
     },
   };
 }

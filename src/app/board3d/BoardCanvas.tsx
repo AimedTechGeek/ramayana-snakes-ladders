@@ -6,7 +6,7 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useRef, type RefObject } from 'react';
-import { Mesh, PCFSoftShadowMap, type Object3D } from 'three';
+import { FloatType, HalfFloatType, Mesh, PCFSoftShadowMap, Texture, type Object3D, type Scene } from 'three';
 import { bridge } from '../appHooks';
 import { Board } from './Board';
 import { TRAY_ANCHOR, blockTopY } from './boardLayout';
@@ -45,6 +45,43 @@ function shadowCasters(root: Object3D): number {
   return count;
 }
 
+/** Bytes per texel by texture type: half floats 8, floats 16, everything else RGBA8. */
+const TEXEL_BYTES: Record<number, number> = { [HalfFloatType]: 8, [FloatType]: 16 };
+
+/**
+ * Estimated GPU memory of every texture the scene uses, MB: material maps and shader uniforms plus the environment,
+ * RGBA at the texture's type, mipmapped ones a third more. Shadow maps are not counted.
+ */
+function textureMb(root: Scene): number {
+  const seen = new Set<Texture>();
+  if (root.environment instanceof Texture) seen.add(root.environment);
+  root.traverse((node) => {
+    const material = (node as Mesh).material;
+    if (!material) return;
+    for (const m of Array.isArray(material) ? material : [material]) {
+      for (const value of Object.values(m)) if (value instanceof Texture) seen.add(value);
+      const uniforms = (m as { uniforms?: Record<string, { value?: unknown }> }).uniforms ?? {};
+      for (const uniform of Object.values(uniforms)) if (uniform?.value instanceof Texture) seen.add(uniform.value);
+    }
+  });
+  let bytes = 0;
+  for (const texture of seen) {
+    const image = texture.image as { width?: number; height?: number } | null;
+    const size = (image?.width ?? 0) * (image?.height ?? 0) * (TEXEL_BYTES[texture.type] ?? 4);
+    bytes += texture.generateMipmaps ? (size * 4) / 3 : size;
+  }
+  return Math.round((bytes / 1e6) * 100) / 100;
+}
+
+/** Bytes downloaded so far: the document plus every resource (transfer size; body size when served from cache). */
+function bytesLoaded(): number {
+  const entries = [
+    ...performance.getEntriesByType('navigation'),
+    ...performance.getEntriesByType('resource'),
+  ] as PerformanceResourceTiming[];
+  return entries.reduce((sum, entry) => sum + (entry.transferSize || entry.encodedBodySize || 0), 0);
+}
+
 /** Frame rate and renderer counters for `window.__app.metrics()` (smoke, devices, the review pack). */
 function MetricsProbe() {
   const gl = useThree((state) => state.gl);
@@ -71,6 +108,8 @@ function MetricsProbe() {
         triangles: gl.info.render.triangles,
         textures: gl.info.memory.textures,
         geometries: gl.info.memory.geometries,
+        textureMb: textureMb(scene),
+        bytesLoaded: bytesLoaded(),
       };
     };
     return () => {
