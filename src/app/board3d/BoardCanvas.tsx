@@ -1,131 +1,49 @@
-// The 3D diorama: blocks, numbers, jumps, tokens, soft room lighting and contact shadows, with a user-driven
-// camera (damped orbit, clamped so it never goes under the board, no automatic follow).
+// The 3D diorama canvas: periwinkle backdrop, studio lighting, the board (plinth, soil slab, blocks, fog, chips),
+// the pieces, and a player-driven camera (no automatic follow).
+// Mount points for the other T44 parts, all in board coordinates (boardLayout.ts):
+//   - props and landmarks (T44.4): children of <Board>, seeded per square, standing at blockTopY(square)
+//   - the die and its tray (T44.7): at TRAY_ANCHOR on the oak ledge
 
-import { CameraControls, ContactShadows } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
-import { Box3, PMREMGenerator, Sphere, Vector3 } from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { SIZE } from '../../game/iso/world';
-import { Blocks } from './Blocks';
-import { UNIT } from './coords';
+import { Canvas } from '@react-three/fiber';
+import { Suspense } from 'react';
+import { PCFSoftShadowMap } from 'three';
+import { Board } from './Board';
+import { CameraRig } from './Camera';
+import { isPhoneWidth } from './cameraConfig';
 import type { DioramaView } from './DioramaView';
+import { BACKDROP, Lighting, PlinthShadow } from './Lighting';
 import { Jumps, Puffs, Tokens } from './Pieces';
-
-const HALF_BOARD = (SIZE * UNIT) / 2;
-/** Fitting this sphere keeps the whole board and the waiting tokens in view at any aspect. */
-const BOARD_SPHERE = new Sphere(new Vector3(-0.3, 0, 0.4), HALF_BOARD + 0.9);
-/** The camera target may wander this far past the board edge, no further. */
-const PAN_BOX = new Box3(
-  new Vector3(-HALF_BOARD - 0.5, -0.5, -HALF_BOARD - 0.5),
-  new Vector3(HALF_BOARD + 0.5, 1.5, HALF_BOARD + 0.5),
-);
-const FIT_POLAR = 0.8;
-const FOCUS_DISTANCE = 6;
-
-/** Soft studio light from three's RoomEnvironment (generated, no files to fetch). */
-function RoomLight() {
-  const gl = useThree((state) => state.gl);
-  const scene = useThree((state) => state.scene);
-  useEffect(() => {
-    const pmrem = new PMREMGenerator(gl);
-    const environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = environment;
-    scene.environmentIntensity = 0.6;
-    return () => {
-      scene.environment = null;
-      environment.dispose();
-      pmrem.dispose();
-    };
-  }, [gl, scene]);
-  return null;
-}
-
-function fitBoard(rig: CameraControls, animate: boolean): void {
-  void rig.rotateTo(0, FIT_POLAR, animate);
-  void rig.fitToSphere(BOARD_SPHERE, animate);
-}
-
-function CameraRig({ view }: { view: DioramaView }) {
-  const controls = useRef<CameraControls>(null);
-  /** The user has orbited, panned or zoomed since the last fit: a resize then keeps their view. */
-  const moved = useRef(false);
-  const width = useThree((state) => state.size.width);
-  const height = useThree((state) => state.size.height);
-  useEffect(() => {
-    const rig = controls.current;
-    if (!rig) return;
-    rig.setBoundary(PAN_BOX);
-    const onControl = (): void => {
-      moved.current = true;
-    };
-    rig.addEventListener('controlstart', onControl);
-    view.camera = {
-      fit: () => {
-        moved.current = false;
-        fitBoard(rig, true);
-      },
-      focus: (player) => {
-        const at = view.tokenPosition(player);
-        if (!at) return;
-        moved.current = true;
-        void rig.moveTo(at[0], at[1], at[2], true);
-        void rig.dollyTo(FOCUS_DISTANCE, true);
-      },
-    };
-    return () => {
-      rig.removeEventListener('controlstart', onControl);
-      view.camera = null;
-    };
-  }, [view]);
-  // The canvas size is part of the fit: until the user moves the camera, a resize or rotation re-fits the board.
-  useEffect(() => {
-    const rig = controls.current;
-    if (rig && !moved.current) fitBoard(rig, false);
-  }, [width, height]);
-  return (
-    <CameraControls
-      ref={controls}
-      makeDefault
-      smoothTime={0.25}
-      draggingSmoothTime={0.08}
-      minPolarAngle={0.15}
-      maxPolarAngle={1.22}
-      minDistance={3.5}
-      maxDistance={26}
-      dollyToCursor={false}
-    />
-  );
-}
 
 interface BoardCanvasProps {
   view: DioramaView;
   onBoardTap: () => void;
 }
 
+/** DPR cap: 2 on desktop and tablet, 1.5 for phone-width canvases (spec 1.3). */
+function dprCap(): number {
+  return isPhoneWidth(window.innerWidth) ? 1.5 : 2;
+}
+
 export function BoardCanvas({ view, onBoardTap }: BoardCanvasProps) {
   return (
     <Canvas
-      dpr={[1, 2]}
-      camera={{ position: [0, 10, 10], fov: 40, near: 0.1, far: 100 }}
+      dpr={[1, dprCap()]}
+      shadows={{ type: PCFSoftShadowMap }}
+      camera={{ position: [0, 12, 14], fov: 35, near: 0.1, far: 100 }}
+      gl={{ antialias: true, alpha: true }}
+      style={{ background: BACKDROP }}
       data-testid="board-canvas"
     >
-      <color attach="background" args={['#1b1a3a']} />
-      <RoomLight />
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[4, 10, 6]} intensity={0.9} />
-      <Blocks view={view} onTap={onBoardTap} />
+      <Lighting />
+      <Suspense fallback={null}>
+        <Board view={view} onTap={onBoardTap}>
+          {/* <Props /> and landmarks mount here (T44.4) */}
+        </Board>
+        <PlinthShadow />
+      </Suspense>
       <Jumps view={view} />
       <Tokens view={view} />
       <Puffs view={view} />
-      <ContactShadows
-        position={[0, 0.003, 0]}
-        scale={SIZE * UNIT + 1}
-        resolution={512}
-        far={1.6}
-        blur={1.6}
-        opacity={0.45}
-      />
       <CameraRig view={view} />
     </Canvas>
   );

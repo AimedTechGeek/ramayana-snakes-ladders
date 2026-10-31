@@ -1,21 +1,22 @@
 // World units (src/game/iso/world.ts: x along a row, y toward the viewer, 56 per square, board 672) to three units
-// (one square = 1, board centred on the origin, y up). Animations sample in world units because the locomotion
-// speeds are world units per second; only rendering converts.
+// (one square = 1, board centred on the origin, y up, field plate at y = 0). Animations sample in world units because
+// the locomotion speeds are world units per second; only rendering converts. A point's height is the ground under
+// it (block tops, see boardLayout.groundHeightAt) plus `lift`, so tokens stand on the block tops.
 
 import { CELL, SIZE } from '../../game/iso/world';
 import type { Vec2 } from '../../game/iso/boardIso';
+import { groundHeightAt } from './boardLayout';
 
 export const UNIT = 1 / CELL;
 export const HALF = SIZE / 2;
-/** Height of a block's top face in three units; tokens stand here. */
-export const BLOCK_TOP = 0;
-export const BLOCK_HEIGHT = 0.32;
 
 export function toThree(world: Vec2, lift = 0): [number, number, number] {
-  return [(world[0] - HALF) * UNIT, BLOCK_TOP + lift, (world[1] - HALF) * UNIT];
+  const x = (world[0] - HALF) * UNIT;
+  const z = (world[1] - HALF) * UNIT;
+  return [x, groundHeightAt(x, z) + lift, z];
 }
 
-/** Where seat `seat`'s token waits before its first move: beside square 1, off the front-left corner. */
+/** Where seat `seat`'s token waits before its first move: on the front rim strip, east of the gate. */
 export function waitingSpot(seat: number): Vec2 {
-  return [-46, SIZE - 120 + seat * 28];
+  return [HALF + (-3 + seat * 0.5) * CELL, SIZE + 0.15 * CELL];
 }

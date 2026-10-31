@@ -31,7 +31,7 @@ export function snakeCurve(jump: Jump): Curve<Vector3> {
     const u = i / bends;
     const sway = i === 0 || i === bends ? 0 : (i % 2 === 0 ? 1 : -1) * 0.45;
     const point = head.clone().lerp(tail, u).addScaledVector(side, sway);
-    point.y = 0.12 + (i === 0 ? 0.25 : 0);
+    point.y = head.y + (tail.y - head.y) * u + 0.12 + (i === 0 ? 0.25 : 0);
     points.push(point);
   }
   return new CatmullRomCurve3(points);
