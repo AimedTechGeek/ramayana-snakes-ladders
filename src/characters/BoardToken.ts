@@ -21,6 +21,7 @@ const MEDALLION_SIZE = 28; // about the figurine token (39 px for 80 units), so 
 export class MedallionToken implements BoardToken {
   private readonly image: Phaser.GameObjects.Image;
   private readonly shadow: Phaser.GameObjects.Ellipse;
+  private readonly baseScale: { x: number; y: number };
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -31,11 +32,15 @@ export class MedallionToken implements BoardToken {
       .image(0, 0, tokenKey(hero))
       .setDisplaySize(MEDALLION_SIZE, MEDALLION_SIZE)
       .setOrigin(0.5, 1);
+    this.baseScale = { x: this.image.scaleX, y: this.image.scaleY };
   }
 
   place(pose: TokenPose): void {
-    this.image.setPosition(pose.feet.x, pose.feet.y).setDepth(pose.depth);
-    this.shadow.setPosition(pose.ground.x, pose.ground.y).setScale(1 - 0.3 * pose.lift);
+    this.image
+      .setPosition(pose.feet.x, pose.feet.y)
+      .setDepth(pose.depth)
+      .setScale(this.baseScale.x * (pose.scale ?? 1), this.baseScale.y * (pose.scale ?? 1));
+    this.shadow.setPosition(pose.ground.x, pose.ground.y).setScale((1 - 0.3 * pose.lift) * (pose.scale ?? 1));
   }
 
   squash(ms: number): void {

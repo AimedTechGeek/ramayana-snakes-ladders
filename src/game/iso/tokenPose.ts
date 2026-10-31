@@ -21,6 +21,8 @@ export interface TokenPose {
   depth: number;
   /** 0 on the tile, 1 at the top of a hop: the shadow shrinks to 70 % at 1. */
   lift: number;
+  /** Drawn size factor, default 1; above 1 while a token crosses the HUD on its way to a zoomed board camera. */
+  scale?: number;
 }
 
 /** Resting point of the `slot`-th of `count` tokens sharing a square: the field centre plus its fan offset (world x, y). */
@@ -58,12 +60,16 @@ export function hopPoint(from: Vec2, to: Vec2, u: number): Vec3 {
 
 /** The pose from a seat plate point to a square's resting spot at progress u: a straight screen line with an arc. */
 export function entryPose(seat: Screen, to: Vec2, u: number): TokenPose {
-  const target = worldPose(to[0], to[1]);
+  return entryPoseTo(seat, worldPose(to[0], to[1]), u);
+}
+
+/** Same arc towards any target pose (the HUD-space image of a board spot while the board camera is zoomed); size eases to the target's. */
+export function entryPoseTo(seat: Screen, target: TokenPose, u: number): TokenPose {
   const arc = ENTRY_ARC_PX * 4 * u * (1 - u);
   const feet = {
     x: seat.x + (target.feet.x - seat.x) * u,
     y: seat.y + (target.feet.y - seat.y) * u - arc,
   };
   const ground = { x: feet.x, y: feet.y + arc };
-  return { feet, ground, depth: target.depth, lift: arc / ENTRY_ARC_PX };
+  return { feet, ground, depth: target.depth, lift: arc / ENTRY_ARC_PX, scale: 1 + ((target.scale ?? 1) - 1) * u };
 }

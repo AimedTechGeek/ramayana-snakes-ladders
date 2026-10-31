@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { applyHiDpi } from '../hidpi';
 import { Character } from '../../characters/Character';
 import { MedallionToken, type BoardToken } from '../../characters/BoardToken';
 import { Figurine } from '../../characters/Figurine';
@@ -18,7 +17,7 @@ import { PANEL, SEAT, seatTokenSpot, seatTop } from '../layout';
 import { squareScreen } from '../iso/boardIso';
 import { fieldCentre, glidePoint, jumpPaths, type JumpPath, type Vec2 } from '../iso/jumps';
 import {
-  entryPose,
+  entryPoseTo,
   hopPoint,
   restingSpot,
   screenPose,
@@ -32,7 +31,9 @@ import { applyEvent, createRevealState, seedFromGameState, type RevealState } fr
 import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
 import { DiceButton } from '../ui/DiceButton';
+import { BoardCameraRig, type Layer } from '../ui/BoardCameraRig';
 import { SpeechBubble } from '../ui/SpeechBubble';
+import type { Point } from '../boardCamera';
 
 interface Chip {
   setLabel(text: string): Chip;
@@ -52,8 +53,24 @@ const HUD_DEPTH = 5000;
 const BUBBLE_DEPTH = 6000;
 /** Left edge of the banner, hint and chips: right of the die plate in the HUD column. */
 const BANNER_X = PANEL.x + 144;
+/** Where the zoom buttons sit: the board's lower-left, clear of the dice and hint in the HUD column. */
+const ZOOM_BUTTONS = { x: 16, y: 720 - 16 - 56, size: 56, gap: 8 } as const;
+/** The follow camera centres this far above a token's feet, on its body. */
+const FOLLOW_LIFT = 20;
 const BOT_DELAY_MS = 1000;
 const FAST_BOT_DELAY_MS = 400;
+
+/** A pose part-way from a to b (feet, shadow spot, depth, size). */
+function blendPose(a: TokenPose, b: TokenPose, u: number): TokenPose {
+  const mix = (from: number, to: number) => from + (to - from) * u;
+  return {
+    feet: { x: mix(a.feet.x, b.feet.x), y: mix(a.feet.y, b.feet.y) },
+    ground: { x: mix(a.ground.x, b.ground.x), y: mix(a.ground.y, b.ground.y) },
+    depth: mix(a.depth, b.depth),
+    lift: 0,
+    scale: mix(a.scale ?? 1, b.scale ?? 1),
+  };
+}
 
 export class BoardScene extends Phaser.Scene {
   private engine!: Game;
@@ -85,6 +102,13 @@ export class BoardScene extends Phaser.Scene {
   private muteChip!: Chip;
   private busy = false;
   private audio!: Audio;
+  private rig!: BoardCameraRig;
+  /** Player whose token the camera follows: the current turn's. */
+  private followPlayer = -1;
+  /** Display objects of each board token, to move them between the board camera and the HUD camera. */
+  private tokenObjects: Phaser.GameObjects.GameObject[][] = [];
+  /** Camera layer each token is drawn on: on its seat card (hud) or on the board. */
+  private tokenLayer: Layer[] = [];
 
   constructor() {
     super('Board');
@@ -113,6 +137,9 @@ export class BoardScene extends Phaser.Scene {
     this.lastLines = new Map();
     this.seatStartAt = [];
     this.busy = false;
+    this.followPlayer = -1;
+    this.tokenObjects = [];
+    this.tokenLayer = [];
   }
 
   /** Loads the chosen level's board (rasterised at 2x) and the seated Hanuman's figurine textures. */
@@ -130,13 +157,13 @@ export class BoardScene extends Phaser.Scene {
   }
 
   create(): void {
-    applyHiDpi(this);
+    this.rig = new BoardCameraRig(this, () => this.fastMode);
     this.audio = getAudio(this.game.registry.get('muted') === true);
     ensureFxTextures(this);
-    this.drawBoard();
-    this.drawSeats();
+    this.rig.within('board', () => this.drawBoard());
+    this.rig.within('hud', () => this.drawSeats());
     this.createTokens();
-    this.createHud();
+    this.rig.within('hud', () => this.createHud());
 
     const keys = this.input.keyboard;
     keys?.on('keydown-SPACE', () => void this.requestRoll());
@@ -144,6 +171,7 @@ export class BoardScene extends Phaser.Scene {
     keys?.on('keydown-F', () => this.toggleFast());
     keys?.on('keydown-M', () => this.toggleMute());
     keys?.on('keydown-ESC', () => this.openMenu());
+    keys?.on('keydown', (event: KeyboardEvent) => this.cameraKey(event));
     const unlock = () => this.audio.unlock();
     this.input.once('pointerdown', unlock);
     keys?.once('keydown', unlock);
@@ -160,6 +188,16 @@ export class BoardScene extends Phaser.Scene {
   /** The engine state for tests and saving. */
   snapshot(): GameState {
     return this.engine.snapshot();
+  }
+
+  /** Board world point to HUD screen point (logical px), for HUD items anchored to a spot on the board. */
+  boardToHud(point: Point): Point {
+    return this.rig.boardToHud(point);
+  }
+
+  /** The camera rig, for tests and for adding board or HUD objects: `rig.within('board' | 'hud', () => ...)`. */
+  get cameraRig(): BoardCameraRig {
+    return this.rig;
   }
 
   get isBusy(): boolean {
@@ -243,11 +281,16 @@ export class BoardScene extends Phaser.Scene {
       case 'TurnStarted':
         this.highlightSeat(event.player);
         this.setBanner(event.player);
+        this.followPlayer = event.player;
+        this.rig.startTurn(this.followPointOf(event.player));
         return;
       case 'Rolled':
         this.audio.dice();
         await this.dieButton.roll(event.value);
-        if (event.value === 6) ringPulse(this, this.dieButton.x, this.dieButton.y, 56, this.fastMode);
+        if (event.value === 6)
+          this.rig.within('hud', () =>
+            ringPulse(this, this.dieButton.x, this.dieButton.y, 56, this.fastMode),
+          );
         return;
       case 'Moved':
         for (const square of event.path) await this.stepTo(event.player, square);
@@ -369,9 +412,23 @@ export class BoardScene extends Phaser.Scene {
     this.fastChip = this.createChip(BANNER_X, 624, 100, () => this.toggleFast());
     this.muteChip = this.createChip(BANNER_X + 108, 624, 100, () => this.toggleMute());
     this.createChip(BANNER_X + 216, 624, 104, () => this.openMenu()).setLabel(t('ui.menu'));
+    this.createZoomButtons();
     this.applyFast();
     this.applyMute();
     this.setBanner(this.snapshot().current);
+  }
+
+  /** + / - / Fit at the board's lower-left; any manual zoom pauses the follow camera until the next turn or Fit. */
+  private createZoomButtons(): void {
+    const { x, y, size, gap } = ZOOM_BUTTONS;
+    const buttons: [string, () => void][] = [
+      ['+', () => this.rig.zoomIn()],
+      ['−', () => this.rig.zoomOut()],
+      [t('ui.fit'), () => this.rig.fit()],
+    ];
+    buttons.forEach(([label, onClick], i) =>
+      this.createChip(x + i * (size + gap), y, size, onClick).setLabel(label),
+    );
   }
 
   private createChip(x: number, y: number, width: number, onClick: () => void): Chip {
@@ -440,6 +497,8 @@ export class BoardScene extends Phaser.Scene {
     ease: string,
     poseAt: (u: number) => TokenPose,
     onUpdate?: (u: number, pose: TokenPose) => void,
+    /** Board feet point the camera follows when the pose is drawn in HUD space (a trip to or from a seat card). */
+    focus?: Point,
   ): Promise<void> {
     const token = this.tokenAt(player);
     const progress = { u: 0 };
@@ -451,10 +510,49 @@ export class BoardScene extends Phaser.Scene {
       onUpdate: () => {
         const pose = poseAt(progress.u);
         token.place(pose);
+        this.followToken(player, focus ?? pose.feet);
         onUpdate?.(progress.u, pose);
       },
     });
     token.place(poseAt(1));
+  }
+
+  /** Asks the board camera to follow the current player's token at a board point (its feet). */
+  private followToken(player: number, feet: Point): void {
+    if (player === this.followPlayer) this.rig.follow({ x: feet.x, y: feet.y - FOLLOW_LIFT });
+  }
+
+  /** Where the camera looks at the start of a turn: the token's body on the board, or nothing (whole board) on its seat card. */
+  private followPointOf(player: number): Point | null {
+    const spot = this.worldAt[player];
+    if (!spot) return null;
+    const feet = worldPose(spot[0], spot[1]).feet;
+    return { x: feet.x, y: feet.y - FOLLOW_LIFT };
+  }
+
+  /** Moves a token's display objects to the HUD camera (on its seat card, or crossing) or the board camera (on the board). */
+  private setTokenLayer(player: number, layer: Layer): void {
+    if (this.tokenLayer[player] === layer) return;
+    this.tokenLayer[player] = layer;
+    this.rig.assign(layer, this.tokenObjects[player] ?? []);
+  }
+
+  /** A token's pose in HUD screen space: its seat card, or where the zoomed board camera shows a board spot, drawn that much bigger. */
+  private hudPose(player: number, spot: Vec2 | null): TokenPose {
+    if (!spot) return screenPose(seatTokenSpot(player), TOKEN_DEPTH_BASE);
+    const pose = worldPose(spot[0], spot[1]);
+    return {
+      ...pose,
+      feet: this.rig.boardToHud(pose.feet),
+      ground: this.rig.boardToHud(pose.ground),
+      scale: this.rig.zoom,
+    };
+  }
+
+  private cameraKey(event: KeyboardEvent): void {
+    if (event.key === '+' || event.key === '=') this.rig.zoomIn();
+    else if (event.key === '-' || event.key === '_') this.rig.zoomOut();
+    else if (event.key === '0') this.rig.fit();
   }
 
   /** The pose a token has at rest: on the board at a world spot, or on its seat card. */
@@ -470,7 +568,18 @@ export class BoardScene extends Phaser.Scene {
     const to = this.spotOf(player);
     if (from === null) {
       const seat = seatTokenSpot(player);
-      await this.travel(player, this.scaled(360), 'Sine.easeInOut', (u) => entryPose(seat, to, u));
+      // Drawn by the HUD camera on the way (the seat card is outside the board camera), then handed to the board camera.
+      const target = worldPose(to[0], to[1]).feet;
+      await this.travel(
+        player,
+        this.scaled(360),
+        'Sine.easeInOut',
+        (u) => entryPoseTo(seat, this.hudPose(player, to), u),
+        undefined,
+        target,
+      );
+      this.setTokenLayer(player, 'board');
+      token.place(worldPose(to[0], to[1]));
     } else {
       await this.travel(player, this.stepMs, 'Linear', (u) => {
         const [x, y, z] = hopPoint(from, to, u);
@@ -492,7 +601,9 @@ export class BoardScene extends Phaser.Scene {
     this.shownSquare[player] = square;
     const end = square === 0 ? null : this.spotOf(player);
     const path = jump ? this.paths.find((p) => p.from === jump.from && p.to === jump.to) : undefined;
-    const trail = kind === 'ladder' ? sparkleTrail(this, this.fastMode) : undefined;
+    const trail =
+      kind === 'ladder' ? this.rig.within('board', () => sparkleTrail(this, this.fastMode)) : undefined;
+    const crossing = start === null || end === null;
     let lastSparkle = 0;
     let poseAt: (u: number) => TokenPose;
     if (path && start && end) {
@@ -508,19 +619,13 @@ export class BoardScene extends Phaser.Scene {
         return worldPose(x + dx, y + dy, z);
       };
     } else {
-      // A straight line at tile height (to or from the seat card, a straight screen line).
-      const a = this.restPose(player, start);
-      const b = this.restPose(player, end);
-      poseAt = (u) => ({
-        feet: { x: a.feet.x + (b.feet.x - a.feet.x) * u, y: a.feet.y + (b.feet.y - a.feet.y) * u },
-        ground: {
-          x: a.ground.x + (b.ground.x - a.ground.x) * u,
-          y: a.ground.y + (b.ground.y - a.ground.y) * u,
-        },
-        depth: a.depth + (b.depth - a.depth) * u,
-        lift: 0,
-      });
+      // A straight line at tile height. To or from a seat card it runs on the HUD camera, the board end tracking the board camera.
+      const at = (spot: Vec2 | null) => (crossing ? this.hudPose(player, spot) : this.restPose(player, spot));
+      poseAt = (u) => blendPose(at(start), at(end), u);
     }
+    if (crossing) this.setTokenLayer(player, 'hud');
+    const boardEnd = end ?? start;
+    const focus = crossing && boardEnd ? worldPose(boardEnd[0], boardEnd[1]).feet : undefined;
     const ladderMs = Math.max(400, 25 * Math.abs((jump?.to ?? 0) - (jump?.from ?? 0)));
     await this.travel(
       player,
@@ -533,25 +638,32 @@ export class BoardScene extends Phaser.Scene {
           trail.emit(pose.feet.x, pose.feet.y);
         }
       },
+      focus,
     );
     trail?.stop();
     this.worldAt[player] = end;
+    if (crossing) {
+      this.setTokenLayer(player, end ? 'board' : 'hud');
+      this.tokenAt(player).place(this.restPose(player, end));
+    }
     const landed = this.restPose(player, end).feet;
-    if (kind === 'ladder') goldBurst(this, landed.x, landed.y, this.fastMode);
-    else dustPuff(this, landed.x, landed.y, this.fastMode);
+    this.rig.within(end ? 'board' : 'hud', () => {
+      if (kind === 'ladder') goldBurst(this, landed.x, landed.y, this.fastMode);
+      else dustPuff(this, landed.x, landed.y, this.fastMode);
+    });
     await this.relayout(player);
   }
 
   /** Dust at the snake's head and a brief camera shake when a token is bitten. */
   private biteEffects(headSquare: number): void {
     const head = squareScreen(headSquare);
-    dustPuff(this, head.x, head.y, this.fastMode);
+    this.rig.within('board', () => dustPuff(this, head.x, head.y, this.fastMode));
     shake(this, this.fastMode);
   }
 
   private bounceEffect(): void {
     const c = squareScreen(144);
-    bouncePuff(this, c.x, c.y, this.fastMode);
+    this.rig.within('board', () => bouncePuff(this, c.x, c.y, this.fastMode));
   }
 
   /** Re-fan every token sharing the square the given player just reached. */
@@ -662,9 +774,13 @@ export class BoardScene extends Phaser.Scene {
     const state = this.snapshot();
     this.shownSquare = state.players.map((p) => p.position);
     state.players.forEach((player, seat) => {
-      const token: BoardToken = FIGURINE_HEROES.includes(player.hero)
-        ? new Figurine(this, 0, 0, player.hero, 's')
-        : new MedallionToken(this, player.hero);
+      const { value: token, objects } = this.rig.collect('board', (): BoardToken =>
+        FIGURINE_HEROES.includes(player.hero)
+          ? new Figurine(this, 0, 0, player.hero, 's')
+          : new MedallionToken(this, player.hero),
+      );
+      this.tokenObjects.push(objects);
+      this.tokenLayer.push('board');
       const seatFigure = this.characters[seat];
       // The board token shows the seat figure's emotion but plays no reaction tween (T40 spec 5).
       if (seatFigure instanceof Figurine) seatFigure.onEmotion = (emotion) => token.setEmotion(emotion);
@@ -672,6 +788,7 @@ export class BoardScene extends Phaser.Scene {
       const spot = player.position === 0 ? null : this.spotOf(seat);
       this.worldAt.push(spot);
       token.place(this.restPose(seat, spot));
+      if (!spot) this.setTokenLayer(seat, 'hud'); // waiting on its seat card, which only the HUD camera shows
     });
   }
 }
