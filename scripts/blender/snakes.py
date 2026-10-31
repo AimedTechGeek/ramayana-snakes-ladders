@@ -63,7 +63,7 @@ def S(id_, R, body, pattern, pitch, **kw):
 SPECS = [
     S("tataka", 2.6, "#457334", "bands", 6, head="plain", motifs=["hair"], props=["stump"]),
     S("manthara", 2.2, "#1C1F4D", "diamonds", 7, accent=GOLD, motifs=["shawl"], props=["scroll"]),
-    S("kaikeyi", 2.6, "#7B3B6E", "spots", 5, motifs=["bangles"], props=["window"], base=(-8.0, 5.5), face_yaw=-57.0, strike=dict(lean_cap=10, push=1.5, dip=0.0, aim=0.0)),   # the wedding deck crosses 0.2 u in front of the coil: the head sits behind it and looks along it
+    S("kaikeyi", 2.8, "#7B3B6E", "spots", 5, motifs=["bangles"], props=["window"]),
     S("viradha", 2.8, "#A4703E", "bands_dots", 6, props=["club"]),
     S("shurpanakha", 2.6, "#8E3B3B", "bands", 6, motifs=["nosering"], props=["nails"]),
     S("golden-deer", 2.6, "#E9C12F", "spots", 5, accent=PARCH, motifs=["deer"]),

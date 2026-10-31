@@ -20,6 +20,8 @@ import {
   bridges,
   deckHeightAt,
   routeAt,
+  WEDDING_BOW,
+  WEDDING_HUMP,
 } from '../src/app/board3d/bridgeGeometry';
 import {
   BEHIND_OPACITY,
@@ -52,8 +54,9 @@ const PAIRS: Record<string, [number, number]> = {
 const SPEC: Record<string, { L: number; h: number; openings: number; crossed: number[] }> = {
   vishwamitra: { L: 182, h: 22, openings: 4, crossed: [21, 22, 23, 24] },
   'shiva-bow': { L: 90, h: 14, openings: 2, crossed: [29, 30] },
-  // h 22: the wedding hump takes the 0.39 u cap so the deck clears kaikeyi's coil by 0.125 u (bridgeGeometry.ts)
-  wedding: { L: 133, h: 22, openings: 3, crossed: [45, 46, 47] },
+  // owner, T44.14: the wedding deck bows 0.6 u toward the viewer and its hump drops to 0.2 u (11 px) so Kaikeyi on 46
+  // strikes in full behind it; the bowed ribbon clips 27's back corner and runs along the front of 45-46
+  wedding: { L: 133, h: 11, openings: 3, crossed: [27, 45, 46] },
   guha: { L: 90, h: 14, openings: 2, crossed: [71, 72] },
   shabari: { L: 15, h: 8, openings: 1, crossed: [] },
   'hanuman-meeting': { L: 90, h: 14, openings: 2, crossed: [104, 105] },
@@ -103,7 +106,7 @@ describe('bridge pairs (T42 6.1 / 6.5)', () => {
     }
   });
 
-  it('Deck_(Route)_Should_RunFromFootBackStripToTopSillAndBowTowardBack', () => {
+  it('Deck_(Route)_Should_RunFromFootBackStripToTopSillAndBowAsSpecified', () => {
     const wedding = bridgeById('wedding')!;
     const [fx, fz] = squareCentre(26);
     const [tx, tz] = squareCentre(52);
@@ -111,7 +114,7 @@ describe('bridge pairs (T42 6.1 / 6.5)', () => {
     expect(wedding.top[0]).toBeCloseTo(tx);
     expect(wedding.top[1]).toBeCloseTo(tz + 0.357);
     const straightMid = [(wedding.foot[0] + wedding.top[0]) / 2, (wedding.foot[1] + wedding.top[1]) / 2];
-    expect(routeAt(wedding, 0.5)[1]).toBeCloseTo(straightMid[1]!);
+    expect(routeAt(wedding, 0.5)[1]).toBeCloseTo(straightMid[1]! - WEDDING_BOW); // a negative bow: toward the viewer
     const setu = bridgeById('rama-setu')!;
     const setuMid = [(setu.foot[0] + setu.top[0]) / 2, (setu.foot[1] + setu.top[1]) / 2];
     expect(routeAt(setu, 0.5)[1]).toBeCloseTo(setuMid[1]! - 0.21);
@@ -126,14 +129,20 @@ describe('bridge pairs (T42 6.1 / 6.5)', () => {
     }
   });
 
-  it('WeddingDeck_(OverKaikeyisCoil)_Should_ClearTheCoilTopByAtLeastOneEighthUnit', () => {
-    // T42 6.5: coil top 0.29 u over the block (2.4 + 5 x 2.8 px), clearance >= 0.125 u
+  it('WeddingDeck_(AtKaikeyi46)_Should_RunInFrontOfTheTokenLowAndFlat', () => {
+    // owner, T44.14: lowered and flattened where it passes 46, and bowed in front of the token's field centre (the
+    // vertex-level clearance against Kaikeyi's clips is in snakes3d.test.ts)
     const wedding = bridgeById('wedding')!;
-    const coilTop = blockTopY(46) + (2.4 + 5 * 2.8 - 2.4) / 56; // 16.4 px absolute, the tile top at 2.4 px
+    expect(wedding.h).toBe(WEDDING_HUMP);
+    expect(wedding.h).toBeLessThan(0.39);
     const [cx, cz] = squareCentre(46);
-    const over = wedding.deck.filter((p) => Math.hypot(p.x - cx, p.z - (cz - 0.25)) < 0.3);
-    expect(over.length).toBeGreaterThan(0);
-    for (const p of over) expect(p.y - coilTop).toBeGreaterThanOrEqual(0.125);
+    const near = wedding.deck.filter((p) => Math.abs(p.x - cx) < 0.46);
+    expect(near.length).toBeGreaterThan(0);
+    for (const p of near) {
+      expect(p.z, 'in front of the block centre').toBeGreaterThan(cz);
+      expect(Math.hypot(p.x - cx, p.z - cz), 'clear of the token on the field centre').toBeGreaterThan(0.4);
+      expect(p.y - blockTopY(46), 'deck height over 46').toBeLessThan(0.3);
+    }
   });
 
   it('RamaSetuBow_(Around114)_Should_KeepTheDeckBodyAboveTheCoilWhereItOverlapsInPlan', () => {

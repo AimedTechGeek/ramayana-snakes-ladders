@@ -400,11 +400,11 @@ def ornaments(kit, route, spec, stone, spans):
             for i in range(len(spans) - 1):
                 pa, pb = route.pt(spans[i], sign * side, 0.115), route.pt(spans[i + 1], sign * side, 0.115)
                 mid = tuple((pa[k] + pb[k]) / 2 for k in range(3))
-                rail([pa, (mid[0], mid[1] - 0.06, mid[2]), pb], 0.01, SAFFRON, sides=4)
-                for t in (0.3, 0.7):
+                rail([pa, (mid[0], mid[1] - 0.06, mid[2]), pb], 0.01, SAFFRON, sides=3)   # 0.01 thin: 3 sides read round
+                for t in (0.3, 0.7):   # u=4: the bowed deck (Kaikeyi, T44.14) is longer, so more spans share 3,000 tris
                     q = tuple(pa[k] + (pb[k] - pa[k]) * t for k in range(3))
                     blob((q[0], q[1] - 0.06 * 4 * t * (1 - t) - 0.012, q[2]), 0.026,
-                         "#F4A04A" if t < 0.5 else "#FFD36B", u=5, v=3)
+                         "#F4A04A" if t < 0.5 else "#FFD36B", u=4, v=3)
         for k in range(8):   # garland loop on the foot abutment, beside the walking line
             ang = k * 2 * PI / 8
             c = foot_pt(-0.13, 0.0)

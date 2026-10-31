@@ -17,15 +17,20 @@ export const PARAPET_WIDTH = 0.04;
 export const ABUTMENT_WIDTH = 0.42;
 export const FOOT_ABUTMENT_DEPTH = 0.21;
 export const TOP_ABUTMENT_DEPTH = 0.29;
-/** rama-setu and shiva-bow bow this far toward -z at mid-span. */
+/** rama-setu and shiva-bow bow this far toward -z at mid-span (a negative bow goes toward +z). */
 export const BOW = 0.21;
 export const BOWED: ReadonlySet<string> = new Set(['rama-setu', 'shiva-bow']);
 /**
- * The wedding hump takes the cap (0.39 u, spec 6.2's min()) instead of 0.125 + 0.08 L = 0.31: the spec asks for a
- * clearance of at least 0.125 u over kaikeyi's coil on 46, and the formula leaves 0.084 u (T42 6.5 assumed the deck
- * sits at its apex there; it crosses at s = 0.56).
+ * Kaikeyi on 46 (owner, T44.14): the straight wedding route passes 0.2 u in front of her coil centre, so its ribbon
+ * covers the whole coil and the rising neck and no deck height lets her full 0.18 u strike through. The wedding deck
+ * bows WEDDING_BOW toward the viewer (+z) instead, running along the front of 45-46 in front of the token, and its
+ * hump is lowered and flattened (WEDDING_HUMP, was the 0.39 cap): the struck head stays behind the ribbon and the low
+ * deck leaves the bite in view.
  */
-const HUMP_OVERRIDE: Readonly<Record<string, number>> = { wedding: 0.39 };
+export const WEDDING_BOW = -0.6;
+export const WEDDING_HUMP = 0.2;
+const BOW_OVERRIDE: Readonly<Record<string, number>> = { wedding: WEDDING_BOW };
+const HUMP_OVERRIDE: Readonly<Record<string, number>> = { wedding: WEDDING_HUMP };
 /** Deck samples per bridge; divisible by 1, 2, 3 and 4 so every pier falls on a sample. */
 export const DECK_SAMPLES = 120;
 
@@ -82,7 +87,7 @@ export function bridgeLayout(id: string, from: number, to: number): BridgeLayout
     length,
     h: HUMP_OVERRIDE[id] ?? Math.min(0.39, 0.125 + 0.08 * length),
     openings: Math.max(1, Math.round(length / 0.8)),
-    bow: BOWED.has(id) ? BOW : 0,
+    bow: BOW_OVERRIDE[id] ?? (BOWED.has(id) ? BOW : 0),
     foot,
     top,
     baseFoot: blockTopY(from) + ABUTMENT_H,

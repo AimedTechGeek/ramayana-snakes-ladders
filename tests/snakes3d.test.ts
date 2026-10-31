@@ -192,6 +192,13 @@ describe('Snake GLBs: RESPECT (T44 5.5, T02)', () => {
     }
   });
 
+  it.each(IDS)('Snake_(%s)_ShouldStrikeItsMouthAtLeast0p15uTowardTheToken', (id) => {
+    // spec 5.4: the strike carries the head 0.18 u toward the field centre (Kaikeyi included since T44.14)
+    const m = SNAKE_META[id]!.mouth;
+    expect(Math.hypot(m.strike[0] - m.idle[0], m.strike[2] - m.idle[2])).toBeGreaterThanOrEqual(0.15);
+    expect(m.strike[2]).toBeGreaterThan(m.idle[2]); // toward the token, in front of the coil
+  });
+
   it.each(IDS)('Snake_(%s)_ShouldDipTheHeadInTheStrike_Item6', (id) => {
     const m = SNAKE_META[id]!.mouth;
     expect(m.strike[1]).toBeLessThan(m.idle[1]);
@@ -232,6 +239,30 @@ describe('Snake GLBs: the snake stays in its head block (T44 5.2, 5.4: no body b
 });
 
 describe('Snake GLBs: clearance from the bridges (T44 6.2 meets 5.2)', () => {
+  it('Kaikeyi_(FullStrikeOn46)_ShouldStayAtLeast0p05uClearOfTheWeddingDeckInEveryClip', async () => {
+    // owner, T44.14: the deck body (slab underside 0.045 below the walk, swags and posts up to 0.115 above it) never
+    // comes within 0.05 u of her coil, neck or head, in plan or in height
+    const l = await load('kaikeyi');
+    const a = snakeAnchor(46, 'kaikeyi');
+    const wedding = buildBridge('wedding', 26, 52);
+    const ribbon = DECK_WIDTH / 2 + PARAPET_WIDTH + 0.05;
+    let nearest = Infinity;
+    for (const clip of ['rise', 'idle', 'hold', 'strike', 'swallow', 'settle'] as SnakeClip[]) {
+      for (let k = 0; k <= 8; k++) {
+        for (const v of posed(l, 'kaikeyi', clip, k / 8)) {
+          for (const p of wedding.deck) {
+            const plan = Math.hypot(v.x + a[0] - p.x, v.z + a[2] - p.z);
+            nearest = Math.min(nearest, plan);
+            if (plan > ribbon) continue;
+            const y = v.y + a[1];
+            expect(y <= p.y - 0.045 - 0.05 || y >= p.y + 0.115 + 0.05, `${clip} ${k}/8: y ${y.toFixed(3)} deck ${p.y.toFixed(3)}`).toBe(true);
+          }
+        }
+      }
+    }
+    expect(nearest).toBeGreaterThan(0); // sanity: the deck was sampled
+  });
+
   it.each(HARD_SNAKES.map((s) => [s.id, s.from] as const))('Snake_(%s)_ShouldClearEveryDeckOfTheBoard', async (id, from) => {
     const l = await load(id);
     const a = snakeAnchor(from, id);
