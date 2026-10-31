@@ -156,7 +156,7 @@
    ],
    "hood": false,
    "triangles": 1992,
-   "bytes": 104884,
+   "bytes": 59236,
    "bones": 10,
    "build_s": 0.4
   },
@@ -313,7 +313,7 @@
    ],
    "hood": false,
    "triangles": 2102,
-   "bytes": 106344,
+   "bytes": 60824,
    "bones": 10,
    "build_s": 0.3
   },
@@ -470,9 +470,9 @@
    ],
    "hood": false,
    "triangles": 2166,
-   "bytes": 107764,
+   "bytes": 61984,
    "bones": 10,
-   "build_s": 0.4
+   "build_s": 0.3
   },
   "viradha": {
    "id": "viradha",
@@ -625,7 +625,7 @@
    ],
    "hood": false,
    "triangles": 2166,
-   "bytes": 107820,
+   "bytes": 62060,
    "bones": 10,
    "build_s": 0.3
   },
@@ -782,7 +782,7 @@
    ],
    "hood": false,
    "triangles": 1998,
-   "bytes": 104352,
+   "bytes": 58700,
    "bones": 10,
    "build_s": 0.3
   },
@@ -937,7 +937,7 @@
    "props": [],
    "hood": false,
    "triangles": 2182,
-   "bytes": 107924,
+   "bytes": 61600,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1093,7 +1093,7 @@
    ],
    "hood": false,
    "triangles": 2166,
-   "bytes": 107704,
+   "bytes": 61960,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1248,7 +1248,7 @@
    "props": [],
    "hood": false,
    "triangles": 2012,
-   "bytes": 106000,
+   "bytes": 59396,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1405,9 +1405,9 @@
    ],
    "hood": false,
    "triangles": 2172,
-   "bytes": 107760,
+   "bytes": 61764,
    "bones": 10,
-   "build_s": 0.3
+   "build_s": 0.4
   },
   "prahasta": {
    "id": "prahasta",
@@ -1562,7 +1562,7 @@
    ],
    "hood": false,
    "triangles": 1998,
-   "bytes": 105856,
+   "bytes": 59488,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1719,7 +1719,7 @@
    ],
    "hood": false,
    "triangles": 1846,
-   "bytes": 104388,
+   "bytes": 57528,
    "bones": 10,
    "build_s": 0.3
   },
@@ -1872,7 +1872,7 @@
    "props": [],
    "hood": false,
    "triangles": 1720,
-   "bytes": 101500,
+   "bytes": 55272,
    "bones": 10,
    "build_s": 0.3
   },
@@ -2030,9 +2030,9 @@
    ],
    "hood": false,
    "triangles": 2530,
-   "bytes": 112784,
+   "bytes": 66488,
    "bones": 10,
-   "build_s": 0.3
+   "build_s": 0.4
   }
  }
 }

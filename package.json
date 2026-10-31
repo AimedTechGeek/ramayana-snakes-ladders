@@ -18,7 +18,7 @@
     "blender:dice": "node scripts/blender/run.mjs scripts/blender/die.py public/models/dice/die.glb",
     "blender:props": "node scripts/blender/run.mjs scripts/blender/props.py public/models/props src/app/board3d/propsManifest.json",
     "blender:bridges": "tsx scripts/blender/bridges-build.mjs",
-    "blender:snakes": "node scripts/blender/run.mjs scripts/blender/snakes.py public/models/snakes src/app/board3d/snakesManifest.json",
+    "blender:snakes": "node scripts/blender/snakes-build.mjs",
     "blender:board": "node scripts/blender/run.mjs scripts/blender/board.py public/models/board/board.glb",
     "blender:heroes": "node scripts/blender/heroes/build.mjs",
     "blender:heroes:check": "node scripts/blender/hero-check.mjs screenshots-tmp/heroes http://localhost:5311 all hanuman && node scripts/blender/hero-check.mjs screenshots-tmp/heroes-rama http://localhost:5311 all rama && node scripts/blender/hero-check.mjs screenshots-tmp/heroes-lakshmana http://localhost:5311 all lakshmana && node scripts/blender/hero-check.mjs screenshots-tmp/heroes-sita http://localhost:5311 all sita"
