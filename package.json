@@ -28,6 +28,7 @@
     "devices": "node scripts/devices.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "blender:spike": "node scripts/blender/run.mjs scripts/blender/hanuman_spike.py public/models/spike/hanuman.glb",
+    "blender:props": "node scripts/blender/run.mjs scripts/blender/props.py public/models/props src/app/board3d/propsManifest.json",
     "blender:spike:check": "node scripts/blender/spike-check.mjs screenshots-tmp/spike"
   },
   "dependencies": {

@@ -3,7 +3,7 @@
 
 import { CameraControls, ContactShadows } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Box3, PMREMGenerator, Sphere, Vector3 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { SIZE } from '../../game/iso/world';
@@ -11,6 +11,7 @@ import { Blocks } from './Blocks';
 import { UNIT } from './coords';
 import type { DioramaView } from './DioramaView';
 import { Jumps, Puffs, Tokens } from './Pieces';
+import { PropsLayer } from './Props';
 
 const HALF_BOARD = (SIZE * UNIT) / 2;
 /** Fitting this sphere keeps the whole board and the waiting tokens in view at any aspect. */
@@ -115,6 +116,7 @@ export function BoardCanvas({ view, onBoardTap }: BoardCanvasProps) {
       <ambientLight intensity={0.25} />
       <directionalLight position={[4, 10, 6]} intensity={0.9} />
       <Blocks view={view} onTap={onBoardTap} />
+      <Suspense fallback={null}><PropsLayer revealed={view.revealedTerrain} /></Suspense>
       <Jumps view={view} />
       <Tokens view={view} />
       <Puffs view={view} />

@@ -1,0 +1,1073 @@
+{
+ "kinds": {
+  "mango-tree": {
+   "kind": "mango-tree",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "side",
+   "height": 20.0,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 174,
+   "budget": 180,
+   "glb": "props",
+   "landmark": false
+  },
+  "rice-stripes": {
+   "kind": "rice-stripes",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "side",
+   "height": 2.6,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 24,
+   "budget": 24,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    2,
+    3
+   ]
+  },
+  "sage-hut": {
+   "kind": "sage-hut",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "side",
+   "height": 11.6,
+   "anim": "smoke",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 133,
+   "budget": 140,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    24
+   ]
+  },
+  "lamp": {
+   "kind": "lamp",
+   "regions": [
+    "mithila",
+    "ayodhya"
+   ],
+   "zone": "back",
+   "height": 13.4,
+   "anim": "flicker",
+   "variety": true,
+   "fly": false,
+   "glow": true,
+   "tris": 60,
+   "budget": 60,
+   "glb": "props",
+   "landmark": false
+  },
+  "plough": {
+   "kind": "plough",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "back",
+   "height": 6.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 80,
+   "budget": 80,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    30
+   ]
+  },
+  "peacock": {
+   "kind": "peacock",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "back",
+   "height": 9.2,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 148,
+   "budget": 160,
+   "glb": "props",
+   "landmark": false
+  },
+  "cow": {
+   "kind": "cow",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "back",
+   "height": 8.6,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 188,
+   "budget": 190,
+   "glb": "props",
+   "landmark": false
+  },
+  "path-stone": {
+   "kind": "path-stone",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "back",
+   "height": 1.4,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 12,
+   "budget": 12,
+   "glb": "props",
+   "landmark": false
+  },
+  "marigold-bush": {
+   "kind": "marigold-bush",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "back",
+   "height": 7.1,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 84,
+   "budget": 90,
+   "glb": "props",
+   "landmark": false
+  },
+  "haystack": {
+   "kind": "haystack",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "back",
+   "height": 8.4,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 49,
+   "budget": 60,
+   "glb": "props",
+   "landmark": false
+  },
+  "potted-plant": {
+   "kind": "potted-plant",
+   "regions": [
+    "mithila",
+    "ayodhya"
+   ],
+   "zone": "back",
+   "height": 8.4,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 82,
+   "budget": 90,
+   "glb": "props",
+   "landmark": false
+  },
+  "rampart": {
+   "kind": "rampart",
+   "regions": [
+    "ayodhya"
+   ],
+   "zone": "side",
+   "height": 15.8,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 84,
+   "budget": 120,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    48,
+    47
+   ]
+  },
+  "dome": {
+   "kind": "dome",
+   "regions": [
+    "ayodhya"
+   ],
+   "zone": "side",
+   "height": 20.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 160,
+   "budget": 160,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    45
+   ]
+  },
+  "chariot": {
+   "kind": "chariot",
+   "regions": [
+    "ayodhya"
+   ],
+   "zone": "side",
+   "height": 17.0,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 176,
+   "budget": 220,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    42
+   ]
+  },
+  "banner-saffron": {
+   "kind": "banner-saffron",
+   "regions": [
+    "ayodhya"
+   ],
+   "zone": "side",
+   "height": 16.9,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 36,
+   "budget": 40,
+   "glb": "props",
+   "landmark": false
+  },
+  "dark-tree": {
+   "kind": "dark-tree",
+   "regions": [
+    "ayodhya"
+   ],
+   "zone": "side",
+   "height": 21.6,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 160,
+   "budget": 160,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    37,
+    38,
+    39,
+    40
+   ]
+  },
+  "fountain": {
+   "kind": "fountain",
+   "regions": [
+    "ayodhya"
+   ],
+   "zone": "side",
+   "height": 14.9,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 141,
+   "budget": 150,
+   "glb": "props",
+   "landmark": false
+  },
+  "bench": {
+   "kind": "bench",
+   "regions": [
+    "ayodhya"
+   ],
+   "zone": "back",
+   "height": 6.8,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 48,
+   "budget": 70,
+   "glb": "props",
+   "landmark": false
+  },
+  "sal-tree": {
+   "kind": "sal-tree",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "side",
+   "height": 21.6,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 160,
+   "budget": 200,
+   "glb": "props",
+   "landmark": false
+  },
+  "vine-post": {
+   "kind": "vine-post",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "side",
+   "height": 17.0,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 83,
+   "budget": 90,
+   "glb": "props",
+   "landmark": false
+  },
+  "hidden-eyes": {
+   "kind": "hidden-eyes",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "back",
+   "height": 1.4,
+   "anim": "flicker",
+   "variety": true,
+   "fly": false,
+   "glow": true,
+   "tris": 8,
+   "budget": 8,
+   "glb": "props",
+   "landmark": false
+  },
+  "panchavati-hut": {
+   "kind": "panchavati-hut",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "side",
+   "height": 12.0,
+   "anim": "smoke",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 117,
+   "budget": 140,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    66
+   ]
+  },
+  "rock": {
+   "kind": "rock",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "back",
+   "height": 5.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 56,
+   "budget": 60,
+   "glb": "props",
+   "landmark": false
+  },
+  "fern": {
+   "kind": "fern",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "back",
+   "height": 3.3,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 64,
+   "budget": 70,
+   "glb": "props",
+   "landmark": false
+  },
+  "reed": {
+   "kind": "reed",
+   "regions": [
+    "dandaka",
+    "ganga"
+   ],
+   "zone": "back",
+   "height": 11.0,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 30,
+   "budget": 30,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    49,
+    50,
+    71,
+    72,
+    73,
+    74
+   ]
+  },
+  "mushroom-cluster": {
+   "kind": "mushroom-cluster",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "back",
+   "height": 5.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 42,
+   "budget": 50,
+   "glb": "props",
+   "landmark": false
+  },
+  "log-pile": {
+   "kind": "log-pile",
+   "regions": [
+    "dandaka"
+   ],
+   "zone": "back",
+   "height": 6.6,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 60,
+   "budget": 80,
+   "glb": "props",
+   "landmark": false
+  },
+  "lotus-pad": {
+   "kind": "lotus-pad",
+   "regions": [
+    "ganga"
+   ],
+   "zone": "back",
+   "height": 3.3,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 21,
+   "budget": 24,
+   "glb": "props",
+   "landmark": false
+  },
+  "boat-post": {
+   "kind": "boat-post",
+   "regions": [
+    "ganga"
+   ],
+   "zone": "back",
+   "height": 9.6,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 36,
+   "budget": 40,
+   "glb": "props",
+   "landmark": false
+  },
+  "ghat-step": {
+   "kind": "ghat-step",
+   "regions": [
+    "ganga"
+   ],
+   "zone": "back",
+   "height": 5.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 36,
+   "budget": 48,
+   "glb": "props",
+   "landmark": false
+  },
+  "river-rock": {
+   "kind": "river-rock",
+   "regions": [
+    "ganga"
+   ],
+   "zone": "back",
+   "height": 4.0,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 36,
+   "budget": 40,
+   "glb": "props",
+   "landmark": false
+  },
+  "net-pole": {
+   "kind": "net-pole",
+   "regions": [
+    "ganga"
+   ],
+   "zone": "side",
+   "height": 13.0,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 36,
+   "budget": 60,
+   "glb": "props",
+   "landmark": false
+  },
+  "fish-ripple": {
+   "kind": "fish-ripple",
+   "regions": [
+    "ganga"
+   ],
+   "zone": "back",
+   "height": 0.0,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 8,
+   "budget": 8,
+   "glb": "props",
+   "landmark": false
+  },
+  "boulder": {
+   "kind": "boulder",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "back",
+   "height": 6.0,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 56,
+   "budget": 70,
+   "glb": "props",
+   "landmark": false
+  },
+  "cave-mouth": {
+   "kind": "cave-mouth",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "side",
+   "height": 15.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 112,
+   "budget": 120,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    90
+   ]
+  },
+  "waterfall": {
+   "kind": "waterfall",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "side",
+   "height": 16.6,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": true,
+   "tris": 70,
+   "budget": 100,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    96
+   ]
+  },
+  "banana-plant": {
+   "kind": "banana-plant",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "side",
+   "height": 11.3,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 95,
+   "budget": 110,
+   "glb": "props",
+   "landmark": false
+  },
+  "berry-bush": {
+   "kind": "berry-bush",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "back",
+   "height": 6.5,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 84,
+   "budget": 90,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    85
+   ]
+  },
+  "basket": {
+   "kind": "basket",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "back",
+   "height": 5.7,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 56,
+   "budget": 80,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    85
+   ]
+  },
+  "monkey-frieze-stone": {
+   "kind": "monkey-frieze-stone",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "back",
+   "height": 9.4,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 100,
+   "budget": 100,
+   "glb": "props",
+   "landmark": false
+  },
+  "hill": {
+   "kind": "hill",
+   "regions": [
+    "kishkindha"
+   ],
+   "zone": "side",
+   "height": 19.0,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 109,
+   "budget": 160,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    97
+   ]
+  },
+  "wave-crest": {
+   "kind": "wave-crest",
+   "regions": [
+    "sea"
+   ],
+   "zone": "back",
+   "height": 6.4,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 20,
+   "budget": 20,
+   "glb": "props",
+   "landmark": false
+  },
+  "rock-stack": {
+   "kind": "rock-stack",
+   "regions": [
+    "sea"
+   ],
+   "zone": "back",
+   "height": 10.1,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 76,
+   "budget": 90,
+   "glb": "props",
+   "landmark": false
+  },
+  "buoy-stone": {
+   "kind": "buoy-stone",
+   "regions": [
+    "sea"
+   ],
+   "zone": "back",
+   "height": 10.4,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 35,
+   "budget": 40,
+   "glb": "props",
+   "landmark": false
+  },
+  "foam-ring": {
+   "kind": "foam-ring",
+   "regions": [
+    "sea"
+   ],
+   "zone": "back",
+   "height": 0.0,
+   "anim": "shimmer",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 8,
+   "budget": 8,
+   "glb": "props",
+   "landmark": false
+  },
+  "shell": {
+   "kind": "shell",
+   "regions": [
+    "sea"
+   ],
+   "zone": "back",
+   "height": 3.6,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 30,
+   "budget": 40,
+   "glb": "props",
+   "landmark": false
+  },
+  "gull-perch": {
+   "kind": "gull-perch",
+   "regions": [
+    "sea"
+   ],
+   "zone": "back",
+   "height": 12.8,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 77,
+   "budget": 80,
+   "glb": "props",
+   "landmark": false
+  },
+  "lanka-wall": {
+   "kind": "lanka-wall",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "side",
+   "height": 16.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 84,
+   "budget": 120,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    121,
+    132
+   ]
+  },
+  "tower-banner": {
+   "kind": "tower-banner",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "side",
+   "height": 21.4,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 70,
+   "budget": 150,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    125,
+    129
+   ]
+  },
+  "arrow-stack": {
+   "kind": "arrow-stack",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "back",
+   "height": 11.4,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 48,
+   "budget": 60,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    123,
+    131
+   ]
+  },
+  "fire": {
+   "kind": "fire",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "back",
+   "height": 7.5,
+   "anim": "flicker",
+   "variety": false,
+   "fly": false,
+   "glow": true,
+   "tris": 30,
+   "budget": 30,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    134,
+    136
+   ]
+  },
+  "broken-banner": {
+   "kind": "broken-banner",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "side",
+   "height": 16.3,
+   "anim": "sway",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 58,
+   "budget": 90,
+   "glb": "props",
+   "landmark": false,
+   "squares": [
+    137
+   ]
+  },
+  "gold-lamp": {
+   "kind": "gold-lamp",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "back",
+   "height": 13.6,
+   "anim": "flicker",
+   "variety": true,
+   "fly": false,
+   "glow": true,
+   "tris": 56,
+   "budget": 70,
+   "glb": "props",
+   "landmark": false
+  },
+  "terrace-step": {
+   "kind": "terrace-step",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "back",
+   "height": 4.2,
+   "anim": "none",
+   "variety": true,
+   "fly": false,
+   "glow": false,
+   "tris": 24,
+   "budget": 24,
+   "glb": "props",
+   "landmark": false
+  },
+  "bird": {
+   "kind": "bird",
+   "regions": [],
+   "zone": "back",
+   "height": 2.8,
+   "anim": "none",
+   "variety": false,
+   "fly": true,
+   "glow": false,
+   "tris": 63,
+   "budget": 70,
+   "glb": "props",
+   "landmark": false
+  },
+  "butterfly": {
+   "kind": "butterfly",
+   "regions": [],
+   "zone": "back",
+   "height": 0.0,
+   "anim": "none",
+   "variety": false,
+   "fly": true,
+   "glow": false,
+   "tris": 4,
+   "budget": 8,
+   "glb": "props",
+   "landmark": false
+  },
+  "ayodhya-threshold": {
+   "kind": "ayodhya-threshold",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "side",
+   "height": 41.0,
+   "anim": "flicker",
+   "variety": false,
+   "fly": false,
+   "glow": true,
+   "tris": 1182,
+   "budget": 1200,
+   "glb": "landmarks",
+   "landmark": true,
+   "squares": [
+    1
+   ]
+  },
+  "janaka-palace": {
+   "kind": "janaka-palace",
+   "regions": [
+    "mithila"
+   ],
+   "zone": "side",
+   "height": 31.8,
+   "anim": "none",
+   "variety": false,
+   "fly": false,
+   "glow": false,
+   "tris": 903,
+   "budget": 1200,
+   "glb": "landmarks",
+   "landmark": true,
+   "squares": [
+    36
+   ]
+  },
+  "dais": {
+   "kind": "dais",
+   "regions": [
+    "lanka"
+   ],
+   "zone": "centre",
+   "height": 4.6,
+   "anim": "none",
+   "variety": false,
+   "fly": false,
+   "glow": false,
+   "tris": 108,
+   "budget": 144,
+   "glb": "landmarks",
+   "landmark": true,
+   "squares": [
+    144
+   ]
+  }
+ },
+ "landmarkMeshes": {
+  "ayodhya-threshold": {
+   "tris": 1182,
+   "glow": true,
+   "width": 57.4,
+   "depth": 40.0,
+   "height": 41.0,
+   "budget": 1200
+  },
+  "janaka-palace": {
+   "tris": 903,
+   "glow": false,
+   "width": 34.0,
+   "depth": 16.6,
+   "height": 31.8,
+   "budget": 1200
+  },
+  "dais": {
+   "tris": 108,
+   "glow": false,
+   "width": 49.0,
+   "depth": 49.0,
+   "height": 4.6,
+   "budget": 144
+  },
+  "throne": {
+   "tris": 500,
+   "glow": false,
+   "width": 12.8,
+   "depth": 13.5,
+   "height": 25.4,
+   "budget": 1200
+  },
+  "chhatra": {
+   "tris": 549,
+   "glow": false,
+   "width": 41.1,
+   "depth": 40.3,
+   "height": 62.6,
+   "budget": 1200
+  }
+ },
+ "bytes": {
+  "props.glb": 141600,
+  "landmarks.glb": 51788
+ }
+}
