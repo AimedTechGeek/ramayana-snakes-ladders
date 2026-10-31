@@ -1,20 +1,17 @@
-// The HUD overlay over the 3D canvas: seats, turn banner and hint, the dice, Fast / Mute / Menu, camera Fit / Focus.
-// The overlay root lets pointer events through to the canvas; only its controls take them.
+// The HUD overlay over the 3D canvas: brand, seat cards, turn banner and hint, speech bubbles, the toolbar (camera,
+// Fast, Mute, language, Menu) and the Roll pill. The overlay root lets pointer events through to the canvas; only
+// its controls take them.
 
-import type { Emotion } from '../../characters/reactions';
-import { HEROES, heroName } from '../../game/heroes';
+import type { Level } from '../../core/types';
+import { HEROES } from '../../game/heroes';
 import { t } from '../../i18n/i18n';
 import type { DioramaView } from '../board3d/DioramaView';
+import { IconButton, Pill, Sparkle } from '../ui/Controls';
+import { Icon } from '../ui/Icon';
+import type { ScreenPoint } from './bubbleLayout';
 import type { HudState } from './HudStore';
-
-/** Placeholder marks for a seat's current emotion. */
-export const EMOTION_MARK: Record<Emotion, string> = {
-  idle: '·',
-  happy: '☺',
-  excited: '✦',
-  scared: '!',
-  sad: '…',
-};
+import { SeatCard } from './SeatCard';
+import { SpeechBubbles } from './SpeechBubbles';
 
 const PIPS: Record<number, number[]> = {
   1: [4],
@@ -25,7 +22,8 @@ const PIPS: Record<number, number[]> = {
   6: [0, 2, 3, 5, 6, 8],
 };
 
-function Die({ value }: { value: number }) {
+/** The CSS die face: the fallback while the 3D die is not in the scene (the Roll pill shows the last value). */
+export function Die({ value }: { value: number }) {
   const on = PIPS[value] ?? [];
   return (
     <span className="die-face" aria-hidden="true">
@@ -36,97 +34,121 @@ function Die({ value }: { value: number }) {
   );
 }
 
-interface HudProps {
+export interface HudProps {
   hud: HudState;
   view: DioramaView;
+  /** Bot difficulty for the seat cards' controller tag. */
+  level?: Level;
+  /**
+   * Speech-bubble anchors, one per seat: the token's head projected to viewport pixels. Without them bubbles open
+   * beside the seat cards. Re-render with fresh points to follow a moving token.
+   */
+  bubbleAnchors?: readonly (ScreenPoint | null | undefined)[];
   onRoll: () => void;
   onFast: () => void;
   onMute: () => void;
   onMenu: () => void;
   onFit: () => void;
   onFocus: () => void;
+  onLanguage: () => void;
 }
 
-export function Hud({ hud, view, onRoll, onFast, onMute, onMenu, onFit, onFocus }: HudProps) {
+export function Hud({
+  hud,
+  view,
+  level,
+  bubbleAnchors,
+  onRoll,
+  onFast,
+  onMute,
+  onMenu,
+  onFit,
+  onFocus,
+  onLanguage,
+}: HudProps) {
   const { dice } = hud;
+  const speaker = hud.seats[hud.current];
+  // The triple-six notice is a toast; the hint line does not repeat it.
+  const hint = hud.hint === t('ui.tripleSix') ? '' : hud.hint;
+  const six = !dice.rolling && dice.value === 6 && dice.roll > 0;
   return (
     <div className="hud" data-testid="hud">
+      <div className="brand" aria-hidden="true">
+        <Sparkle />
+        {t('ui.brand')}
+        <Sparkle />
+      </div>
+
       <ol className="seat-cards">
-        {hud.seats.map((seat, i) => {
-          const mood = view.moods[i];
-          const bubble = view.bubbles[i];
-          return (
-            <li
-              key={i}
-              className={`seat-card${hud.current === i ? ' current' : ''}`}
-              style={{ borderColor: hud.current === i ? undefined : HEROES[seat.hero].cssColor }}
-              data-testid={`seat-card-${i}`}
-            >
-              <span className="seat-dot" style={{ background: HEROES[seat.hero].cssColor }}>
-                {mood ? EMOTION_MARK[mood.emotion] : ''}
-              </span>
-              <span className="seat-name">{seat.name}</span>
-              <span className="seat-meta">
-                {heroName(seat.hero)} · {t(seat.controller === 'bot' ? 'ui.bot' : 'ui.human')}
-              </span>
-              <span className="seat-position">
-                {seat.rank !== null
-                  ? t(`ui.rank${seat.rank}`)
-                  : seat.position === 0
-                    ? t('ui.atStart')
-                    : t('ui.square', { n: seat.position })}
-              </span>
-              {bubble && <span className="bubble">{bubble.line}</span>}
-            </li>
-          );
-        })}
+        {hud.seats.map((seat, i) => (
+          <SeatCard
+            key={i}
+            seat={seat}
+            index={i}
+            active={hud.current === i}
+            mood={view.moods[i]?.emotion ?? null}
+            level={level}
+          />
+        ))}
       </ol>
 
       <div className="turn-panel">
-        <div className="banner" data-testid="banner">
-          {hud.current >= 0 && hud.seats[hud.current] && (
-            <span
-              className="banner-dot"
-              style={{ background: HEROES[hud.seats[hud.current]!.hero].cssColor }}
-            />
-          )}
+        <div className="banner glass" data-testid="banner">
+          {speaker && <span className="banner-dot" style={{ background: HEROES[speaker.hero].cssColor }} />}
           {hud.banner}
         </div>
-        {hud.hint && <div className="hint">{hud.hint}</div>}
+        {hint && <div className="hint">{hint}</div>}
       </div>
 
-      <div className="controls">
-        <button className={`btn chip${hud.fast ? ' on' : ''}`} data-testid="fast" onClick={onFast}>
-          {hud.fast ? '»» ' : '» '}
-          {t('ui.fast')}
-        </button>
-        <button className={`btn chip${hud.muted ? ' on' : ''}`} data-testid="mute" onClick={onMute}>
-          {hud.muted ? `✕ ${t('ui.muted')}` : `♪ ${t('ui.mute')}`}
-        </button>
-        <button className="btn chip" data-testid="menu" onClick={onMenu}>
-          {t('ui.menu')}
-        </button>
+      <SpeechBubbles bubbles={view.bubbles} anchors={bubbleAnchors} />
+
+      <div className="toolbar">
+        <IconButton icon="fit" label={t('ui.fit')} caption data-testid="fit" onClick={onFit} />
+        <IconButton icon="focus" label={t('ui.focus')} caption data-testid="focus" onClick={onFocus} />
+        <IconButton
+          icon={hud.fast ? 'fast' : 'normal'}
+          label={t('ui.fast')}
+          caption
+          pressed={hud.fast}
+          data-testid="fast"
+          onClick={onFast}
+        />
+        <IconButton
+          icon={hud.muted ? 'speaker-off' : 'speaker'}
+          label={t('ui.mute')}
+          caption
+          pressed={hud.muted}
+          data-testid="mute"
+          onClick={onMute}
+        />
+        <IconButton
+          icon="globe"
+          label={t('ui.language')}
+          caption
+          data-testid="hud-language"
+          onClick={onLanguage}
+        />
+        <IconButton icon="menu" label={t('ui.menu')} caption data-testid="menu" onClick={onMenu} />
       </div>
 
-      <div className="camera-buttons">
-        <button className="btn chip" data-testid="fit" onClick={onFit}>
-          {t('ui.fit')}
-        </button>
-        <button className="btn chip" data-testid="focus" onClick={onFocus}>
-          {t('ui.focus')}
-        </button>
-      </div>
-
-      <button
+      <Pill
         key={dice.roll}
-        className={`dice${dice.rolling ? ' rolling' : ''}${!dice.rolling && dice.value === 6 && dice.roll > 0 ? ' six' : ''}`}
+        variant="primary"
+        className={`roll${hud.diceEnabled ? ' ready' : ''}${dice.rolling ? ' rolling' : ''}${six ? ' six' : ''}`}
         data-testid="dice"
-        aria-label={t('ui.rollHint')}
+        aria-label={`${t('ui.roll')}. ${t('ui.rollHint')}`}
         disabled={!hud.diceEnabled}
         onClick={onRoll}
       >
-        <Die value={dice.value} />
-      </button>
+        {dice.roll > 0 && !dice.rolling ? (
+          <span className="roll-die">
+            <Die value={dice.value} />
+          </span>
+        ) : (
+          <Icon name="roll" size={22} className="roll-icon" />
+        )}
+        {t('ui.roll')}
+      </Pill>
     </div>
   );
 }

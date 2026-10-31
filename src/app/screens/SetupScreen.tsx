@@ -11,125 +11,138 @@ import {
   toGameConfig,
   type SeatController,
 } from '../../game/setupModel';
-import { t } from '../../i18n/i18n';
+import { getLocale, t } from '../../i18n/i18n';
+import { Divider, LangSwitch, Pill, Segmented, Toggle } from '../ui/Controls';
+import { Icon } from '../ui/Icon';
+import { Portrait } from '../ui/Portrait';
 
-const CONTROLLERS: readonly { value: SeatController; labelKey: string }[] = [
-  { value: 'human', labelKey: 'ui.human' },
-  { value: 'bot', labelKey: 'ui.bot' },
-  { value: 'empty', labelKey: 'ui.empty' },
-];
-const LEVELS: readonly { value: Level; labelKey: string }[] = [
-  { value: 'easy', labelKey: 'ui.easy' },
-  { value: 'medium', labelKey: 'ui.medium' },
-  { value: 'hard', labelKey: 'ui.hard' },
-];
+const CONTROLLERS: readonly SeatController[] = ['human', 'bot', 'empty'];
+const LEVELS: readonly Level[] = ['easy', 'medium', 'hard'];
 
 interface SetupScreenProps {
+  muted: boolean;
   onStart: (config: GameConfig) => void;
   onBack: () => void;
+  onToggleLanguage: () => void;
+  onMute: () => void;
 }
 
 /** Four seats (human, bot or empty; hero; name) and the board level; Start needs two filled seats. */
-export function SetupScreen({ onStart, onBack }: SetupScreenProps) {
+export function SetupScreen({ muted, onStart, onBack, onToggleLanguage, onMute }: SetupScreenProps) {
   const [seats, setSeats] = useState(defaultSeats);
   const [level, setLevel] = useState<Level>('easy');
   const startable = canStart(seats);
 
   return (
     <main className="screen setup" data-testid="setup">
-      <header className="setup-header">
-        <button className="btn chip" data-testid="back" onClick={onBack}>
+      <header className="screen-top">
+        <Pill variant="outline" icon="arrow-left" data-testid="back" onClick={onBack}>
           {t('ui.back')}
-        </button>
-        <h1 className="title small">{t('ui.title')}</h1>
+        </Pill>
+        <h1 className="h1 screen-title">{t('ui.chooseHeroes')}</h1>
+        <div className="top-actions">
+          <LangSwitch locale={getLocale()} onToggle={onToggleLanguage} />
+          <Toggle
+            checked={muted}
+            onChange={onMute}
+            label={t('ui.mute')}
+            onIcon="speaker-off"
+            offIcon="speaker"
+            testId="setup-mute"
+          />
+        </div>
       </header>
+
       <div className="seats-grid">
         {seats.map((seat, k) => {
           const empty = seat.controller === 'empty';
           return (
-            <section key={k} className={`seat-column${empty ? ' empty' : ''}`} data-testid={`seat-${k}`}>
-              <div className="seat-label">{t('ui.seat', { n: k + 1 })}</div>
-              <div className="segments" role="radiogroup">
-                {CONTROLLERS.map((option) => (
-                  <button
-                    key={option.value}
-                    role="radio"
-                    aria-checked={seat.controller === option.value}
-                    className={`segment${seat.controller === option.value ? ' on' : ''}`}
-                    data-testid={`seat-${k}-${option.value}`}
-                    onClick={() => setSeats((all) => setController(all, k, option.value))}
-                  >
-                    {t(option.labelKey)}
-                  </button>
-                ))}
+            <section
+              key={k}
+              className={`seat-column glass${empty ? ' empty' : ''}`}
+              style={{ ['--hero' as string]: HEROES[seat.hero].cssColor }}
+              data-testid={`seat-${k}`}
+              aria-label={t('ui.seat', { n: k + 1 })}
+            >
+              <div className="seat-label">
+                <Icon
+                  name={empty ? 'seat-empty' : seat.controller === 'bot' ? 'robot' : 'person'}
+                  size={16}
+                />
+                {t('ui.seat', { n: k + 1 })}
               </div>
+              <Segmented
+                label={t('ui.seat', { n: k + 1 })}
+                value={seat.controller}
+                onChange={(value) => setSeats((all) => setController(all, k, value))}
+                options={CONTROLLERS.map((value) => ({
+                  value,
+                  label: t(`ui.${value}`),
+                  testId: `seat-${k}-${value}`,
+                }))}
+              />
               <div className="hero-picker">
                 <button
-                  className="btn arrow"
-                  aria-label="previous hero"
+                  type="button"
+                  className="icon-btn glass small"
+                  aria-label={t('ui.prevHero')}
                   disabled={empty}
                   onClick={() => setSeats((all) => cycleHero(all, k, -1))}
                 >
-                  ‹
+                  <Icon name="chevron-left" />
                 </button>
-                <div
-                  className="portrait"
-                  style={{ background: empty ? '#8a8a8a' : HEROES[seat.hero].cssColor }}
-                >
-                  {heroName(seat.hero).charAt(0)}
+                <div className="portrait-stage">
+                  <Portrait key={seat.hero} hero={seat.hero} empty={empty} className="hero-portrait" />
                 </div>
                 <button
-                  className="btn arrow"
-                  aria-label="next hero"
+                  type="button"
+                  className="icon-btn glass small"
+                  aria-label={t('ui.nextHero')}
                   disabled={empty}
                   onClick={() => setSeats((all) => cycleHero(all, k, 1))}
                 >
-                  ›
+                  <Icon name="chevron-right" />
                 </button>
               </div>
-              <div className="hero-caption" style={{ color: empty ? undefined : HEROES[seat.hero].cssColor }}>
-                {heroName(seat.hero)}
-              </div>
-              {!empty && (
-                <label className="name-field">
-                  <span>{t('ui.name')}</span>
-                  <input
-                    type="text"
-                    maxLength={MAX_NAME_LENGTH}
-                    aria-label={t('ui.seatName', { n: k + 1 })}
-                    value={seat.name}
-                    onChange={(event) => setSeats((all) => setName(all, k, event.target.value))}
-                  />
-                </label>
-              )}
+              <div className="hero-name">{empty ? '—' : heroName(seat.hero)}</div>
+              <label className={`name-field${empty ? ' hidden' : ''}`}>
+                <span className="sr-only">{t('ui.name')}</span>
+                <input
+                  type="text"
+                  maxLength={MAX_NAME_LENGTH}
+                  disabled={empty}
+                  placeholder={t('ui.name')}
+                  aria-label={t('ui.seatName', { n: k + 1 })}
+                  value={seat.name}
+                  onChange={(event) => setSeats((all) => setName(all, k, event.target.value))}
+                />
+              </label>
             </section>
           );
         })}
       </div>
+
       <footer className="setup-footer">
-        <span className="footer-label">{t('ui.board')}</span>
-        <div className="segments" role="radiogroup">
-          {LEVELS.map((option) => (
-            <button
-              key={option.value}
-              role="radio"
-              aria-checked={level === option.value}
-              className={`segment${level === option.value ? ' on' : ''}`}
-              data-testid={`level-${option.value}`}
-              onClick={() => setLevel(option.value)}
-            >
-              {t(option.labelKey)}
-            </button>
-          ))}
-        </div>
-        <button
-          className="btn primary"
+        <span className="footer-label">
+          <Icon name="robot" size={18} />
+          {t('ui.difficulty')}
+        </span>
+        <Segmented
+          label={t('ui.board')}
+          value={level}
+          onChange={setLevel}
+          options={LEVELS.map((value) => ({ value, label: t(`ui.${value}`), testId: `level-${value}` }))}
+        />
+        <Divider className="footer-divider" />
+        <Pill
+          variant="primary"
+          arrow
           data-testid="start"
           disabled={!startable}
           onClick={() => onStart(toGameConfig(seats, level))}
         >
           {t('ui.start')}
-        </button>
+        </Pill>
       </footer>
     </main>
   );

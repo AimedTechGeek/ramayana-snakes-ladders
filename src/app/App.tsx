@@ -37,7 +37,7 @@ export function App() {
   /** A new id per game, so GameScreen remounts (Play Again starts afresh). */
   const [game, setGame] = useState<{ id: number; start: TurnStart } | null>(null);
   const [saved, setSaved] = useState<LoadedGame | null>(loadGame);
-  const [, setLanguage] = useState(getLocale);
+  const [language, setLanguage] = useState(getLocale);
   const [fast, setFast] = useState(false);
   const [muted, setMuted] = useState(false);
   const portrait = usePortrait();
@@ -51,6 +51,16 @@ export function App() {
     setSaved(loadGame());
     setScreen('boot');
   }, []);
+  const toNewGame = useCallback(() => {
+    setGame(null);
+    setSaved(loadGame());
+    setScreen('setup');
+  }, []);
+  const toggleLanguage = useCallback(() => {
+    const next = getLocale() === 'en' ? 'hi' : 'en';
+    setLocale(next);
+    setLanguage(next);
+  }, []);
   const toggleFast = useCallback(() => setFast((on) => !on), []);
   const toggleMute = useCallback(() => setMuted((on) => !on), []);
 
@@ -61,6 +71,11 @@ export function App() {
     bridge.setFast = setFast;
     bridge.ready = true;
   }, [screen, portrait, openGame]);
+
+  // Devanagari shaping and line height follow the document language.
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   // Browsers keep audio locked until a gesture.
   useEffect(() => {
@@ -76,16 +91,22 @@ export function App() {
           saved={saved}
           onPlay={() => setScreen('setup')}
           onResume={(game) => openGame({ state: game.state, reveal: game.reveal })}
-          onToggleLanguage={() => {
-            const next = getLocale() === 'en' ? 'hi' : 'en';
-            setLocale(next);
-            setLanguage(next);
-          }}
+          muted={muted}
+          onMute={toggleMute}
+          onToggleLanguage={toggleLanguage}
           onGallery={() => setScreen('gallery')}
         />
       )}
-      {screen === 'setup' && <SetupScreen onStart={(config) => openGame({ config })} onBack={toBoot} />}
-      {screen === 'gallery' && <GalleryScreen onBack={toBoot} />}
+      {screen === 'setup' && (
+        <SetupScreen
+          muted={muted}
+          onStart={(config) => openGame({ config })}
+          onBack={toBoot}
+          onToggleLanguage={toggleLanguage}
+          onMute={toggleMute}
+        />
+      )}
+      {screen === 'gallery' && <GalleryScreen onBack={toBoot} onToggleLanguage={toggleLanguage} />}
       {screen === 'game' && game && (
         <GameScreen
           key={game.id}
@@ -95,6 +116,8 @@ export function App() {
           portrait={portrait}
           onFast={toggleFast}
           onMute={toggleMute}
+          onLanguage={toggleLanguage}
+          onNewGame={toNewGame}
           onExit={toBoot}
           onPlayAgain={(config) => openGame({ config })}
         />
