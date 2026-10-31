@@ -23,7 +23,8 @@ export const BOARD_VIEWPORT: Size = { width: 784, height: 720 };
 export const BOARD_WORLD: Size = { width: 784, height: 720 };
 
 export const MIN_ZOOM = 1;
-export const MAX_ZOOM = 3;
+/** Textures are rastered for this zoom (camera.json zoom.max): never zoom past it. */
+export const MAX_ZOOM = 2.5;
 /** User zoom the camera eases to while it follows the current token. */
 export const FOLLOW_ZOOM = 2;
 /** Time a follow pan or fit takes to settle (about 95 % of the way). */

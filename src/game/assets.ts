@@ -163,7 +163,9 @@ export function atlasSheet(name: string, base = 'assets/iso'): AtlasSheet {
  * Sheets every scene loads. Art tasks append theirs here (T42.2 `blocks`, `shared`; T42.3 `props`; T42.4 `frame`);
  * level-specific `snakes-<level>` and `bridges-<level>` are loaded per level with `loadAtlas`.
  */
-export const ATLAS_SHEETS: readonly AtlasSheet[] = [];
+export const ATLAS_SHEETS: readonly AtlasSheet[] = ['blocks', 'shared', 'props', 'frame'].map((name) =>
+  atlasSheet(name),
+);
 
 /** Queues a sheet (image, Phaser atlas data and sidecar) on the scene's loader; call from preload(). */
 export function loadAtlas(scene: Phaser.Scene, sheet: AtlasSheet): void {

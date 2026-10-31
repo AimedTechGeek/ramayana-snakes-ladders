@@ -15,6 +15,7 @@ const DRONE_PATTERN = [DRONE_PA_HZ, DRONE_SA_HZ, DRONE_SA_HZ, DRONE_SA_HZ];
 /** Bansuri phrase on a pentatonic scale: Sa Re Ga Pa Dha Sa' above 440 Hz. */
 const BANSURI_NOTES = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2].map((ratio) => 440 * ratio);
 const BELL_HZ = 392;
+const REVEAL_GAIN = 0.25;
 /** Inharmonic temple-bell partials as [ratio, relative level]. */
 const BELL_PARTIALS: readonly (readonly [number, number])[] = [
   [1, 0.5],
@@ -95,6 +96,32 @@ export class Audio {
     const play = this.playable();
     if (!play) return;
     this.tone(play, { from: 1200, at: play.ctx.currentTime, duration: 0.03, peak: 0.04, attack: 0.002 });
+  }
+
+  /** Fog lifts: two sines a fifth apart (440 / 660 Hz) under a low-pass sweeping 2 kHz to 400 Hz, 300 ms (150 ms in Fast). */
+  reveal(fast = false): void {
+    const play = this.playable();
+    if (!play) return;
+    const { ctx, out } = play;
+    const start = ctx.currentTime;
+    const duration = fast ? 0.15 : 0.3;
+    const end = start + duration;
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.setValueAtTime(2000, start);
+    lowpass.frequency.exponentialRampToValueAtTime(400, end);
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, start);
+    env.gain.exponentialRampToValueAtTime(REVEAL_GAIN, start + 0.02);
+    env.gain.exponentialRampToValueAtTime(0.0001, end);
+    lowpass.connect(env).connect(out);
+    for (const hz of [440, 660]) {
+      const osc = ctx.createOscillator();
+      osc.frequency.value = hz;
+      osc.connect(lowpass);
+      osc.start(start);
+      osc.stop(end + 0.02);
+    }
   }
 
   /** Rising bansuri-like phrase on a pentatonic scale, about 700 ms. */

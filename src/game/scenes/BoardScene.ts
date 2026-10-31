@@ -11,7 +11,8 @@ import type { GameEvent } from '../../core/events';
 import { Game } from '../../core/game';
 import type { GameConfig, GameState, Hero, Jump, Level } from '../../core/types';
 import { getAudio, type Audio } from '../audio';
-import { BOARD_STAGE, boardKey, boardUrl, FIGURINE_HEROES, figurineAssets } from '../assets';
+import { FIGURINE_HEROES, figurineAssets } from '../assets';
+import { estimateTextureMb, LivingBoard } from '../board/LivingBoard';
 import { HEROES, heroName } from '../heroes';
 import { PANEL, SEAT, seatTokenSpot, seatTop } from '../layout';
 import { squareScreen } from '../iso/boardIso';
@@ -27,7 +28,13 @@ import {
 } from '../iso/tokenPose';
 import { COLORS, CSS, BODY_FONT, TITLE_FONT } from '../palette';
 import { bouncePuff, dustPuff, ensureFxTextures, goldBurst, ringPulse, shake, sparkleTrail } from '../fx';
-import { applyEvent, createRevealState, seedFromGameState, type RevealState } from '../reveal';
+import {
+  applyEvent,
+  createRevealState,
+  seedFromGameState,
+  type RevealChange,
+  type RevealState,
+} from '../reveal';
 import { clearSave, saveGame } from '../save';
 import { tweenAsync } from '../tween';
 import { DiceButton } from '../ui/DiceButton';
@@ -47,8 +54,7 @@ export type BoardSceneData =
 // Timing from docs/design/reactions.json.
 const STEP_MS = 120;
 const FAST_STEP_MS = 40;
-// Depth layers (T40 spec 2.6): board 0, shadows 500, fx 900, tokens 1000+, HUD 5000, speech bubbles 6000.
-const BOARD_DEPTH = 0;
+// Depth bands (T42 spec 1.4, src/game/board/boardBands.ts): floor 0+, standing 1000+, numerals 3000; HUD 5000, speech bubbles 6000.
 const HUD_DEPTH = 5000;
 const BUBBLE_DEPTH = 6000;
 /** Left edge of the banner, hint and chips: right of the die plate in the HUD column. */
@@ -74,8 +80,12 @@ function blendPose(a: TokenPose, b: TokenPose, u: number): TokenPose {
 
 export class BoardScene extends Phaser.Scene {
   private engine!: Game;
-  /** Fog-of-war state; kept current and saved, not yet rendered. */
+  /** Fog-of-war state; kept current and saved. */
   private reveal!: RevealState;
+  /** The board's 144 blocks, props, frame and fog; the visuals follow `reveal` as the token hops. */
+  private living!: LivingBoard;
+  /** Squares the current event revealed in `reveal` whose crossfade waits for the token to arrive. */
+  private pendingTerrain = new Set<number>();
   private board!: StoryBoard;
   private dice: Dice = createRandomDice();
   private level: Level = 'easy';
@@ -142,15 +152,8 @@ export class BoardScene extends Phaser.Scene {
     this.tokenLayer = [];
   }
 
-  /** Loads the chosen level's board (rasterised at 2x) and the seated Hanuman's figurine textures. */
+  /** Loads the seated Hanuman's figurine textures (the board atlases load in PreloadScene). */
   preload(): void {
-    const key = boardKey(this.level);
-    if (!this.textures.exists(key)) {
-      this.load.svg(key, boardUrl(this.level), {
-        width: BOARD_STAGE.width * BOARD_STAGE.scale,
-        height: BOARD_STAGE.height * BOARD_STAGE.scale,
-      });
-    }
     for (const asset of figurineAssets(this.heroes, ['s', 'm'])) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.url);
     }
@@ -160,7 +163,7 @@ export class BoardScene extends Phaser.Scene {
     this.rig = new BoardCameraRig(this, () => this.fastMode);
     this.audio = getAudio(this.game.registry.get('muted') === true);
     ensureFxTextures(this);
-    this.rig.within('board', () => this.drawBoard());
+    this.living = new LivingBoard(this, this.rig, this.board, this.reveal, { isFast: () => this.fastMode });
     this.rig.within('hud', () => this.drawSeats());
     this.createTokens();
     this.rig.within('hud', () => this.createHud());
@@ -172,12 +175,14 @@ export class BoardScene extends Phaser.Scene {
     keys?.on('keydown-M', () => this.toggleMute());
     keys?.on('keydown-ESC', () => this.openMenu());
     keys?.on('keydown', (event: KeyboardEvent) => this.cameraKey(event));
+    if (import.meta.env.DEV) keys?.on('keydown-R', () => this.revealAll());
     const unlock = () => this.audio.unlock();
     this.input.once('pointerdown', unlock);
     keys?.once('keydown', unlock);
     this.events.once('shutdown', () => this.audio.drone(false));
     this.audio.drone(true);
 
+    this.logTextureMemory();
     this.game.registry.set('board', this);
     this.game.registry.set('board-ready', true);
     saveGame(this.snapshot(), this.reveal);
@@ -188,6 +193,33 @@ export class BoardScene extends Phaser.Scene {
   /** The engine state for tests and saving. */
   snapshot(): GameState {
     return this.engine.snapshot();
+  }
+
+  /** Reveals every square and jump at once (dev key R, tests): the fog is gone for good, as after a long game. */
+  revealAll(): void {
+    for (let square = 1; square <= 144; square++)
+      if (!this.reveal.terrain.includes(square)) this.reveal.terrain.push(square);
+    for (const jump of [...this.board.ladders, ...this.board.snakes])
+      if (!this.reveal.jumps.includes(jump.from)) this.reveal.jumps.push(jump.from);
+    this.living.revealAll();
+    saveGame(this.snapshot(), this.reveal);
+  }
+
+  /** The living board, for tests and for the snake / bridge actors (`onJumpRevealed`). */
+  get livingBoard(): LivingBoard {
+    return this.living;
+  }
+
+  /** Dev: estimated GPU texture memory (spec 3.3); logged once and kept in the registry as 'texture-mb'. */
+  private logTextureMemory(): void {
+    const { mb, largest } = estimateTextureMb(this.textures);
+    this.game.registry.set('texture-mb', mb);
+    if (import.meta.env.DEV) {
+      console.info(
+        `[T42.7] texture memory estimate ${mb.toFixed(1)} MB (limit 48): ` +
+          largest.map((row) => `${row.key} ${row.mb.toFixed(1)}`).join(', '),
+      );
+    }
   }
 
   /** Board world point to HUD screen point (logical px), for HUD items anchored to a spot on the board. */
@@ -268,10 +300,15 @@ export class BoardScene extends Phaser.Scene {
 
   private async play(events: GameEvent[]): Promise<void> {
     for (const event of events) {
-      applyEvent(this.reveal, event);
+      this.pendingTerrain = new Set(
+        applyEvent(this.reveal, event).flatMap((change: RevealChange) =>
+          change.kind === 'terrain' ? [change.square] : [],
+        ),
+      );
       this.events.emit('game-event', event, this.engine);
       const reactions = this.react(event);
       await this.animate(event);
+      this.flushReveals();
       if (event.type === 'Won' || event.type === 'GameOver') await reactions;
     }
   }
@@ -293,16 +330,23 @@ export class BoardScene extends Phaser.Scene {
           );
         return;
       case 'Moved':
-        for (const square of event.path) await this.stepTo(event.player, square);
+        for (const [i, square] of event.path.entries()) {
+          await this.stepTo(event.player, square);
+          if (i === event.path.length - 1 && this.landedOnHidden) this.audio.reveal(this.fastMode);
+        }
         return;
       case 'Laddered':
         this.audio.ladder();
+        this.living.revealJump(event.jump.from);
         await this.slideTo(event.player, event.jump.to, 'ladder', event.jump);
+        this.revealTerrain(event.jump.to);
         return;
       case 'Bitten':
         this.audio.snake();
         this.biteEffects(event.jump.from);
+        this.living.revealJump(event.jump.from);
         await this.slideTo(event.player, event.jump.to, 'snake', event.jump);
+        this.revealTerrain(event.jump.to);
         return;
       case 'TripleSixVoid':
         this.audio.tripleSix();
@@ -587,6 +631,7 @@ export class BoardScene extends Phaser.Scene {
       });
     }
     this.worldAt[player] = to;
+    this.revealTerrain(square);
     token.squash(this.scaled(60));
     await this.relayout(player);
   }
@@ -684,6 +729,21 @@ export class BoardScene extends Phaser.Scene {
     );
   }
 
+  /** True when the last hop landed on a square whose fog it just lifted (the airy cue of spec 7.4 plays once per roll). */
+  private landedOnHidden = false;
+
+  /** Lifts the fog of a square the engine revealed in this event, as the token arrives (spec 7.2). */
+  private revealTerrain(square: number): void {
+    this.landedOnHidden = this.pendingTerrain.delete(square);
+    if (this.landedOnHidden) this.living.revealSquare(square);
+  }
+
+  /** Anything the event revealed that no hop or slide reached (a bounce, a void) shows by the end of the event. */
+  private flushReveals(): void {
+    for (const square of this.pendingTerrain) this.living.revealSquare(square);
+    this.pendingTerrain.clear();
+  }
+
   /** The world spot (x, y) a token on the board rests at: the square's field centre plus its fan slot. */
   private spotOf(player: number): Vec2 {
     const square = this.shownSquare[player] ?? 0;
@@ -695,15 +755,6 @@ export class BoardScene extends Phaser.Scene {
     const token = this.tokens[player];
     if (!token) throw new Error(`No token for player ${player}`);
     return token;
-  }
-
-  /** The board diorama: one image per difficulty at (0, 0), rasterised at 2x (T40 spec 2.6). */
-  private drawBoard(): void {
-    this.add
-      .image(0, 0, boardKey(this.level))
-      .setOrigin(0)
-      .setDisplaySize(BOARD_STAGE.width, BOARD_STAGE.height)
-      .setDepth(BOARD_DEPTH);
   }
 
   private drawSeats(): void {

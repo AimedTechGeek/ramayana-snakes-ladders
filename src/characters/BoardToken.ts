@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { Hero } from '../core/types';
 import { tokenKey } from '../game/assets';
 import { COLORS } from '../game/palette';
-import { SHADOW_DEPTH, type TokenPose } from '../game/iso/tokenPose';
+import { shadowDepthOf, SHADOW_DEPTH, type TokenPose } from '../game/iso/tokenPose';
 import type { Emotion } from './reactions';
 
 /** What BoardScene moves around the isometric board: a figurine, or the old medallion until T40.10. */
@@ -40,7 +40,10 @@ export class MedallionToken implements BoardToken {
       .setPosition(pose.feet.x, pose.feet.y)
       .setDepth(pose.depth)
       .setScale(this.baseScale.x * (pose.scale ?? 1), this.baseScale.y * (pose.scale ?? 1));
-    this.shadow.setPosition(pose.ground.x, pose.ground.y).setScale((1 - 0.3 * pose.lift) * (pose.scale ?? 1));
+    this.shadow
+      .setPosition(pose.ground.x, pose.ground.y)
+      .setDepth(shadowDepthOf(pose))
+      .setScale((1 - 0.3 * pose.lift) * (pose.scale ?? 1));
   }
 
   squash(ms: number): void {

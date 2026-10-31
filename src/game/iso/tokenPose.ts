@@ -7,6 +7,13 @@ import { FAN_WORLD, TOP_Z } from './world';
 /** Tokens draw at 1000 + depth key (1027..1585): always above the board texture (0) and the shadows (500). */
 export const TOKEN_DEPTH_BASE = 1000;
 export const SHADOW_DEPTH = 500;
+/** Floor-band offset of a token shadow over its tile (boardBands FLOOR_OFFSET.shadow). */
+const SHADOW_OFFSET = 0.6;
+/** A token's shadow is a floor decal: it sorts at the tile key of the ground point + 0.6 (spec 1.4), under the token. */
+export function shadowDepthOf(pose: TokenPose): number {
+  return pose.depth - TOKEN_DEPTH_BASE + SHADOW_OFFSET;
+}
+
 /** A step hop rises this many world units at its apex. */
 export const HOP_HEIGHT = 14;
 /** The entry from the seat plate arcs this many world units (as screen pixels at the board scale). */
@@ -71,5 +78,11 @@ export function entryPoseTo(seat: Screen, target: TokenPose, u: number): TokenPo
     y: seat.y + (target.feet.y - seat.y) * u - arc,
   };
   const ground = { x: feet.x, y: feet.y + arc };
-  return { feet, ground, depth: target.depth, lift: arc / ENTRY_ARC_PX, scale: 1 + ((target.scale ?? 1) - 1) * u };
+  return {
+    feet,
+    ground,
+    depth: target.depth,
+    lift: arc / ENTRY_ARC_PX,
+    scale: 1 + ((target.scale ?? 1) - 1) * u,
+  };
 }

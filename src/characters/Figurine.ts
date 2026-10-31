@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { Hero } from '../core/types';
 import { figurineFrame, figurineKey, type FigurineSize } from '../game/assets';
 import { COLORS } from '../game/palette';
-import { SHADOW_DEPTH, type TokenPose } from '../game/iso/tokenPose';
+import { shadowDepthOf, SHADOW_DEPTH, type TokenPose } from '../game/iso/tokenPose';
 import type { BoardToken } from './BoardToken';
 import { faceHoldMs, scaled, type Emotion, type Reaction, type TweenName } from './reactions';
 
@@ -74,7 +74,10 @@ export class Figurine extends Phaser.GameObjects.Container implements BoardToken
   place(pose: TokenPose): void {
     const scale = pose.scale ?? 1;
     this.setPosition(pose.feet.x, pose.feet.y).setDepth(pose.depth).setScale(scale);
-    this.shadow.setPosition(pose.ground.x, pose.ground.y).setScale((1 - 0.3 * pose.lift) * scale);
+    this.shadow
+      .setPosition(pose.ground.x, pose.ground.y)
+      .setDepth(shadowDepthOf(pose))
+      .setScale((1 - 0.3 * pose.lift) * scale);
   }
 
   squash(ms: number): void {
