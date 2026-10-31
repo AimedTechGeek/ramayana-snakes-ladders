@@ -1,0 +1,795 @@
+{
+  "frames": {
+    "abduction.coil": {
+      "frame": {
+        "x": 209,
+        "y": 0,
+        "w": 164,
+        "h": 144
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 164,
+        "h": 144
+      },
+      "sourceSize": {
+        "w": 164,
+        "h": 144
+      }
+    },
+    "abduction.head.closed": {
+      "frame": {
+        "x": 803,
+        "y": 323,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "abduction.head.open": {
+      "frame": {
+        "x": 912,
+        "y": 323,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "brahmastra.coil": {
+      "frame": {
+        "x": 302,
+        "y": 556,
+        "w": 109,
+        "h": 109
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 109
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 109
+      }
+    },
+    "brahmastra.head.closed": {
+      "frame": {
+        "x": 411,
+        "y": 556,
+        "w": 99,
+        "h": 109
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 109
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 109
+      }
+    },
+    "brahmastra.head.open": {
+      "frame": {
+        "x": 510,
+        "y": 556,
+        "w": 99,
+        "h": 109
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 109
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 109
+      }
+    },
+    "golden-deer.coil": {
+      "frame": {
+        "x": 720,
+        "y": 189,
+        "w": 119,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 119,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 119,
+        "h": 124
+      }
+    },
+    "golden-deer.head.closed": {
+      "frame": {
+        "x": 119,
+        "y": 323,
+        "w": 114,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 114
+      }
+    },
+    "golden-deer.head.open": {
+      "frame": {
+        "x": 233,
+        "y": 323,
+        "w": 114,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 114
+      }
+    },
+    "indrajit-arrows.coil": {
+      "frame": {
+        "x": 437,
+        "y": 189,
+        "w": 144,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 124
+      }
+    },
+    "indrajit-arrows.head.closed": {
+      "frame": {
+        "x": 872,
+        "y": 442,
+        "w": 104,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 104,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 104,
+        "h": 114
+      }
+    },
+    "indrajit-arrows.head.open": {
+      "frame": {
+        "x": 0,
+        "y": 556,
+        "w": 104,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 104,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 104,
+        "h": 114
+      }
+    },
+    "kabandha.coil": {
+      "frame": {
+        "x": 0,
+        "y": 189,
+        "w": 124,
+        "h": 134
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 124,
+        "h": 134
+      },
+      "sourceSize": {
+        "w": 124,
+        "h": 134
+      }
+    },
+    "kabandha.head.closed": {
+      "frame": {
+        "x": 609,
+        "y": 556,
+        "w": 99,
+        "h": 109
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 109
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 109
+      }
+    },
+    "kabandha.head.open": {
+      "frame": {
+        "x": 708,
+        "y": 556,
+        "w": 99,
+        "h": 109
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 109
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 109
+      }
+    },
+    "kaikeyi.coil": {
+      "frame": {
+        "x": 283,
+        "y": 189,
+        "w": 154,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 154,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 154,
+        "h": 124
+      }
+    },
+    "kaikeyi.head.closed": {
+      "frame": {
+        "x": 0,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "kaikeyi.head.open": {
+      "frame": {
+        "x": 109,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "kumbhakarna.coil": {
+      "frame": {
+        "x": 373,
+        "y": 0,
+        "w": 159,
+        "h": 144
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 159,
+        "h": 144
+      },
+      "sourceSize": {
+        "w": 159,
+        "h": 144
+      }
+    },
+    "kumbhakarna.head.closed": {
+      "frame": {
+        "x": 347,
+        "y": 323,
+        "w": 114,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 114
+      }
+    },
+    "kumbhakarna.head.open": {
+      "frame": {
+        "x": 461,
+        "y": 323,
+        "w": 114,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 114
+      }
+    },
+    "manthara.coil": {
+      "frame": {
+        "x": 581,
+        "y": 189,
+        "w": 139,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 139,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 139,
+        "h": 124
+      }
+    },
+    "manthara.head.closed": {
+      "frame": {
+        "x": 104,
+        "y": 556,
+        "w": 99,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 114
+      }
+    },
+    "manthara.head.open": {
+      "frame": {
+        "x": 203,
+        "y": 556,
+        "w": 99,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 114
+      }
+    },
+    "prahasta.coil": {
+      "frame": {
+        "x": 701,
+        "y": 0,
+        "w": 154,
+        "h": 134
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 154,
+        "h": 134
+      },
+      "sourceSize": {
+        "w": 154,
+        "h": 134
+      }
+    },
+    "prahasta.head.closed": {
+      "frame": {
+        "x": 575,
+        "y": 323,
+        "w": 114,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 114
+      }
+    },
+    "prahasta.head.open": {
+      "frame": {
+        "x": 689,
+        "y": 323,
+        "w": 114,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 114,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 114,
+        "h": 114
+      }
+    },
+    "ravana.coil": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 209,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 209,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 209,
+        "h": 189
+      }
+    },
+    "ravana.head.closed": {
+      "frame": {
+        "x": 839,
+        "y": 189,
+        "w": 119,
+        "h": 119
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 119,
+        "h": 119
+      },
+      "sourceSize": {
+        "w": 119,
+        "h": 119
+      }
+    },
+    "ravana.head.open": {
+      "frame": {
+        "x": 0,
+        "y": 323,
+        "w": 119,
+        "h": 119
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 119,
+        "h": 119
+      },
+      "sourceSize": {
+        "w": 119,
+        "h": 119
+      }
+    },
+    "shurpanakha.coil": {
+      "frame": {
+        "x": 855,
+        "y": 0,
+        "w": 149,
+        "h": 134
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 149,
+        "h": 134
+      },
+      "sourceSize": {
+        "w": 149,
+        "h": 134
+      }
+    },
+    "shurpanakha.head.closed": {
+      "frame": {
+        "x": 218,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "shurpanakha.head.open": {
+      "frame": {
+        "x": 327,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "tataka.coil": {
+      "frame": {
+        "x": 124,
+        "y": 189,
+        "w": 159,
+        "h": 129
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 159,
+        "h": 129
+      },
+      "sourceSize": {
+        "w": 159,
+        "h": 129
+      }
+    },
+    "tataka.head.closed": {
+      "frame": {
+        "x": 436,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "tataka.head.open": {
+      "frame": {
+        "x": 545,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "viradha.coil": {
+      "frame": {
+        "x": 532,
+        "y": 0,
+        "w": 169,
+        "h": 134
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 169,
+        "h": 134
+      },
+      "sourceSize": {
+        "w": 169,
+        "h": 134
+      }
+    },
+    "viradha.head.closed": {
+      "frame": {
+        "x": 654,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    },
+    "viradha.head.open": {
+      "frame": {
+        "x": 763,
+        "y": 442,
+        "w": 109,
+        "h": 114
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 109,
+        "h": 114
+      },
+      "sourceSize": {
+        "w": 109,
+        "h": 114
+      }
+    }
+  },
+  "meta": {
+    "app": "ramayana atlas.mjs",
+    "version": "1",
+    "image": "snakes-hard.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1024,
+      "h": 1024
+    },
+    "scale": "1"
+  }
+}

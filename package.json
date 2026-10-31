@@ -22,6 +22,7 @@
     "art:props": "node scripts/art/iso/props.mjs",
     "art:bridges": "tsx scripts/art/iso/bridges/index.mjs public/assets/iso",
     "art:iso:check": "node scripts/art/iso/check.mjs public/assets/iso art-src/iso",
+    "art:snakes": "tsx scripts/art/iso/snakes/index.mjs",
     "devices": "node scripts/devices.mjs",
     "screenshots": "node scripts/screenshots.mjs"
   },

@@ -1,0 +1,412 @@
+{
+  "sheet": "snakes-easy",
+  "width": 512,
+  "height": 1024,
+  "padding": 2,
+  "frames": {
+    "abduction.coil": {
+      "snake": "abduction",
+      "part": "coil",
+      "w": 164,
+      "h": 144,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 87
+    },
+    "abduction.head.closed": {
+      "snake": "abduction",
+      "part": "head",
+      "state": "closed",
+      "w": 109,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 33.697,
+      "anchorY": 77.474
+    },
+    "abduction.head.open": {
+      "snake": "abduction",
+      "part": "head",
+      "state": "open",
+      "w": 109,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 33.697,
+      "anchorY": 77.474
+    },
+    "golden-deer.coil": {
+      "snake": "golden-deer",
+      "part": "coil",
+      "w": 119,
+      "h": 124,
+      "factor": 5,
+      "anchorX": 57,
+      "anchorY": 82
+    },
+    "golden-deer.head.closed": {
+      "snake": "golden-deer",
+      "part": "head",
+      "state": "closed",
+      "w": 114,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 35.433,
+      "anchorY": 81.135
+    },
+    "golden-deer.head.open": {
+      "snake": "golden-deer",
+      "part": "head",
+      "state": "open",
+      "w": 114,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 35.433,
+      "anchorY": 81.135
+    },
+    "indrajit-arrows.coil": {
+      "snake": "indrajit-arrows",
+      "part": "coil",
+      "w": 144,
+      "h": 124,
+      "factor": 5,
+      "anchorX": 87,
+      "anchorY": 77
+    },
+    "indrajit-arrows.head.closed": {
+      "snake": "indrajit-arrows",
+      "part": "head",
+      "state": "closed",
+      "w": 104,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 36.218,
+      "anchorY": 83.421
+    },
+    "indrajit-arrows.head.open": {
+      "snake": "indrajit-arrows",
+      "part": "head",
+      "state": "open",
+      "w": 104,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 36.218,
+      "anchorY": 83.421
+    },
+    "kaikeyi.coil": {
+      "snake": "kaikeyi",
+      "part": "coil",
+      "w": 154,
+      "h": 124,
+      "factor": 5,
+      "anchorX": 57,
+      "anchorY": 82
+    },
+    "kaikeyi.head.closed": {
+      "snake": "kaikeyi",
+      "part": "head",
+      "state": "closed",
+      "w": 109,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 36.052,
+      "anchorY": 81.914
+    },
+    "kaikeyi.head.open": {
+      "snake": "kaikeyi",
+      "part": "head",
+      "state": "open",
+      "w": 109,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 36.052,
+      "anchorY": 81.914
+    },
+    "manthara.coil": {
+      "snake": "manthara",
+      "part": "coil",
+      "w": 139,
+      "h": 124,
+      "factor": 5,
+      "anchorX": 52,
+      "anchorY": 72
+    },
+    "manthara.head.closed": {
+      "snake": "manthara",
+      "part": "head",
+      "state": "closed",
+      "w": 99,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 36.421,
+      "anchorY": 78.736
+    },
+    "manthara.head.open": {
+      "snake": "manthara",
+      "part": "head",
+      "state": "open",
+      "w": 99,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 36.421,
+      "anchorY": 78.736
+    },
+    "shurpanakha.coil": {
+      "snake": "shurpanakha",
+      "part": "coil",
+      "w": 149,
+      "h": 134,
+      "factor": 5,
+      "anchorX": 57,
+      "anchorY": 82
+    },
+    "shurpanakha.head.closed": {
+      "snake": "shurpanakha",
+      "part": "head",
+      "state": "closed",
+      "w": 109,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 35.798,
+      "anchorY": 81.611
+    },
+    "shurpanakha.head.open": {
+      "snake": "shurpanakha",
+      "part": "head",
+      "state": "open",
+      "w": 109,
+      "h": 114,
+      "factor": 5,
+      "anchorX": 35.798,
+      "anchorY": 81.611
+    }
+  },
+  "snakes": {
+    "manthara": {
+      "coil": {
+        "frame": "manthara.coil",
+        "anchor": [
+          52,
+          72
+        ]
+      },
+      "head": {
+        "closed": "manthara.head.closed",
+        "open": "manthara.head.open",
+        "pivot": [
+          -15.58,
+          -38.26
+        ],
+        "mouth": [
+          36.27,
+          3.28
+        ],
+        "neck": [
+          [
+            22.57,
+            -35.81
+          ],
+          [
+            -4.78,
+            -48.1
+          ],
+          [
+            -7.37,
+            -17.27
+          ]
+        ]
+      },
+      "body": "#1C1F4D",
+      "R": 2.2,
+      "headTop": 29
+    },
+    "kaikeyi": {
+      "coil": {
+        "frame": "kaikeyi.coil",
+        "anchor": [
+          57,
+          82
+        ]
+      },
+      "head": {
+        "closed": "kaikeyi.head.closed",
+        "open": "kaikeyi.head.open",
+        "pivot": [
+          -20.95,
+          -50.09
+        ],
+        "mouth": [
+          43.03,
+          0.25
+        ],
+        "neck": [
+          [
+            23.91,
+            -36.98
+          ],
+          [
+            -3.21,
+            -49.32
+          ],
+          [
+            -6.13,
+            -18.87
+          ]
+        ]
+      },
+      "body": "#7B3B6E",
+      "R": 2.8,
+      "headTop": 33.5
+    },
+    "shurpanakha": {
+      "coil": {
+        "frame": "shurpanakha.coil",
+        "anchor": [
+          57,
+          82
+        ]
+      },
+      "head": {
+        "closed": "shurpanakha.head.closed",
+        "open": "shurpanakha.head.open",
+        "pivot": [
+          -21.2,
+          -50.39
+        ],
+        "mouth": [
+          43.29,
+          0.55
+        ],
+        "neck": [
+          [
+            24.17,
+            -36.68
+          ],
+          [
+            -2.81,
+            -49.22
+          ],
+          [
+            -5.91,
+            -19.09
+          ]
+        ]
+      },
+      "body": "#8E3B3B",
+      "R": 2.8,
+      "headTop": 33.5
+    },
+    "golden-deer": {
+      "coil": {
+        "frame": "golden-deer.coil",
+        "anchor": [
+          57,
+          82
+        ]
+      },
+      "head": {
+        "closed": "golden-deer.head.closed",
+        "open": "golden-deer.head.open",
+        "pivot": [
+          -21.57,
+          -50.87
+        ],
+        "mouth": [
+          43.65,
+          1.03
+        ],
+        "neck": [
+          [
+            24.53,
+            -36.2
+          ],
+          [
+            -2.22,
+            -49.05
+          ],
+          [
+            -5.58,
+            -19.39
+          ]
+        ]
+      },
+      "body": "#E9C12F",
+      "R": 2.8,
+      "headTop": 33.5
+    },
+    "abduction": {
+      "coil": {
+        "frame": "abduction.coil",
+        "anchor": [
+          62,
+          87
+        ]
+      },
+      "head": {
+        "closed": "abduction.head.closed",
+        "open": "abduction.head.open",
+        "pivot": [
+          -23.3,
+          -54.53
+        ],
+        "mouth": [
+          45.72,
+          3.27
+        ],
+        "neck": [
+          [
+            24.92,
+            -33.2
+          ],
+          [
+            -0.77,
+            -46.99
+          ],
+          [
+            -5.26,
+            -19.32
+          ]
+        ]
+      },
+      "body": "#783431",
+      "R": 3,
+      "headTop": 33.5
+    },
+    "indrajit-arrows": {
+      "coil": {
+        "frame": "indrajit-arrows.coil",
+        "anchor": [
+          87,
+          77
+        ]
+      },
+      "head": {
+        "closed": "indrajit-arrows.head.closed",
+        "open": "indrajit-arrows.head.open",
+        "pivot": [
+          -20.78,
+          -48.58
+        ],
+        "mouth": [
+          42.45,
+          0.1
+        ],
+        "neck": [
+          [
+            25.08,
+            -37.8
+          ],
+          [
+            -1.87,
+            -50.19
+          ],
+          [
+            -5.07,
+            -20.22
+          ]
+        ]
+      },
+      "body": "#3A3F9E",
+      "R": 2.6,
+      "headTop": 33.5
+    }
+  }
+}
