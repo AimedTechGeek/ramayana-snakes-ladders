@@ -41,33 +41,48 @@ function RoomLight() {
   return null;
 }
 
+function fitBoard(rig: CameraControls, animate: boolean): void {
+  void rig.rotateTo(0, FIT_POLAR, animate);
+  void rig.fitToSphere(BOARD_SPHERE, animate);
+}
+
 function CameraRig({ view }: { view: DioramaView }) {
   const controls = useRef<CameraControls>(null);
+  /** The user has orbited, panned or zoomed since the last fit: a resize then keeps their view. */
+  const moved = useRef(false);
   const width = useThree((state) => state.size.width);
   const height = useThree((state) => state.size.height);
   useEffect(() => {
     const rig = controls.current;
     if (!rig) return;
     rig.setBoundary(PAN_BOX);
-    const fit = (animate: boolean): void => {
-      void rig.rotateTo(0, FIT_POLAR, animate);
-      void rig.fitToSphere(BOARD_SPHERE, animate);
+    const onControl = (): void => {
+      moved.current = true;
     };
-    fit(false);
+    rig.addEventListener('controlstart', onControl);
     view.camera = {
-      fit: () => fit(true),
+      fit: () => {
+        moved.current = false;
+        fitBoard(rig, true);
+      },
       focus: (player) => {
         const at = view.tokenPosition(player);
         if (!at) return;
+        moved.current = true;
         void rig.moveTo(at[0], at[1], at[2], true);
         void rig.dollyTo(FOCUS_DISTANCE, true);
       },
     };
     return () => {
+      rig.removeEventListener('controlstart', onControl);
       view.camera = null;
     };
-    // The canvas size is part of the fit: a resize or rotation re-fits the board (it is not a follow).
-  }, [view, width, height]);
+  }, [view]);
+  // The canvas size is part of the fit: until the user moves the camera, a resize or rotation re-fits the board.
+  useEffect(() => {
+    const rig = controls.current;
+    if (rig && !moved.current) fitBoard(rig, false);
+  }, [width, height]);
   return (
     <CameraControls
       ref={controls}
