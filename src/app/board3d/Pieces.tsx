@@ -1,4 +1,4 @@
-// Pieces on the board: Hanuman, Rama and Lakshmana (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
+// Pieces on the board: Hanuman, Rama, Lakshmana and Sita (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
 // placeholder bridges and snakes that rise when revealed, bounce puffs, and the head anchors of the speech bubbles.
 
 import { useFrame, useThree } from '@react-three/fiber';
@@ -74,10 +74,10 @@ function useTokenPlacement(view: DioramaView, player: number) {
 }
 
 /** Heroes with a rigged clay GLB (the others are pegs until their models land). */
-const RIGGED: readonly Hero[] = ['hanuman', 'rama', 'lakshmana'];
+const RIGGED: readonly Hero[] = ['hanuman', 'rama', 'lakshmana', 'sita'];
 const isRigged = (hero: Hero): hero is HeroId => RIGGED.includes(hero);
 
-/** A rigged clay hero (Hanuman, Rama, Lakshmana), driven by the view through heroDirector (useHeroActor). */
+/** A rigged clay hero (Hanuman, Rama, Lakshmana, Sita), driven by the view through heroDirector (useHeroActor). */
 function RiggedToken({
   view,
   player,
