@@ -137,6 +137,15 @@ class Skeleton:
 
 
 SKEL = Skeleton()
+VERIFY_BONES = ("foot.L", "foot.R", "hand.R", "head", "tail.04", "prop.R")
+
+
+def use_bones(bones, verify_bones):
+    """Swap the skeleton every solve runs on (a hero whose extra bones differ from the shared 31: Sita's braid).
+    Hero scripts call motion.SKEL / motion.use_bones; nothing else in this module changes."""
+    global SKEL, VERIFY_BONES
+    SKEL = Skeleton(bones)
+    VERIFY_BONES = tuple(verify_bones)
 
 
 # ---------------------------------------------------------------- IK and chains
@@ -577,7 +586,7 @@ def verify_fk(arm, poses, frames=(0,)):
         scene.frame_set(f)
         bpy.context.view_layer.update()
         kin = SKEL.kin(poses[f])
-        for b in ("foot.L", "foot.R", "hand.R", "head", "tail.04", "prop.R"):
+        for b in VERIFY_BONES:
             blender_head = arm.pose.bones[b].head / SCALE
             err = (blender_head - kin.head(b)).length
             if err > 0.05:

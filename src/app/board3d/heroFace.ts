@@ -8,28 +8,28 @@ import { FACE_FRAMES } from './heroClips';
 
 export const ATLAS_W = 1024;
 export const ATLAS_H = 192;
-const FRAME_W = ATLAS_W / FACE_FRAMES.length;
+export const FRAME_W = ATLAS_W / FACE_FRAMES.length;
 /** Pixels per design unit on the patch (x +-6.2, z 55.2..67.4 in the Blender build); features stay inside +-5.2 so mip levels never bleed a neighbouring frame in. */
-const PX_X = FRAME_W / 12.4;
-const PX_Z = ATLAS_H / 12.2;
-const INK = '#2a1a0f';
+export const PX_X = FRAME_W / 12.4;
+export const PX_Z = ATLAS_H / 12.2;
+export const INK = '#2a1a0f';
 
-type Ctx = CanvasRenderingContext2D;
+export type Ctx = CanvasRenderingContext2D;
 type Look = 'idle' | 'blink' | 'happy' | 'excited' | 'scared' | 'sad';
 
 /** Patch design coordinates -> canvas pixels inside frame `index`. */
-function px(index: number, x: number, z: number): [number, number] {
+export function px(index: number, x: number, z: number): [number, number] {
   return [index * FRAME_W + FRAME_W / 2 + x * PX_X, ATLAS_H - (z - 55.2) * PX_Z];
 }
 
-function stroke(ctx: Ctx, width: number, colour = INK): void {
+export function stroke(ctx: Ctx, width: number, colour = INK): void {
   ctx.strokeStyle = colour;
   ctx.lineWidth = width * PX_X;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 }
 
-function path(ctx: Ctx, index: number, pts: [number, number][]): void {
+export function path(ctx: Ctx, index: number, pts: [number, number][]): void {
   ctx.beginPath();
   pts.forEach(([x, z], i) => {
     const [cx, cy] = px(index, x, z);
@@ -38,7 +38,7 @@ function path(ctx: Ctx, index: number, pts: [number, number][]): void {
   });
 }
 
-function curve(ctx: Ctx, index: number, a: [number, number], c: [number, number], b: [number, number]): void {
+export function curve(ctx: Ctx, index: number, a: [number, number], c: [number, number], b: [number, number]): void {
   const [ax, ay] = px(index, ...a);
   const [cx, cy] = px(index, ...c);
   const [bx, by] = px(index, ...b);
@@ -47,13 +47,13 @@ function curve(ctx: Ctx, index: number, a: [number, number], c: [number, number]
   ctx.quadraticCurveTo(cx, cy, bx, by);
 }
 
-function ellipse(ctx: Ctx, index: number, x: number, z: number, rx: number, rz: number): void {
+export function ellipse(ctx: Ctx, index: number, x: number, z: number, rx: number, rz: number): void {
   const [cx, cy] = px(index, x, z);
   ctx.beginPath();
   ctx.ellipse(cx, cy, rx * PX_X, rz * PX_Z, 0, 0, Math.PI * 2);
 }
 
-function glossyEye(
+export function glossyEye(
   ctx: Ctx,
   index: number,
   x: number,
@@ -78,7 +78,7 @@ function glossyEye(
   ctx.fill();
 }
 
-function blush(ctx: Ctx, index: number, alpha: number): void {
+export function blush(ctx: Ctx, index: number, alpha: number): void {
   for (const sx of [-1, 1]) {
     const [cx, cy] = px(index, sx * 4.3, 59.2);
     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 1.5 * PX_X);
@@ -90,7 +90,7 @@ function blush(ctx: Ctx, index: number, alpha: number): void {
   }
 }
 
-function brows(ctx: Ctx, index: number, tilt: number, lift: number, width = 0.62): void {
+export function brows(ctx: Ctx, index: number, tilt: number, lift: number, width = 0.62): void {
   stroke(ctx, width);
   for (const sx of [-1, 1]) {
     const z0 = 65.0 + lift;
@@ -99,7 +99,7 @@ function brows(ctx: Ctx, index: number, tilt: number, lift: number, width = 0.62
   }
 }
 
-function smile(ctx: Ctx, index: number, width: number, depth: number, z = 56.9): void {
+export function smile(ctx: Ctx, index: number, width: number, depth: number, z = 56.9): void {
   stroke(ctx, 0.42);
   curve(ctx, index, [-width, z + 0.45], [0, z - depth], [width, z + 0.45]);
   ctx.stroke();
@@ -226,27 +226,30 @@ export function drawFaceAtlas(ctx: Ctx): void {
   FACE_FRAMES.forEach((look, index) => drawFrame(ctx, index, look));
 }
 
-let shared: CanvasTexture | null = null;
+/** A hero that paints its own six frames (Sita: heroFaceSita.ts) passes its painter; the default is Hanuman's. */
+export type FacePainter = (ctx: Ctx) => void;
+const shared = new Map<FacePainter, CanvasTexture>();
 
-/** One atlas texture for the page; each hero clones it (shared image) to keep its own frame offset. */
-export function faceAtlasTexture(): CanvasTexture {
-  if (shared) return shared;
+/** One atlas texture per painter; each hero clones it (shared image) to keep its own frame offset. */
+export function faceAtlasTexture(painter: FacePainter = drawFaceAtlas): CanvasTexture {
+  const known = shared.get(painter);
+  if (known) return known;
   const canvas = document.createElement('canvas');
   canvas.width = ATLAS_W;
   canvas.height = ATLAS_H;
   const ctx = canvas.getContext('2d');
-  if (ctx) drawFaceAtlas(ctx);
+  if (ctx) painter(ctx);
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.flipY = false; // glTF UVs: v = 0 is the top of the image
   texture.anisotropy = 4;
-  shared = texture;
+  shared.set(painter, texture);
   return texture;
 }
 
 /** A hero's own texture object over the shared atlas, showing frame `index`. */
-export function faceTextureFor(): CanvasTexture {
-  const t = faceAtlasTexture().clone();
+export function faceTextureFor(painter: FacePainter = drawFaceAtlas): CanvasTexture {
+  const t = faceAtlasTexture(painter).clone();
   t.flipY = false;
   t.colorSpace = SRGBColorSpace;
   t.repeat.set(1 / FACE_FRAMES.length, 1);

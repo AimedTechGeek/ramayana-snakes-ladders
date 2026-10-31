@@ -1,4 +1,4 @@
-// Pieces on the board: Hanuman (the rigged clay hero), clay peg figures for the heroes whose models are still to come,
+// Pieces on the board: Hanuman and Sita (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
 // placeholder bridges and snakes that rise when revealed, bounce puffs, and the head anchors of the speech bubbles.
 
 import { useFrame, useThree } from '@react-three/fiber';
@@ -8,7 +8,7 @@ import type { Hero, Jump } from '../../core/types';
 import { HEROES } from '../../game/heroes';
 import { toThree } from './coords';
 import type { DioramaView } from './DioramaView';
-import { Hero as HeroFigure, blob, useHeroActor, type HeroHandle } from './Hero';
+import { Hero as HeroFigure, blob, useHeroActor, type HeroHandle, type HeroId } from './Hero';
 import { angleDelta } from './heroClips';
 import { bridgeCurve, snakeCurve } from './jumpCurves';
 
@@ -80,12 +80,14 @@ function useTokenPlacement(view: DioramaView, player: number) {
   return group;
 }
 
-/** Hanuman: the rigged clay hero, driven by the view through heroDirector (useHeroActor). */
-function HanumanToken({
+/** A rigged clay hero (Hanuman, Sita), driven by the view through heroDirector (useHeroActor). */
+function RiggedToken({
+  hero: heroId,
   view,
   player,
   reducedMotion,
 }: {
+  hero: HeroId;
   view: DioramaView;
   player: number;
   reducedMotion: boolean;
@@ -95,7 +97,7 @@ function HanumanToken({
   useHeroActor(hero, view, player, { reducedMotion });
   return (
     <group ref={group}>
-      <HeroFigure ref={hero} hero="hanuman" reducedMotion={reducedMotion} />
+      <HeroFigure ref={hero} hero={heroId} reducedMotion={reducedMotion} />
     </group>
   );
 }
@@ -255,12 +257,12 @@ export function Tokens({ view, reducedMotion }: { view: DioramaView; reducedMoti
   return (
     <group>
       {players.map((player, i) =>
-        player.hero === 'hanuman' ? (
+        player.hero === 'hanuman' || player.hero === 'sita' ? (
           <Suspense
             key={i}
             fallback={<PegToken view={view} player={i} hero={player.hero} reducedMotion={reducedMotion} />}
           >
-            <HanumanToken view={view} player={i} reducedMotion={reducedMotion} />
+            <RiggedToken hero={player.hero} view={view} player={i} reducedMotion={reducedMotion} />
           </Suspense>
         ) : (
           <PegToken key={i} view={view} player={i} hero={player.hero} reducedMotion={reducedMotion} />
