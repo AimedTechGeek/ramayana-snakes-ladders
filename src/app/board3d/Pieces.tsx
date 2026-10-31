@@ -266,26 +266,41 @@ export function BubbleAnchors({ view }: { view: DioramaView }) {
   return null;
 }
 
-/** A ring that grows and fades where a token turned round at 144. */
+/** Rings drawn at once: a token's bounce, or a long bridge's dust (two abutments and up to three piers). */
+const PUFF_RINGS = 6;
+
+/** Rings that grow and fade: where a token turned round at 144, and at a bridge's feet when it lands (T44.14). */
 export function Puffs({ view }: { view: DioramaView }) {
-  const mesh = useRef<Mesh>(null);
+  const meshes = useRef<(Mesh | null)[]>([]);
   useFrame(() => {
-    const node = mesh.current;
-    if (!node) return;
     const now = performance.now();
     view.puffs = view.puffs.filter((puff) => now - puff.start < puff.ms);
-    const puff = view.puffs[0];
-    node.visible = puff !== undefined;
-    if (!puff) return;
-    const u = (now - puff.start) / puff.ms;
-    node.position.set(...toThree(puff.at, 0.02));
-    node.scale.setScalar(0.4 + u * 1.2);
-    (node.material as MeshBasicMaterial).opacity = 1 - u;
+    meshes.current.forEach((node, i) => {
+      if (!node) return;
+      const puff = view.puffs[i];
+      node.visible = puff !== undefined;
+      if (!puff) return;
+      const u = (now - puff.start) / puff.ms;
+      node.position.set(...toThree(puff.at, 0.02));
+      node.scale.setScalar((0.4 + u * 1.2) * puff.size);
+      (node.material as MeshBasicMaterial).opacity = 1 - u;
+    });
   });
   return (
-    <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
-      <ringGeometry args={[0.2, 0.32, 32]} />
-      <meshBasicMaterial color="#fff6dc" transparent depthWrite={false} />
-    </mesh>
+    <>
+      {Array.from({ length: PUFF_RINGS }, (_, i) => (
+        <mesh
+          key={i}
+          ref={(node) => {
+            meshes.current[i] = node;
+          }}
+          rotation={[-Math.PI / 2, 0, 0]}
+          visible={false}
+        >
+          <ringGeometry args={[0.2, 0.32, 32]} />
+          <meshBasicMaterial color="#fff6dc" transparent depthWrite={false} />
+        </mesh>
+      ))}
+    </>
   );
 }

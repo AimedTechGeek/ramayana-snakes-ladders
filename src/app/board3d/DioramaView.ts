@@ -20,6 +20,7 @@ import {
 import { restingSpot } from '../../game/iso/tokenPose';
 import type { RevealChange } from '../../game/reveal';
 import { bridgeCurve, bridgeLeads } from './jumpCurves';
+import { DECK_SAMPLES, bridgeById } from './bridgeGeometry';
 import { groundHeightAt } from './boardLayout';
 import { SNAKE_META, backOut, biteTimeline, mouthPoint, type SnakeClip } from './snakeChoreo';
 import { toThree, toWorld, waitingSpot } from './coords';
@@ -63,6 +64,8 @@ export interface Puff {
   at: Vec2;
   start: number;
   ms: number;
+  /** Ring scale: 1 for a token's bounce, smaller for the dust at a bridge's feet. */
+  size: number;
 }
 
 export interface SeatMood {
@@ -452,7 +455,11 @@ export class DioramaView implements BoardView {
     await this.tween(this.ms(RISE_MS, motion), (u) =>
       rising.forEach((id) => this.jumpRise.set(id, easeInOut(u))),
     );
-    rising.forEach((id) => this.justRisen.add(id));
+    rising.forEach((id) => {
+      this.justRisen.add(id);
+      this.pierDust(id, motion);
+    });
+    this.changed();
   }
 
   react(seat: number, reaction: Reaction): Promise<void> {
@@ -517,8 +524,21 @@ export class DioramaView implements BoardView {
   }
 
   private puff(square: number, motion: MotionOptions): void {
-    this.puffs.push({ at: fieldCentre(square), start: performance.now(), ms: this.ms(PUFF_MS, motion) });
+    this.puffs.push({ at: fieldCentre(square), start: performance.now(), ms: this.ms(PUFF_MS, motion), size: 1 });
     this.changed();
+  }
+
+  /** Dust where a risen bridge comes down on the blocks: its two abutments and every pier (bridges.py: k / openings). */
+  private pierDust(jumpId: number, motion: MotionOptions): void {
+    const story = this.setup?.board.ladders.find((ladder) => ladder.from === jumpId);
+    const bridge = story ? bridgeById(story.id) : undefined;
+    if (!bridge) return;
+    const start = performance.now();
+    const ms = this.ms(PUFF_MS, motion);
+    for (let k = 0; k <= bridge.openings; k++) {
+      const p = bridge.deck[Math.round((k * DECK_SAMPLES) / bridge.openings)]!;
+      this.puffs.push({ at: toWorld(p.x, p.z), start, ms, size: 0.55 });
+    }
   }
 
   /** Fast halves an animation; reduced motion skips it. */
