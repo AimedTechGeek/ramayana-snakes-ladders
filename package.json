@@ -19,6 +19,7 @@
     "art:atlas:test": "node scripts/art/iso/atlas-test.mjs",
     "art:blocks": "node scripts/art/iso/blocks.mjs",
     "art:frame": "node scripts/art/iso/frame.mjs public/assets/iso",
+    "art:props": "node scripts/art/iso/props.mjs",
     "art:iso:check": "node scripts/art/iso/check.mjs public/assets/iso art-src/iso",
     "devices": "node scripts/devices.mjs",
     "screenshots": "node scripts/screenshots.mjs"

@@ -1,0 +1,53 @@
+// Material colours shared by the region props. Each is one '#RRGGBB' that tones(hex) turns into four tones and lines.
+export const C = {
+  // greens
+  mango: '#4F9A3A',
+  mangoLight: '#7DB84A',
+  leaf: '#5FA845',
+  leafDark: '#3E7F34',
+  sal: '#3E7A38',
+  sage: '#8DB86B',
+  moss: '#5E8F3F',
+  // woods and earth
+  trunk: '#8A5A33',
+  bark: '#6C4528',
+  teak: '#B07A44',
+  mud: '#B98B5A',
+  clay: '#C9774A',
+  thatch: '#DDB45C',
+  straw: '#E8CB7A',
+  // stone
+  sand: '#E3C98D',
+  sandDark: '#CDAE6E',
+  plaster: '#F1E8D2',
+  stone: '#A9A397',
+  stoneDark: '#7D786E',
+  rock: '#8C8678',
+  ochre: '#CF975B',
+  ochreDark: '#B07A3F',
+  night: '#3A3F86',
+  nightLight: '#555BA8',
+  // accents
+  saffron: '#F39C2B',
+  gold: '#E9C12F',
+  goldDark: '#C79A1C',
+  blood: '#8E3B3B',
+  bloodLight: '#B24A44',
+  parchment: '#F3E3B8',
+  brass: '#C9A24A',
+  white: '#F6F1E4',
+  // water and sea
+  water: '#4E9BB8',
+  waterLight: '#8CCBDD',
+  sea: '#3F8FB5',
+  foam: '#EAF6F4',
+  // life
+  peacock: '#1F7F8F',
+  peacockGreen: '#2E9E6B',
+  cowWhite: '#F4EDE0',
+  cowSpot: '#B9855A',
+  lotus: '#EE8FAE',
+  banana: '#6DB04A',
+  berry: '#A63A4E',
+  ink: '#2A1A0F',
+};

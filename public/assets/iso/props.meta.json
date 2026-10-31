@@ -1,0 +1,1205 @@
+{
+  "sheet": "props",
+  "width": 512,
+  "height": 1024,
+  "padding": 2,
+  "frames": {
+    "arrow-stack": {
+      "kind": "arrow-stack",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "back",
+      "height": 11.3,
+      "footprint": {
+        "w": 8.8,
+        "d": 4.2
+      },
+      "parts": 19,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        123,
+        131
+      ],
+      "w": 54,
+      "h": 69,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 41.121
+    },
+    "ayodhya-threshold": {
+      "kind": "ayodhya-threshold",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "side",
+      "height": 1.5,
+      "footprint": {
+        "w": 10.2,
+        "d": 34
+      },
+      "parts": 17,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": false,
+      "landmark": true,
+      "squares": [
+        1
+      ],
+      "w": 124,
+      "h": 119,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 56.121
+    },
+    "banana-plant": {
+      "kind": "banana-plant",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "side",
+      "height": 12.8,
+      "footprint": {
+        "w": 10.2,
+        "d": 9.6
+      },
+      "parts": 12,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 69,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 51.121
+    },
+    "banner-saffron": {
+      "kind": "banner-saffron",
+      "regions": [
+        "ayodhya"
+      ],
+      "zone": "side",
+      "height": 16.6,
+      "footprint": {
+        "w": 6.6,
+        "d": 5.4
+      },
+      "parts": 6,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 69,
+      "factor": 5,
+      "anchorX": 17,
+      "anchorY": 51.121
+    },
+    "basket": {
+      "kind": "basket",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "back",
+      "height": 5.9,
+      "footprint": {
+        "w": 7.8,
+        "d": 6
+      },
+      "parts": 10,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        85
+      ],
+      "w": 49,
+      "h": 54,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 26.121
+    },
+    "berry-bush": {
+      "kind": "berry-bush",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "back",
+      "height": 6.3,
+      "footprint": {
+        "w": 9.4,
+        "d": 5.9
+      },
+      "parts": 10,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        85
+      ],
+      "w": 54,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 31.121
+    },
+    "boat-post": {
+      "kind": "boat-post",
+      "regions": [
+        "ganga"
+      ],
+      "zone": "back",
+      "height": 8.2,
+      "footprint": {
+        "w": 9.6,
+        "d": 5.7
+      },
+      "parts": 11,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 41.121
+    },
+    "boulder": {
+      "kind": "boulder",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "back",
+      "height": 5.8,
+      "footprint": {
+        "w": 9.7,
+        "d": 5.7
+      },
+      "parts": 6,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 26.121
+    },
+    "broken-banner": {
+      "kind": "broken-banner",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "side",
+      "height": 13,
+      "footprint": {
+        "w": 8.6,
+        "d": 7.4
+      },
+      "parts": 18,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        137
+      ],
+      "w": 54,
+      "h": 69,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 41.121
+    },
+    "buoy-stone": {
+      "kind": "buoy-stone",
+      "regions": [
+        "sea"
+      ],
+      "zone": "back",
+      "height": 10.9,
+      "footprint": {
+        "w": 6,
+        "d": 6
+      },
+      "parts": 8,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 44,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 36.121
+    },
+    "cave-mouth": {
+      "kind": "cave-mouth",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "side",
+      "height": 19,
+      "footprint": {
+        "w": 11,
+        "d": 11.4
+      },
+      "parts": 10,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        90
+      ],
+      "w": 74,
+      "h": 94,
+      "factor": 5,
+      "anchorX": 37,
+      "anchorY": 61.121
+    },
+    "chariot": {
+      "kind": "chariot",
+      "regions": [
+        "ayodhya"
+      ],
+      "zone": "side",
+      "height": 17,
+      "footprint": {
+        "w": 9.1,
+        "d": 20.5
+      },
+      "parts": 17,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        42
+      ],
+      "w": 89,
+      "h": 104,
+      "factor": 5,
+      "anchorX": 52,
+      "anchorY": 61.121
+    },
+    "cow": {
+      "kind": "cow",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "back",
+      "height": 7.2,
+      "footprint": {
+        "w": 10,
+        "d": 4.9
+      },
+      "parts": 20,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 54,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 31.121
+    },
+    "dais": {
+      "kind": "dais",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "centre",
+      "height": 0.4,
+      "footprint": {
+        "w": 32,
+        "d": 32
+      },
+      "parts": 12,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": false,
+      "landmark": true,
+      "squares": [
+        144
+      ],
+      "w": 144,
+      "h": 119,
+      "factor": 5,
+      "anchorX": 72,
+      "anchorY": 56.121
+    },
+    "dark-tree": {
+      "kind": "dark-tree",
+      "regions": [
+        "ayodhya"
+      ],
+      "zone": "side",
+      "height": 21.2,
+      "footprint": {
+        "w": 11.2,
+        "d": 11.2
+      },
+      "parts": 6,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        37,
+        38,
+        39,
+        40
+      ],
+      "w": 64,
+      "h": 84,
+      "factor": 5,
+      "anchorX": 32,
+      "anchorY": 61.121
+    },
+    "dome": {
+      "kind": "dome",
+      "regions": [
+        "ayodhya"
+      ],
+      "zone": "side",
+      "height": 16.4,
+      "footprint": {
+        "w": 11,
+        "d": 11
+      },
+      "parts": 14,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        45
+      ],
+      "w": 79,
+      "h": 89,
+      "factor": 5,
+      "anchorX": 37,
+      "anchorY": 51.121
+    },
+    "fern": {
+      "kind": "fern",
+      "regions": [
+        "dandaka"
+      ],
+      "zone": "back",
+      "height": 4.4,
+      "footprint": {
+        "w": 7,
+        "d": 5.7
+      },
+      "parts": 10,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 49,
+      "h": 44,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 26.121
+    },
+    "fire": {
+      "kind": "fire",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "back",
+      "height": 10.5,
+      "footprint": {
+        "w": 6,
+        "d": 6
+      },
+      "parts": 11,
+      "anim": "flicker",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        134,
+        136
+      ],
+      "emit": {
+        "x": 0,
+        "y": -5.5
+      },
+      "w": 44,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 36.121
+    },
+    "foam-ring": {
+      "kind": "foam-ring",
+      "regions": [
+        "sea"
+      ],
+      "zone": "back",
+      "height": 1.4,
+      "footprint": {
+        "w": 6,
+        "d": 6
+      },
+      "parts": 9,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 44,
+      "h": 44,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 21.121
+    },
+    "fountain": {
+      "kind": "fountain",
+      "regions": [
+        "ayodhya"
+      ],
+      "zone": "side",
+      "height": 14.6,
+      "footprint": {
+        "w": 11.2,
+        "d": 11.2
+      },
+      "parts": 11,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 64,
+      "h": 74,
+      "factor": 5,
+      "anchorX": 32,
+      "anchorY": 46.121
+    },
+    "ghat-step": {
+      "kind": "ghat-step",
+      "regions": [
+        "ganga"
+      ],
+      "zone": "back",
+      "height": 5.1,
+      "footprint": {
+        "w": 9.9,
+        "d": 6
+      },
+      "parts": 9,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 64,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 32,
+      "anchorY": 36.121
+    },
+    "gold-lamp": {
+      "kind": "gold-lamp",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "back",
+      "height": 11.2,
+      "footprint": {
+        "w": 6.6,
+        "d": 5.8
+      },
+      "parts": 12,
+      "anim": "flicker",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 36.121
+    },
+    "gull-perch": {
+      "kind": "gull-perch",
+      "regions": [
+        "sea"
+      ],
+      "zone": "back",
+      "height": 10.3,
+      "footprint": {
+        "w": 7.4,
+        "d": 5.7
+      },
+      "parts": 8,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 36.121
+    },
+    "hidden-eyes": {
+      "kind": "hidden-eyes",
+      "regions": [
+        "dandaka"
+      ],
+      "zone": "back",
+      "height": 6.8,
+      "footprint": {
+        "w": 9.7,
+        "d": 6
+      },
+      "parts": 7,
+      "anim": "flicker",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 54,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 31.121
+    },
+    "janaka-palace": {
+      "kind": "janaka-palace",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "side",
+      "height": 18.1,
+      "footprint": {
+        "w": 11.1,
+        "d": 32
+      },
+      "parts": 14,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": false,
+      "landmark": true,
+      "squares": [
+        36
+      ],
+      "w": 124,
+      "h": 134,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 71.121
+    },
+    "lamp": {
+      "kind": "lamp",
+      "regions": [
+        "mithila",
+        "ayodhya"
+      ],
+      "zone": "back",
+      "height": 11.5,
+      "footprint": {
+        "w": 5.8,
+        "d": 5.8
+      },
+      "parts": 6,
+      "anim": "flicker",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        1
+      ],
+      "w": 44,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 36.121
+    },
+    "lanka-wall": {
+      "kind": "lanka-wall",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "side",
+      "height": 21.1,
+      "footprint": {
+        "w": 10.4,
+        "d": 36.2
+      },
+      "parts": 18,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        121,
+        132
+      ],
+      "w": 129,
+      "h": 159,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 96.121
+    },
+    "lotus-pad": {
+      "kind": "lotus-pad",
+      "regions": [
+        "ganga"
+      ],
+      "zone": "back",
+      "height": 4.9,
+      "footprint": {
+        "w": 9.7,
+        "d": 6
+      },
+      "parts": 13,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 26.121
+    },
+    "mango-tree": {
+      "kind": "mango-tree",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "side",
+      "height": 20,
+      "footprint": {
+        "w": 11.3,
+        "d": 9.9
+      },
+      "parts": 13,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 64,
+      "h": 89,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 66.121
+    },
+    "monkey-frieze-stone": {
+      "kind": "monkey-frieze-stone",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "back",
+      "height": 9.2,
+      "footprint": {
+        "w": 9.4,
+        "d": 3.4
+      },
+      "parts": 10,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 69,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 41.121
+    },
+    "net-pole": {
+      "kind": "net-pole",
+      "regions": [
+        "ganga"
+      ],
+      "zone": "side",
+      "height": 14.2,
+      "footprint": {
+        "w": 8,
+        "d": 6.5
+      },
+      "parts": 10,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 46.121
+    },
+    "panchavati-hut": {
+      "kind": "panchavati-hut",
+      "regions": [
+        "dandaka"
+      ],
+      "zone": "side",
+      "height": 14.8,
+      "footprint": {
+        "w": 11.4,
+        "d": 10.4
+      },
+      "parts": 10,
+      "anim": "smoke",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        66
+      ],
+      "emit": {
+        "x": 0,
+        "y": -7.3
+      },
+      "w": 79,
+      "h": 79,
+      "factor": 5,
+      "anchorX": 37,
+      "anchorY": 46.121
+    },
+    "path-stone": {
+      "kind": "path-stone",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "back",
+      "height": 2.8,
+      "footprint": {
+        "w": 9.4,
+        "d": 5.8
+      },
+      "parts": 8,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 26.121
+    },
+    "peacock": {
+      "kind": "peacock",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "back",
+      "height": 9.6,
+      "footprint": {
+        "w": 5.9,
+        "d": 5.9
+      },
+      "parts": 21,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 49,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 36.121
+    },
+    "plough": {
+      "kind": "plough",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "back",
+      "height": 6,
+      "footprint": {
+        "w": 9.8,
+        "d": 5.4
+      },
+      "parts": 8,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        30
+      ],
+      "w": 64,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 31.121
+    },
+    "rampart": {
+      "kind": "rampart",
+      "regions": [
+        "ayodhya"
+      ],
+      "zone": "side",
+      "height": 21.7,
+      "footprint": {
+        "w": 9.6,
+        "d": 37.8
+      },
+      "parts": 16,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        48,
+        47
+      ],
+      "w": 124,
+      "h": 159,
+      "factor": 5,
+      "anchorX": 57,
+      "anchorY": 101.121
+    },
+    "reed": {
+      "kind": "reed",
+      "regions": [
+        "dandaka",
+        "ganga"
+      ],
+      "zone": "back",
+      "height": 11,
+      "footprint": {
+        "w": 7.8,
+        "d": 3
+      },
+      "parts": 9,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        49,
+        50,
+        71,
+        72,
+        73,
+        74
+      ],
+      "w": 49,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 22,
+      "anchorY": 41.121
+    },
+    "rice-stripes": {
+      "kind": "rice-stripes",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "back",
+      "height": 5.1,
+      "footprint": {
+        "w": 10,
+        "d": 6
+      },
+      "parts": 14,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        2,
+        3
+      ],
+      "w": 64,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 32,
+      "anchorY": 31.121
+    },
+    "rishyamukha-hill": {
+      "kind": "rishyamukha-hill",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "side",
+      "height": 20.4,
+      "footprint": {
+        "w": 11,
+        "d": 11.2
+      },
+      "parts": 10,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        97
+      ],
+      "w": 64,
+      "h": 89,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 61.121
+    },
+    "river-rock": {
+      "kind": "river-rock",
+      "regions": [
+        "ganga"
+      ],
+      "zone": "back",
+      "height": 3.6,
+      "footprint": {
+        "w": 9.8,
+        "d": 6
+      },
+      "parts": 5,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 26.121
+    },
+    "rock": {
+      "kind": "rock",
+      "regions": [
+        "dandaka"
+      ],
+      "zone": "back",
+      "height": 5.4,
+      "footprint": {
+        "w": 9.6,
+        "d": 6
+      },
+      "parts": 5,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 26.121
+    },
+    "rock-stack": {
+      "kind": "rock-stack",
+      "regions": [
+        "sea"
+      ],
+      "zone": "back",
+      "height": 9.4,
+      "footprint": {
+        "w": 7.9,
+        "d": 6
+      },
+      "parts": 6,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 54,
+      "h": 59,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 36.121
+    },
+    "sage-hut": {
+      "kind": "sage-hut",
+      "regions": [
+        "mithila"
+      ],
+      "zone": "side",
+      "height": 14.4,
+      "footprint": {
+        "w": 11.7,
+        "d": 11.2
+      },
+      "parts": 8,
+      "anim": "smoke",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        24
+      ],
+      "emit": {
+        "x": 0,
+        "y": -7.3
+      },
+      "w": 69,
+      "h": 79,
+      "factor": 5,
+      "anchorX": 37,
+      "anchorY": 46.121
+    },
+    "sal-tree": {
+      "kind": "sal-tree",
+      "regions": [
+        "dandaka"
+      ],
+      "zone": "side",
+      "height": 21.7,
+      "footprint": {
+        "w": 9,
+        "d": 9
+      },
+      "parts": 8,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 89,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 66.121
+    },
+    "shell": {
+      "kind": "shell",
+      "regions": [
+        "sea"
+      ],
+      "zone": "back",
+      "height": 4.6,
+      "footprint": {
+        "w": 9.7,
+        "d": 5.5
+      },
+      "parts": 5,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 49,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 21.121
+    },
+    "terrace-step": {
+      "kind": "terrace-step",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "back",
+      "height": 5.6,
+      "footprint": {
+        "w": 9.2,
+        "d": 5.9
+      },
+      "parts": 10,
+      "anim": "none",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 64,
+      "h": 64,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 36.121
+    },
+    "tower-banner": {
+      "kind": "tower-banner",
+      "regions": [
+        "lanka"
+      ],
+      "zone": "side",
+      "height": 21.4,
+      "footprint": {
+        "w": 8.3,
+        "d": 8
+      },
+      "parts": 9,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        125,
+        129
+      ],
+      "w": 64,
+      "h": 94,
+      "factor": 5,
+      "anchorX": 32,
+      "anchorY": 61.121
+    },
+    "vine-post": {
+      "kind": "vine-post",
+      "regions": [
+        "dandaka"
+      ],
+      "zone": "side",
+      "height": 17.7,
+      "footprint": {
+        "w": 10.2,
+        "d": 8.1
+      },
+      "parts": 22,
+      "anim": "sway",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 69,
+      "h": 79,
+      "factor": 5,
+      "anchorX": 32,
+      "anchorY": 56.121
+    },
+    "waterfall": {
+      "kind": "waterfall",
+      "regions": [
+        "kishkindha"
+      ],
+      "zone": "side",
+      "height": 17.8,
+      "footprint": {
+        "w": 11,
+        "d": 14
+      },
+      "parts": 13,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": true,
+      "squares": [
+        96
+      ],
+      "w": 79,
+      "h": 104,
+      "factor": 5,
+      "anchorX": 42,
+      "anchorY": 66.121
+    },
+    "wave-crest": {
+      "kind": "wave-crest",
+      "regions": [
+        "sea"
+      ],
+      "zone": "back",
+      "height": 6.5,
+      "footprint": {
+        "w": 9.6,
+        "d": 5.6
+      },
+      "parts": 8,
+      "anim": "shimmer",
+      "baseZ": 2.4,
+      "variety": true,
+      "landmark": false,
+      "w": 59,
+      "h": 54,
+      "factor": 5,
+      "anchorX": 27,
+      "anchorY": 26.121
+    }
+  }
+}
