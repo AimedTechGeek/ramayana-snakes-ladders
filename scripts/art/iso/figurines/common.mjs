@@ -11,6 +11,9 @@ import { boardProjection, camera } from '../../iso-board.mjs';
 import { cropProjection } from '../common.mjs';
 
 export const DEG = Math.PI / 180;
+
+/** Class of a material on a part (props/kit.mjs materialCss writes its rule): .m + the hex without #. */
+export const materialClass = (hex) => `m${hex.slice(1)}`;
 export const RIGHT = [Math.sin(camera.azimuth * DEG), -Math.cos(camera.azimuth * DEG), 0];
 export const FORWARD = [Math.cos(camera.azimuth * DEG), Math.sin(camera.azimuth * DEG), 0];
 
@@ -55,10 +58,14 @@ export function createFigure({ size, lit = false, label, view }) {
   const fig = { P, V, R, ks, size, lit, width, height, anchor, k: kPx, label, parts, backdrop };
 
   /** Add a drawn item. `part` names the part for the count; `at` seeds its depth key. */
-  fig.put = (owner, name, at, svg, { bias = 0, shapes = [], route, chunk } = {}) => {
+  fig.put = (owner, name, at, svg, { bias = 0, shapes = [], route, chunk, mat } = {}) => {
     parts.add(name.replace(/[#:].*$/, ''));
     // The pedestal base is tagged: its outline is the reference the anchor test measures the feet point against.
-    const tagged = name === 'stand.base' ? `<g data-part="pedestal-base">${svg}</g>` : svg;
+    const tagged = mat
+      ? `<g class="${materialClass(mat)}">${svg}</g>`
+      : name === 'stand.base'
+        ? `<g data-part="pedestal-base">${svg}</g>`
+        : svg;
     R.put({ piece: owner, at, bias, svg: tagged, shapes, name: R.nameFor(name), route, chunk });
   };
 
@@ -111,7 +118,7 @@ export function createFigure({ size, lit = false, label, view }) {
       name,
       add(F.o, mul(F.a, (s0 + s1) / 2)),
       k.solidSvg(paths, { ...style(tone, options), inner }) + extra,
-      { bias, shapes: [shape] },
+      { bias, shapes: [shape], mat: options.mat },
     );
     return shape;
   };
@@ -130,7 +137,7 @@ export function createFigure({ size, lit = false, label, view }) {
       name,
       add(a, mul(axis, 0.5)),
       k.solidSvg(paths, { ...style(tone, options), inner: options.inner ?? '' }) + extra,
-      { bias, shapes: [shape] },
+      { bias, shapes: [shape], mat: options.mat },
     );
     return shape;
   };
@@ -146,7 +153,7 @@ export function createFigure({ size, lit = false, label, view }) {
       name,
       add(F.o, mul(F.a, (s0 + s1) / 2)),
       k.solidSvg(paths, { ...style(tone, options), inner: options.inner ?? '' }) + extra,
-      { bias, shapes: [shape] },
+      { bias, shapes: [shape], mat: options.mat },
     );
     return shape;
   };
@@ -162,7 +169,7 @@ export function createFigure({ size, lit = false, label, view }) {
       name,
       c,
       k.solidSvg(paths, { ...style(tone, options), inner: options.inner ?? '' }) + extra,
-      { bias, shapes: [shape] },
+      { bias, shapes: [shape], mat: options.mat },
     );
     return shape;
   };
@@ -193,6 +200,7 @@ export function createFigure({ size, lit = false, label, view }) {
           shapes: [A.tube(piece.points, piece.radii)],
           route: id,
           chunk: index,
+          mat: options.mat,
         },
       ),
     );
@@ -286,19 +294,19 @@ export function inBasis(centre, basis, [r, f, u]) {
  * T02's 100x100 face box onto the head sphere (spec 4.1): lon = (fx-50)/50*55 deg, lat = (50-fy)/50*55 deg.
  * `centre` is the local (r, f, u) head centre; the result is a world point `lift` outside the surface.
  */
-export function faceWorld(centre, basis, radius, fx, fy, lift = 0, scale = 1) {
+export function faceWorld(centre, basis, radius, fx, fy, lift = 0, scale = 1, loc = local) {
   const lon = ((fx - 50) / 50) * 55 * DEG * scale;
   const lat = ((50 - fy) / 50) * 55 * DEG;
   const d = add(
     add(mul(basis.F, Math.cos(lat) * Math.cos(lon)), mul(basis.R, Math.cos(lat) * Math.sin(lon))),
     mul(basis.Z, Math.sin(lat)),
   );
-  return local(add(centre, mul(d, radius + lift)));
+  return loc(add(centre, mul(d, radius + lift)));
 }
 
 /** Unit normal (world) of the sphere at face coordinates, to test that a feature faces the camera. */
-export function faceFacing(fig, centre, basis, radius, fx, fy) {
-  const c = local(centre);
-  const p = faceWorld(centre, basis, radius, fx, fy);
+export function faceFacing(fig, centre, basis, radius, fx, fy, loc = local) {
+  const c = loc(centre);
+  const p = faceWorld(centre, basis, radius, fx, fy, 0, 1, loc);
   return dot(unit(sub(p, c)), fig.V);
 }

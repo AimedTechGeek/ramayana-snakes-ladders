@@ -39,7 +39,7 @@ export function nextPot(n) {
  * @param {number} [maxSize]
  * @returns {{ width: number, height: number, placements: Record<string, { x: number, y: number }> }}
  */
-export function shelfPack(items, maxSize = 2048) {
+export function shelfPack(items, maxSize = 2048, minWidth = 64) {
   if (!items.length) throw new Error('shelfPack: no items');
   const sorted = [...items].sort((a, b) => b.h - a.h || b.w - a.w || byName(a, b));
   const names = new Set();
@@ -52,7 +52,7 @@ export function shelfPack(items, maxSize = 2048) {
   }
   const widest = Math.max(...sorted.map((item) => item.w));
   let best = null;
-  for (let width = 64; width <= maxSize; width *= 2) {
+  for (let width = Math.max(64, minWidth); width <= maxSize; width *= 2) {
     if (width < widest) continue;
     const placements = {};
     let x = 0;
@@ -146,7 +146,7 @@ export async function openRasteriser() {
  *   frames: Record<string, object> }>}
  */
 export async function buildAtlas(sheetName, frames, options = {}) {
-  const { outDir = DEFAULT_OUT, maxSize = 2048, factor: defaultFactor = FACTORS.fine, padding = 2 } = options;
+  const { outDir = DEFAULT_OUT, maxSize = 2048, minWidth = 64, factor: defaultFactor = FACTORS.fine, padding = 2 } = options;
   if (!frames.length) throw new Error(`atlas ${sheetName}: no frames`);
 
   const prepared = frames.map((frame) => {
@@ -167,7 +167,7 @@ export async function buildAtlas(sheetName, frames, options = {}) {
     };
   });
 
-  const { width: sheetW, height: sheetH, placements } = shelfPack(prepared, maxSize);
+  const { width: sheetW, height: sheetH, placements } = shelfPack(prepared, maxSize, minWidth);
   const owned = options.rasteriser ? null : await openRasteriser();
   const { page } = options.rasteriser ?? owned;
   const pngFile = join(outDir, `${sheetName}.png`);

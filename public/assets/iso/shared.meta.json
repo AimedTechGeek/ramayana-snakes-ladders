@@ -60,6 +60,14 @@
       "anchorX": 29.5,
       "anchorY": 24.5
     },
+    "lit-ring": {
+      "kind": "fx",
+      "w": 124,
+      "h": 74,
+      "factor": 5,
+      "anchorX": 62,
+      "anchorY": 37
+    },
     "mist-1": {
       "kind": "mist",
       "overhang": 0.2,

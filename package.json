@@ -22,6 +22,7 @@
     "art:frame": "node scripts/art/iso/frame.mjs public/assets/iso",
     "art:props": "node scripts/art/iso/props.mjs",
     "art:bridges": "tsx scripts/art/iso/bridges/index.mjs public/assets/iso",
+    "art:hanuman:sheet": "node scripts/art/iso/figurines/sheet.mjs art-src/iso/review 2",
     "art:iso:check": "node scripts/art/iso/check.mjs public/assets/iso art-src/iso",
     "art:snakes": "tsx scripts/art/iso/snakes/index.mjs",
     "devices": "node scripts/devices.mjs",

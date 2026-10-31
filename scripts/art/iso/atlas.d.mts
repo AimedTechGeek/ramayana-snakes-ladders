@@ -5,6 +5,7 @@ export function nextPot(n: number): number;
 export function shelfPack(
   items: { name: string; w: number; h: number }[],
   maxSize?: number,
+  minWidth?: number,
 ): { width: number; height: number; placements: Record<string, { x: number; y: number }> };
 export function frameAnchor(
   anchor: { x: number; y: number },
@@ -29,6 +30,8 @@ export interface Rasteriser {
 export interface AtlasOptions {
   outDir?: string;
   maxSize?: number;
+  /** Narrowest sheet width tried (default 64); a tie in area keeps the narrower sheet, so force a wide one here. */
+  minWidth?: number;
   factor?: number;
   padding?: number;
   rasteriser?: Rasteriser;

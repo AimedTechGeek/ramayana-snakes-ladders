@@ -668,6 +668,19 @@ function shadowSvg() {
   return { svg: exportSvg({ width: W, height: H, label: 'shadow', body }), anchor: { x: W / 2, y: H / 2 }, width: W, height: H };
 }
 
+/** The current player's marker: a thin ink ring on the tile top round the token's feet (T43 spec 6.2), 9.5 units in radius. */
+function litRingSvg() {
+  const W = 24;
+  const H = 14;
+  const P = centred(W, H, [[0, 0, TOP_Z]]);
+  const ring = Array.from({ length: 36 }, (_, i) => {
+    const a = (i / 36) * Math.PI * 2;
+    return k.iso([9.5 * Math.cos(a), 9.5 * Math.sin(a), TOP_Z], P);
+  });
+  const body = `<path d="${k.pathOf(ring, true)}" fill="none" stroke="${INK}" stroke-width="0.9" opacity="0.85"/>`;
+  return { svg: exportSvg({ width: W, height: H, label: 'lit ring', body }), anchor: { x: W / 2, y: H / 2 }, width: W, height: H };
+}
+
 /** Three glints of sunlight on water, white on transparent (alpha is animated at runtime). */
 function shimmerSvg() {
   const W = 24;
@@ -773,7 +786,7 @@ export function numeralLayout() {
   };
 }
 
-/** Frame specs of the `shared` sheet: mist 2, numerals 20, FX 12. */
+/** Frame specs of the `shared` sheet: mist 2, numerals 20, FX 13 (with the lit ring). */
 export function sharedFrames() {
   const layout = numeralLayout();
   const frames = [];
@@ -785,6 +798,7 @@ export function sharedFrames() {
   }
   const fx = [
     ['shadow', shadowSvg()],
+    ['lit-ring', litRingSvg()],
     ['shimmer', shimmerSvg()],
     ['puff', puffSvg()],
     ['tongue-short', tongueSvg(false)],

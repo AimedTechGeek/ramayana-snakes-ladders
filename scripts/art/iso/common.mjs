@@ -61,19 +61,19 @@ export function extraCss() {
 // ---------------------------------------------------------------- export
 
 /** The kit's token and solid rules without its plate, legend and animation parts, plus extraCss(). */
-function standaloneCss() {
+function standaloneCss(css = '') {
   const end = ISO_CSS.indexOf('@keyframes');
   if (end < 0) throw new Error('iso.css layout changed: no @keyframes marker');
-  return `${ISO_CSS.slice(0, end)}\n${extraCss()}\n`;
+  return `${ISO_CSS.slice(0, end)}\n${extraCss()}\n${css}`;
 }
 
 /** A standalone light SVG (figureSvg `standalone: 'light'`) whose embedded style is the trimmed kit css + extraCss(). */
-export function exportSvg({ width, height, label, body }) {
+export function exportSvg({ width, height, label, body, css }) {
   const svg = figureSvg({ width, height, label, body, standalone: 'light' });
   const start = svg.indexOf('<style>');
   const end = svg.indexOf('</style>');
   if (start < 0 || end < 0) throw new Error('figureSvg standalone output has no <style>');
-  return `${svg.slice(0, start)}<style>${standaloneCss()}${svg.slice(end)}`;
+  return `${svg.slice(0, start)}<style>${standaloneCss(css)}${svg.slice(end)}`;
 }
 
 /**

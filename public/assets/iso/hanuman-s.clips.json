@@ -1,0 +1,135 @@
+{
+  "facings": [
+    "SE",
+    "SW",
+    "NW",
+    "NE"
+  ],
+  "factor": 4,
+  "clips": {
+    "idle": {
+      "frames": 3,
+      "facings": [
+        "SW"
+      ],
+      "fps": 3,
+      "loop": true,
+      "pingPong": [
+        0,
+        1,
+        2,
+        1
+      ]
+    },
+    "walk": {
+      "frames": 8,
+      "facings": [
+        "SE",
+        "NW",
+        "NE"
+      ],
+      "cycle": 32,
+      "speed": 80,
+      "fps": 20,
+      "loop": true
+    },
+    "run": {
+      "frames": 6,
+      "facings": [
+        "SE",
+        "NW",
+        "NE"
+      ],
+      "cycle": 56,
+      "speed": 280,
+      "fps": 30,
+      "fastSpeed": 560,
+      "fastFps": 60,
+      "loop": true
+    },
+    "leap": {
+      "frames": 4,
+      "facings": [
+        "SE",
+        "NW",
+        "NE"
+      ],
+      "loop": false,
+      "ms": [
+        160,
+        80,
+        null,
+        120
+      ],
+      "fastMs": [
+        60,
+        40,
+        null,
+        60
+      ]
+    }
+  },
+  "frames": [
+    "SW.excited",
+    "SW.happy",
+    "SW.sad",
+    "SW.scared",
+    "idle.SW.0",
+    "idle.SW.1",
+    "idle.SW.2",
+    "leap.NE.0",
+    "leap.NE.1",
+    "leap.NE.2",
+    "leap.NE.3",
+    "leap.NW.0",
+    "leap.NW.1",
+    "leap.NW.2",
+    "leap.NW.3",
+    "leap.SE.0",
+    "leap.SE.1",
+    "leap.SE.2",
+    "leap.SE.3",
+    "run.NE.0",
+    "run.NE.1",
+    "run.NE.2",
+    "run.NE.3",
+    "run.NE.4",
+    "run.NE.5",
+    "run.NW.0",
+    "run.NW.1",
+    "run.NW.2",
+    "run.NW.3",
+    "run.NW.4",
+    "run.NW.5",
+    "run.SE.0",
+    "run.SE.1",
+    "run.SE.2",
+    "run.SE.3",
+    "run.SE.4",
+    "run.SE.5",
+    "walk.NE.0",
+    "walk.NE.1",
+    "walk.NE.2",
+    "walk.NE.3",
+    "walk.NE.4",
+    "walk.NE.5",
+    "walk.NE.6",
+    "walk.NE.7",
+    "walk.NW.0",
+    "walk.NW.1",
+    "walk.NW.2",
+    "walk.NW.3",
+    "walk.NW.4",
+    "walk.NW.5",
+    "walk.NW.6",
+    "walk.NW.7",
+    "walk.SE.0",
+    "walk.SE.1",
+    "walk.SE.2",
+    "walk.SE.3",
+    "walk.SE.4",
+    "walk.SE.5",
+    "walk.SE.6",
+    "walk.SE.7"
+  ]
+}
