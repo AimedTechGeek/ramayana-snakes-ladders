@@ -112,11 +112,11 @@ describe('Snake bite (T44 5.4)', () => {
     const fast = biteTimeline({ fast: true, reducedMotion: false, firstTime: false });
     expect(fast.map((s) => [s.name, s.ms])).toEqual([
       ['hold', 0],
-      ['strike', 90],
-      ['swallow', 150],
+      ['strike', 50],
+      ['swallow', 80],
       ['settle', 0],
-      ['reappear', 120],
-    ]);
+      ['reappear', 60],
+    ]); // T44.14: half of spec 5.4's Fast column
   });
 
   it.each(HEROES)('Bite_(%s,Normal)_ShouldRunEveryBeatWithin20msOfTheSpec', async (hero) => {
@@ -148,14 +148,14 @@ describe('Snake bite (T44 5.4)', () => {
     expect(view.snakeAct.has(SNAKE.from)).toBe(false); // idle again
   });
 
-  it('Bite_(FastAlreadyRevealed)_ShouldTakeUnderHalfASecondWithNoHoldOrSettle', async () => {
+  it('Bite_(FastAlreadyRevealed)_ShouldTakeUnderAThirdOfASecondWithNoHoldOrSettle', async () => {
     const view = makeView('hanuman');
     view.jumpRise.set(SNAKE.from, 1); // revealed on an earlier turn
     const trace = await run(view, { fast: true, reducedMotion: false });
     expect(trace.starts.map((s) => s.clip)).toEqual(['strike', 'swallow']);
-    expect(Math.abs(startOf(trace, 'swallow') - startOf(trace, 'strike') - 90)).toBeLessThanOrEqual(20);
-    expect(Math.abs(trace.arrivedAt - startOf(trace, 'swallow') - 150)).toBeLessThanOrEqual(20);
-    expect(trace.doneAt).toBeLessThan(500);
+    expect(Math.abs(startOf(trace, 'swallow') - startOf(trace, 'strike') - 50)).toBeLessThanOrEqual(20);
+    expect(Math.abs(trace.arrivedAt - startOf(trace, 'swallow') - 80)).toBeLessThanOrEqual(20);
+    expect(trace.doneAt).toBeLessThan(300);
   });
 
   it('Bite_(ReducedMotion)_ShouldPlaceTheTokenAtTheTailWithoutFlourish', async () => {

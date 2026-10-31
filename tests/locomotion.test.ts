@@ -46,8 +46,9 @@ describe('gaitFor (spec 4)', () => {
       expect(gaitFor(n, false)).toMatchObject({ clip: 'run', speed: 280, cycle: 56, frames: 6 });
   });
 
-  it('FastMode_(Any_Distance)_Should_Run560UnitsPerSecond', () => {
-    for (const n of [1, 2, 3, 6]) expect(gaitFor(n, true)).toMatchObject({ clip: 'run', speed: 560 });
+  it('FastMode_(Any_Distance)_Should_Run1680UnitsPerSecond', () => {
+    // T44.14: three times T05's 560 so a 4-bot Fast game fits a minute
+    for (const n of [1, 2, 3, 6]) expect(gaitFor(n, true)).toMatchObject({ clip: 'run', speed: 1680 });
   });
 });
 
@@ -58,8 +59,8 @@ describe('durationOf (spec 4)', () => {
   it('WalkTwoSquares_Should_Take1520Ms', () => expect(ms(2)).toBeCloseTo(1520, 0));
   it('RunThreeSquares_Should_Take700Ms', () => expect(ms(3)).toBeCloseTo(700, 0));
   it('RunSixSquares_Should_Take1300Ms', () => expect(ms(6)).toBeCloseTo(1300, 0));
-  it('FastSixSquares_Should_Take600Ms', () => expect(ms(6, true)).toBeCloseTo(600, 0));
-  it('FastOneSquare_Should_Take100Ms', () => expect(ms(1, true)).toBeCloseTo(100, 0));
+  it('FastSixSquares_Should_Take200Ms', () => expect(ms(6, true)).toBeCloseTo(200, 0));
+  it('FastOneSquare_Should_TakeAThirtiethOfASecond', () => expect(ms(1, true)).toBeCloseTo(33.3, 0));
 });
 
 describe('distanceAt (speed profile)', () => {

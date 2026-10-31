@@ -4,7 +4,7 @@
     "fastStepMs": 40,
     "walkUnitsPerS": 80,
     "runUnitsPerS": 280,
-    "fastRunUnitsPerS": 560,
+    "fastRunUnitsPerS": 1680,
     "walkMaxSquares": 2,
     "botDelayMs": 1000,
     "bystanderStaggerMs": [80, 150],

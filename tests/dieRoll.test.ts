@@ -111,8 +111,8 @@ describe('the baked tumble clips', () => {
 });
 
 describe('the roll rules', () => {
-  it('Roll_(Fast)_Should_TakeFourTenthsOfASecond', () => {
-    expect(rollSeconds(true)).toBeCloseTo(0.4, 6);
+  it('Roll_(Fast)_Should_TakeASeventhOfASecond', () => {
+    expect(rollSeconds(true)).toBeCloseTo(1 / 7, 6); // T44.14 (was 0.4 s): the move starts while it lands
     expect(rollSeconds(false)).toBeCloseTo(1.0, 6);
   });
 

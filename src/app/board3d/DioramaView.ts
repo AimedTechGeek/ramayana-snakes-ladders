@@ -134,7 +134,7 @@ export class DioramaView implements BoardView {
   anchors: readonly (ScreenAnchor | null)[] = [];
   private anchorVersion = 0;
   private anchorListeners = new Set<() => void>();
-  /** Fog lift duration of the reveal in progress, ms: 420, Fast 120, 0 under reduced motion. */
+  /** Fog lift duration of the reveal in progress, ms: 420, Fast 60, 0 under reduced motion. */
   revealMs = 420;
   private version = 0;
   private listeners = new Set<() => void>();
@@ -428,7 +428,7 @@ export class DioramaView implements BoardView {
   }
 
   async reveal(changes: readonly RevealChange[], motion: MotionOptions): Promise<void> {
-    this.revealMs = motion.reducedMotion ? 0 : motion.fast ? 120 : 420;
+    this.revealMs = motion.reducedMotion ? 0 : motion.fast ? 60 : 420;
     const rising: number[] = [];
     for (const change of changes) {
       if (change.kind === 'terrain') this.revealedTerrain.add(change.square);

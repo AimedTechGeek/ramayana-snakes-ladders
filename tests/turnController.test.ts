@@ -129,9 +129,13 @@ class Recorder implements BoardView, HudSink {
   diceEnabled(enabled: boolean): void {
     this.diceOn = enabled;
   }
+  /** A test can hold the die in the air: rollDice resolves when this does. */
+  dieHold: (() => Promise<void>) | null = null;
   async rollDice(value: number, fast: boolean): Promise<void> {
     this.log.push(`hud.rollDice ${value}`);
     this.rollFast.push(fast);
+    if (this.dieHold) await this.dieHold();
+    this.log.push(`hud.dieSettled ${value}`);
   }
   settings(settings: { fast: boolean; muted: boolean }): void {
     this.settingsSeen.push(settings);
@@ -389,6 +393,34 @@ describe('TurnController', () => {
     expect(view.rollFast).toEqual([true]);
     expect(view.gaits[0]).toEqual(gaitFor(5, true));
     expect(view.motions.every((motion) => motion.fast)).toBe(true);
+  });
+
+  it('Roll_(NormalSpeed)_Should_MoveOnlyAfterTheDieHasSettled', async () => {
+    const { controller, view } = rig(newGame([human('Asha'), human('Ravi')]), [5]);
+    await controller.start();
+    await controller.requestRoll();
+
+    expect(indexOf(view.log, 'hud.dieSettled 5')).toBeLessThan(indexOf(view.log, 'view.enter 0 1'));
+  });
+
+  it('Roll_(Fast)_Should_SetOffWhileTheDieLandsButNeverTumbleTwoDiceAtOnce', async () => {
+    // T44.14: a 4-bot Hard game in Fast fits about a minute because the move overlaps the die
+    const { controller, view } = rig(newGame([human('Asha'), human('Ravi')]), [5, 3], { fast: true });
+    let land: () => void = () => {};
+    view.dieHold = () => new Promise<void>((resolve) => (land = resolve));
+    await controller.start();
+    await controller.requestRoll();
+    expect(indexOf(view.log, 'view.enter 0 1')).toBeGreaterThan(-1);
+    expect(view.log).not.toContain('hud.dieSettled 5');
+
+    const second = controller.requestRoll(); // Ravi: his die waits for Asha's to land
+    await Promise.resolve();
+    expect(view.log).not.toContain('hud.rollDice 3');
+    land();
+    await vi.waitFor(() => expect(view.log).toContain('hud.rollDice 3'));
+    expect(indexOf(view.log, 'hud.dieSettled 5')).toBeLessThan(indexOf(view.log, 'hud.rollDice 3'));
+    land();
+    await second;
   });
 
   it('ReducedMotion_Should_GlideAtRunSpeedWithTheReducedFlag', async () => {

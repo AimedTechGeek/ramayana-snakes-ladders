@@ -22,7 +22,8 @@ import { speech, t } from '../../i18n/i18n';
 import type { BoardView, Clock, HudSink, MotionOptions, SaveSink, SeatInfo, TurnAudio } from './ports';
 
 export const BOT_DELAY_MS = 1000;
-export const FAST_BOT_DELAY_MS = 400;
+/** Fast is for watching bots: a 4-bot Hard game (about 180 rolls) fits a minute (T44.14; was 400). */
+export const FAST_BOT_DELAY_MS = 60;
 /** A reaction cut short by a newer one may never resolve; Won and GameOver wait at most this much past the longest. */
 const REACTION_SLACK_MS = 100;
 
@@ -87,6 +88,8 @@ export class TurnController {
   /** Last line shown per speech key, so a bubble does not repeat itself. */
   private lastLines = new Map<string, string>();
   private latest: GameEvent | null = null;
+  /** The die of the last Fast roll, which the move does not wait for. */
+  private dieSettled: Promise<void> = Promise.resolve();
 
   constructor(start: TurnStart, deps: TurnDeps, settings: TurnSettings) {
     const dice = deps.dice ?? createRandomDice();
@@ -275,10 +278,15 @@ export class TurnController {
         this.hud.turn(event.player, t('ui.yourTurn', { name: this.playerName(event.player) }));
         this.view.turnStarted(event.player);
         return;
-      case 'Rolled':
+      case 'Rolled': {
+        await this.dieSettled; // the previous Fast roll's die is down before this one tumbles
         this.audio.dice();
-        await this.hud.rollDice(event.value, this.settings.fast);
+        const rolling = this.hud.rollDice(event.value, this.settings.fast);
+        // Fast: the token sets off while the die is still landing (T44.14: a 4-bot Hard game in about a minute)
+        if (this.settings.fast) this.dieSettled = rolling;
+        else await rolling;
         return;
+      }
       case 'Moved':
         await this.advance(event.player, event.from, event.path);
         return;

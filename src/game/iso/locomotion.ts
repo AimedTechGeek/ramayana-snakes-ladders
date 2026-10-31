@@ -55,7 +55,7 @@ const RUN_RAMP_MS = 100;
 /** Spec 4: ease in over the first 12 units and out over the last 16 at run speed; the walk keeps the same 12:16 ratio. */
 const RAMP_IN_SHARE = 12 / 28;
 
-/** One gait per move: walk up to `walkMaxSquares` squares at 80 u/s, run beyond at 280; Fast always runs at 560. */
+/** One gait per move: walk up to `walkMaxSquares` squares at 80 u/s, run beyond at 280; Fast always runs at 1680. */
 export function gaitFor(squares: number, fast: boolean): Gait {
   if (fast) {
     return { clip: 'run', speed: TIMING.fastRunUnitsPerS, cycle: RUN_CYCLE, frames: RUN_FRAMES, rampMs: 0 };
@@ -182,13 +182,13 @@ export function frameIndexOf(phase: number, frames: number): number {
 // ---- Leaps: time-driven beats (anticipation, takeoff, flight, land), spec 3.1 and 4.
 
 export type LeapBeats = readonly [number, number, number, number];
-/** A bridge step on or off (spec 4): 160 / 80 / 180 / 120 ms, Fast 60 / 40 / 80 / 60. */
+/** A bridge step on or off (spec 4): 160 / 80 / 180 / 120 ms, Fast 30 / 20 / 40 / 30 (T44.14). */
 export function stepLeapBeats(fast: boolean): LeapBeats {
-  return fast ? [60, 40, 80, 60] : [160, 80, 180, 120];
+  return fast ? [30, 20, 40, 30] : [160, 80, 180, 120];
 }
-/** `hanuman-leap`: anticipation 200, flight 700, land 120 (Fast 80 / 250 / 60); takeoff keeps the clip's 80 (Fast 40). */
+/** `hanuman-leap`: anticipation 200, flight 700, land 120 (Fast 40 / 130 / 30); takeoff keeps the clip's 80 (Fast 20). */
 export function longLeapBeats(fast: boolean): LeapBeats {
-  return fast ? [80, 40, 250, 60] : [200, 80, 700, 120];
+  return fast ? [40, 20, 130, 30] : [200, 80, 700, 120];
 }
 export function leapMs(beats: LeapBeats): number {
   return beats[0] + beats[1] + beats[2] + beats[3];

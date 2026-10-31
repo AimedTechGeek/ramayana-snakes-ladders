@@ -24,14 +24,14 @@ describe('bridge crossing plan (T44 6.5)', () => {
     expect(plan[1]!.t1).toBeCloseTo(plan[2]!.t0);
   });
 
-  it('Crossing_(DeckRun)_Should_RunAtFiveUnitsPerSecondAndTenInFast', () => {
+  it('Crossing_(DeckRun)_Should_RunAtFiveUnitsPerSecondAndTwentyInFast', () => {
     expect(crossingPlan(base)[1]!.ms).toBeCloseTo((3.25 / 5) * 1000);
-    expect(crossingPlan({ ...base, fast: true })[1]!.ms).toBeCloseTo((3.25 / 10) * 1000);
+    expect(crossingPlan({ ...base, fast: true })[1]!.ms).toBeCloseTo((3.25 / 20) * 1000);
   });
 
   it('Crossing_(StepLeaps)_Should_UseTheT43BeatsAndTheShorterFastBeats', () => {
     expect(crossingPlan(base)[0]).toMatchObject({ beats: STEP_BEATS, ms: 540 });
-    expect(crossingPlan({ ...base, fast: true })[2]).toMatchObject({ beats: STEP_BEATS_FAST, ms: 240 });
+    expect(crossingPlan({ ...base, fast: true })[2]).toMatchObject({ beats: STEP_BEATS_FAST, ms: 120 });
   });
 
   it('Crossing_(ShortBridgeLikeShabari)_Should_BeOneLeapFromFootToTop', () => {

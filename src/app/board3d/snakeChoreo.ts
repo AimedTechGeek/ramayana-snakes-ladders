@@ -34,9 +34,9 @@ export interface BiteStep {
   ms: number;
 }
 
-/** Spec 5.4, normal and Fast (Fast is not always half: hold and settle vanish). */
+/** Spec 5.4, normal and Fast (Fast is not always half: hold and settle vanish; T44.14 halved spec 5.4's Fast again). */
 const NORMAL_MS: Record<BiteStepName, number> = { rise: 380, hold: 260, strike: 180, swallow: 320, settle: 220, reappear: 260 };
-const FAST_MS: Record<BiteStepName, number> = { rise: 120, hold: 0, strike: 90, swallow: 150, settle: 0, reappear: 120 };
+const FAST_MS: Record<BiteStepName, number> = { rise: 60, hold: 0, strike: 50, swallow: 80, settle: 0, reappear: 60 };
 
 export function biteTimeline(options: { fast: boolean; reducedMotion: boolean; firstTime: boolean }): BiteStep[] {
   const table = options.fast ? FAST_MS : NORMAL_MS;

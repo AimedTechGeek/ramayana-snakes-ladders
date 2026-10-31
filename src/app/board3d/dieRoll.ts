@@ -23,13 +23,13 @@ export const CLIP_FRAMES = 24;
 export const CONTACT_FRAMES: readonly number[] = [6, 12, 18];
 /** The orientation correction blends in over the last 6 frames. */
 export const CORRECTION_FRAMES = 6;
-export const FAST_FACTOR = 2.5;
+export const FAST_FACTOR = 7;
 export const DIE_HALF_EDGE = 0.21;
 
 export const TAP_MAX_PX = 8;
 export const TAP_MAX_MS = 300;
 
-/** Seconds a roll takes: the clip is 1.0 s, Fast plays it at 2.5x (0.4 s). */
+/** Seconds a roll takes: the clip is 1.0 s, Fast plays it at 7x (0.14 s; T44.14, was 2.5x). */
 export function rollSeconds(fast: boolean): number {
   return CLIP_FRAMES / CLIP_FPS / (fast ? FAST_FACTOR : 1);
 }

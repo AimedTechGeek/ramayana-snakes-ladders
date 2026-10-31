@@ -193,8 +193,9 @@ describe('crossing time (T44 6.5 totals)', () => {
     expect(crossingTime('shabari')).toBe(540);
   });
 
-  it('Vishwamitra_(FastCrossing)_Should_TakeAbout810Ms', () => {
-    expect(Math.abs(crossingTime('vishwamitra', true) - 810)).toBeLessThanOrEqual(30);
+  it('Vishwamitra_(FastCrossing)_Should_TakeAbout400Ms', () => {
+    // T44.14: Fast steps and deck run twice as quick as spec 6.5's 810 ms
+    expect(Math.abs(crossingTime('vishwamitra', true) - 400)).toBeLessThanOrEqual(30);
   });
 });
 

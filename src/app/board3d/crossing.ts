@@ -7,9 +7,9 @@ import type { Beats } from './heroClips';
 
 /** Leap beats in ms: anticipation, takeoff, flight, land (T43 / T44 6.5). */
 export const STEP_BEATS: Beats = [160, 80, 180, 120];
-export const STEP_BEATS_FAST: Beats = [60, 40, 80, 60];
+export const STEP_BEATS_FAST: Beats = [30, 20, 40, 30];
 export const LONG_LEAP_BEATS: Beats = [200, 80, 700, 120];
-export const LONG_LEAP_BEATS_FAST: Beats = [80, 40, 250, 60];
+export const LONG_LEAP_BEATS_FAST: Beats = [40, 20, 130, 30];
 /** Step-on and step-off cover this much ground (u), each, when the caller does not measure it. */
 export const STEP_LENGTH = 0.25;
 /** Apex of a step leap above the deck (u). */
@@ -18,9 +18,9 @@ export const STEP_HOP = 0.14;
 export const LONG_LEAP_CLEARANCE = 0.25;
 /** Bridges shorter than this are one leap, foot to top (shabari). */
 export const SHORT_BRIDGE = 0.5;
-/** Deck run speed, u/s (T44 4.6: 5.0, Fast 10). */
+/** Deck run speed, u/s (T44 4.6: 5.0; Fast 20 since T44.14, so a 4-bot Fast game fits a minute). */
 export const RUN_SPEED = 5;
-export const RUN_SPEED_FAST = 10;
+export const RUN_SPEED_FAST = 20;
 
 export interface LeapSegment {
   kind: 'leap';

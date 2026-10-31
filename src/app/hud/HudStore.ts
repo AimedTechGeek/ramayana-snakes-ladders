@@ -22,9 +22,9 @@ export interface HudState {
 }
 
 const ROLL_MS = 600;
-/** The die's tumble clips: 1.0 s, Fast 0.4 s (T44 7); a roll that has not settled by then + slack is let go. */
+/** The die's tumble clips: 1.0 s, Fast 0.14 s (T44 7, Fast since T44.14); a roll not settled by then + slack is let go. */
 const DIE_MS = 1000;
-const DIE_FAST_MS = 400;
+const DIE_FAST_MS = 143;
 const DIE_SLACK_MS = 600;
 
 export type DieRoller = (value: number, fast: boolean, turn: number) => Promise<void>;
