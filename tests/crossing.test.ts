@@ -25,9 +25,8 @@ describe('bridge crossing plan (T44 6.5)', () => {
   });
 
   it('Crossing_(DeckRun)_Should_RunAtFiveUnitsPerSecondAndTenInFast', () => {
-    const deck = 3.25 - 2 * 0.25;
-    expect(crossingPlan(base)[1]!.ms).toBeCloseTo((deck / 5) * 1000);
-    expect(crossingPlan({ ...base, fast: true })[1]!.ms).toBeCloseTo((deck / 10) * 1000);
+    expect(crossingPlan(base)[1]!.ms).toBeCloseTo((3.25 / 5) * 1000);
+    expect(crossingPlan({ ...base, fast: true })[1]!.ms).toBeCloseTo((3.25 / 10) * 1000);
   });
 
   it('Crossing_(StepLeaps)_Should_UseTheT43BeatsAndTheShorterFastBeats', () => {

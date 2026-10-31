@@ -5,6 +5,7 @@
 import type { Arrive, BoardSetup, BoardView, MotionOptions } from '../turn/ports';
 import type { Emotion, Reaction } from '../../characters/reactions';
 import { TIMING } from '../../characters/reactions';
+import type { StoryJump } from '../../core/boards';
 import type { Jump } from '../../core/types';
 import { fieldCentre, type Vec2 } from '../../game/iso/boardIso';
 import {
@@ -18,7 +19,7 @@ import {
 } from '../../game/iso/locomotion';
 import { restingSpot } from '../../game/iso/tokenPose';
 import type { RevealChange } from '../../game/reveal';
-import { bridgeCurve } from './jumpCurves';
+import { bridgeCurve, bridgeLeads } from './jumpCurves';
 import { toThree, toWorld, waitingSpot } from './coords';
 import { crossingPlan, hopHeight, leapProgress } from './crossing';
 import type { Beats } from './heroClips';
@@ -102,6 +103,9 @@ export class DioramaView implements BoardView {
   revealedTerrain = new Set<number>();
   /** Rise of each revealed jump (keyed by its head or foot square), 0..1. */
   jumpRise = new Map<number, number>();
+  /** Foot squares of bridges that rose during this turn's reveal (their crossing skips the thud), and thud start times. */
+  justRisen = new Set<number>();
+  thuds = new Map<number, number>();
   current = -1;
   moods: (SeatMood | null)[] = [];
   bubbles: (Bubble | null)[] = [];
@@ -161,9 +165,9 @@ export class DioramaView implements BoardView {
     this.winShown = shown;
   }
 
-  /** Story id of a bridge (`hanuman-leap`, ...) on the current board. */
-  private bridgeId(jump: Jump): string {
-    return this.setup?.board.ladders.find((ladder) => ladder.from === jump.from)?.id ?? '';
+  /** The story ladder (id, names) behind an engine jump on the current board. */
+  private ladderOf(jump: Jump): StoryJump | undefined {
+    return this.setup?.board.ladders.find((ladder) => ladder.from === jump.from);
   }
 
   dispose(): void {
@@ -267,7 +271,11 @@ export class DioramaView implements BoardView {
 
   async cross(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive): Promise<void> {
     const token = this.token(player);
-    const curve = bridgeCurve(jump);
+    const story = this.ladderOf(jump);
+    if (!story) throw new Error(`No bridge from square ${jump.from}`);
+    const curve = bridgeCurve(story);
+    // a bridge that already stood thuds under the lander (T44 6.4); one that just rose has had its show
+    if (!this.justRisen.delete(jump.from) && !motion.reducedMotion) this.thuds.set(jump.from, performance.now());
     token.square = jump.to;
     const end = this.spotOf(player);
     // Reduced motion: the token appears at the top (T44 4.6).
@@ -276,10 +284,13 @@ export class DioramaView implements BoardView {
       const top = curve.getPointAt(1);
       let apex = -Infinity;
       for (let i = 0; i <= 20; i++) apex = Math.max(apex, curve.getPointAt(i / 20).y);
+      const leads = bridgeLeads(curve);
       const plan = crossingPlan({
-        id: this.bridgeId(jump),
+        id: story.id,
         hero: this.setup?.state.players[player]?.hero ?? 'rama',
-        length: curve.getLength(),
+        length: leads.deck,
+        leadIn: leads.leadIn,
+        leadOut: leads.leadOut,
         apexRise: apex - (foot.y + top.y) / 2,
         fast: motion.fast,
       });
@@ -360,6 +371,7 @@ export class DioramaView implements BoardView {
     await this.tween(this.ms(RISE_MS, motion), (u) =>
       rising.forEach((id) => this.jumpRise.set(id, easeInOut(u))),
     );
+    rising.forEach((id) => this.justRisen.add(id));
   }
 
   react(seat: number, reaction: Reaction): Promise<void> {
