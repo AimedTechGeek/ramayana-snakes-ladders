@@ -4,3 +4,4 @@ coverage
 *.log
 .DS_Store
 screenshots-tmp
+__pycache__

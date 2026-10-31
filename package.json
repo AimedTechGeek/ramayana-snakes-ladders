@@ -28,7 +28,9 @@
     "devices": "node scripts/devices.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "blender:spike": "node scripts/blender/run.mjs scripts/blender/hanuman_spike.py public/models/spike/hanuman.glb",
-    "blender:spike:check": "node scripts/blender/spike-check.mjs screenshots-tmp/spike"
+    "blender:spike:check": "node scripts/blender/spike-check.mjs screenshots-tmp/spike",
+    "blender:heroes": "node scripts/blender/heroes/build.mjs",
+    "blender:heroes:check": "node scripts/blender/hero-check.mjs screenshots-tmp/heroes"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",
