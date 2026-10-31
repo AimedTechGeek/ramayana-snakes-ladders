@@ -84,7 +84,9 @@ if (WHAT === 'all' || WHAT === 'bridges') {
   await page.waitForTimeout(3000);
   for (const [id] of IDS) {
     const { target, length } = await midpoint(page, id);
-    await look(page, target, Math.max(2.6, length * 1.15 + 1.2));
+    // shabari is a 0.27 u stub on the board edge: frame it from close, turned to face the open side
+    if (id === 'shabari') await look(page, target, 2.2, 0.9, -0.7);
+    else await look(page, target, Math.max(2.6, length * 1.15 + 1.2));
     await shoot(page, `bridge-${id}`);
   }
   await look(page, [0, 0, 0], 14, 0.9, 0.0);
@@ -157,9 +159,31 @@ if (WHAT === 'all' || WHAT === 'close') {
   await page.waitForTimeout(2500);
   for (const [id] of IDS) {
     const { target, length } = await midpoint(page, id);
-    await look(page, target, Math.max(1.7, length * 0.55 + 1.2), 1.0, 0.35);
+    if (id === 'shabari') await look(page, target, 1.6, 0.9, -0.7);
+    else await look(page, target, Math.max(1.7, length * 0.55 + 1.2), 1.0, 0.35);
     await shoot(page, `close-${id}`);
   }
+  await context.close();
+}
+
+if (WHAT === 'all' || WHAT === 'thud') {
+  const { context, page } = await openBoard();
+  await page.evaluate(() => window.__view.jumpRise.set(4, 1));
+  await page.evaluate(() => window.__view.changed());
+  await page.waitForTimeout(1500);
+  const { target, length } = await midpoint(page, 'vishwamitra');
+  await look(page, target, length * 1.15 + 1.4);
+  await shoot(page, 'thud-0-resting');
+  // hold the thud at its peak (60 ms into 120) for the capture
+  await page.evaluate(() => {
+    const view = window.__view;
+    const real = performance.now.bind(performance);
+    const origin = real();
+    view.thuds.set(4, origin);
+    performance.now = () => origin + 60; // frozen at the peak
+  });
+  await page.waitForTimeout(300);
+  await shoot(page, 'thud-1-peak');
   await context.close();
 }
 

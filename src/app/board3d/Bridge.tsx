@@ -78,6 +78,8 @@ function BridgePiece({ view, jump, bridge }: { view: DioramaView; jump: StoryJum
     gltf.scene.traverse((node) => {
       if (!found && node instanceof Mesh) found = node.geometry;
     });
+    // the GLB carries no normals (flat shading needs none), but the shadow-map vertex code offsets along the normal
+    (found as BufferGeometry | null)?.computeVertexNormals();
     return found;
   }, [gltf]);
   const { material, uniforms } = useMemo(() => bridgeMaterial(bridge), [bridge]);
@@ -85,6 +87,10 @@ function BridgePiece({ view, jump, bridge }: { view: DioramaView; jump: StoryJum
   const mesh = useRef<Mesh>(null);
   const opacity = useRef(1);
   const total = riseTotalMs(bridge.openings);
+  const pivot = useMemo<[number, number, number]>(() => {
+    const mid = bridge.deck[bridge.deck.length >> 1]!;
+    return [mid.x, bridge.baseFoot, mid.z];
+  }, [bridge]);
   const shadows = useMemo(() => !isPhoneWidth(window.innerWidth), []);
 
   useFrame((_, delta) => {
@@ -107,7 +113,9 @@ function BridgePiece({ view, jump, bridge }: { view: DioramaView; jump: StoryJum
     // an already standing bridge gives a small thud when a token lands on its foot
     const thudAt = view.thuds.get(jump.from);
     const s = thudAt === undefined ? 1 : thudScale(performance.now() - thudAt);
+    // the mesh holds board coordinates: scale about the bridge's own centre, not the board origin
     node.scale.set(s, s, s);
+    node.position.set(pivot[0] * (1 - s), pivot[1] * (1 - s), pivot[2] * (1 - s));
   });
 
   if (!geometry) return null;
