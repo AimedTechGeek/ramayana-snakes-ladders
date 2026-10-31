@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Hero preview</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: linear-gradient(165deg, #9aa3d9 0%, #8c96c8 55%, #7e88bc 100%);
+        font-family: system-ui, sans-serif;
+      }
+      #app {
+        position: fixed;
+        inset: 0;
+      }
+      #ui {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        z-index: 2;
+      }
+      #ui button {
+        border: 0;
+        border-radius: 14px;
+        padding: 6px 12px;
+        font:
+          600 13px system-ui,
+          sans-serif;
+        background: rgba(255, 255, 255, 0.82);
+        color: #2b2f5c;
+        cursor: pointer;
+      }
+      #ui button[aria-pressed='true'] {
+        background: #f39c2b;
+        color: #fff;
+      }
+      #hud {
+        position: fixed;
+        left: 8px;
+        bottom: 8px;
+        color: #fff;
+        font:
+          12px ui-monospace,
+          monospace;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="ui"></div>
+    <div id="hud"></div>
+    <script type="module" src="/src/app/board3d/heroPreview.tsx"></script>
+  </body>
+</html>

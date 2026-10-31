@@ -128,7 +128,7 @@ def build_mesh():
                (78.4, 1.5), (79.6, 0.2)], sides=10)
     kit.paint("head", GOLD)
     kit.sphere((0, 0, 79.4), 0.8, u=6, v=4)
-    kit.paint("head", SEAT)
+    kit.paint("head", GOLD)
 
     # ---- arms (L +X): one smooth tube per arm (blended at the elbow), armlet, wristband, fist
     for side, sx in (("L", 1), ("R", -1)):
@@ -403,10 +403,9 @@ def main():
     arm = rig.build_armature(scale=SCALE, bones=HERO_BONES)
     rig.skin(obj, arm)
 
-    drift = {}
     clips = {"idle": motion.clip_idle(STYLE)}
-    clips["walk"], drift["walk"] = motion.clip_walk(STYLE)
-    clips["run"], drift["run"] = motion.clip_run(STYLE)
+    clips["walk"], _ = motion.clip_walk(STYLE)    # the lock residual is zero by construction; the real drift is measured on the skinned mesh (tests/heroGlb.test.ts)
+    clips["run"], _ = motion.clip_run(STYLE)
     clips["leap"] = motion.clip_leap(STYLE)
     clips["happy"] = emotion_clip(happy_pose, 36, 12)
     clips["excited"] = emotion_clip(excited_pose, 36, 8)
@@ -435,8 +434,6 @@ def main():
     arm["run_speed_mps"] = arm["run_stride_m"] / (motion.RUN_FRAMES / common.FPS)
     arm["walk_leg_gain"] = motion.LEG_GAIN["walk"]
     arm["fps"] = common.FPS
-    arm["drift_walk_u"] = drift["walk"] * SCALE
-    arm["drift_run_u"] = drift["run"] * SCALE
     arm["face_frames"] = "idle,blink,happy,excited,scared,sad"
     arm["report"] = json.dumps(report)
     t1 = time.time()
@@ -448,8 +445,6 @@ def main():
         "bones": len(arm.data.bones),
         "parts": kit.parts,
         "height_u": round(arm["height_u"], 3),
-        "drift_walk_u": round(arm["drift_walk_u"], 4),
-        "drift_run_u": round(arm["drift_run_u"], 4),
         "fk_error_du": round(fk_err, 4),
         "build_s": round(t1 - t0, 2),
         "glb_bytes": os.path.getsize(out),
