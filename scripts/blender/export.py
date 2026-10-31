@@ -2,7 +2,7 @@
 import bpy
 
 
-def export_glb(path, objects, meshopt=True, extras=True):
+def export_glb(path, objects, meshopt=True, extras=True, **extra):
     bpy.ops.object.select_all(action="DESELECT")
     for o in objects:
         o.select_set(True)
@@ -24,6 +24,7 @@ def export_glb(path, objects, meshopt=True, extras=True):
         export_cameras=False,
         export_lights=False,
     )
+    kwargs.update(extra)
     if meshopt:
         kwargs["export_meshopt_compression_enable"] = True
     bpy.ops.export_scene.gltf(**kwargs)

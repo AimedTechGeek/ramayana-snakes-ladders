@@ -84,6 +84,8 @@ export class DioramaView implements BoardView {
   puffs: Puff[] = [];
   ranking: readonly number[] | null = null;
   camera: CameraApi | null = null;
+  /** Fog lift duration of the reveal in progress, ms: 420, Fast 120, 0 under reduced motion. */
+  revealMs = 420;
   private version = 0;
   private listeners = new Set<() => void>();
   private disposed = false;
@@ -245,6 +247,7 @@ export class DioramaView implements BoardView {
   }
 
   async reveal(changes: readonly RevealChange[], motion: MotionOptions): Promise<void> {
+    this.revealMs = motion.reducedMotion ? 0 : motion.fast ? 120 : 420;
     const rising: number[] = [];
     for (const change of changes) {
       if (change.kind === 'terrain') this.revealedTerrain.add(change.square);

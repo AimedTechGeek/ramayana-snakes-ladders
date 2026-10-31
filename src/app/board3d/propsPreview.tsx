@@ -8,7 +8,7 @@ import { createRoot } from 'react-dom/client';
 import { PMREMGenerator, Vector3 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { Blocks } from './Blocks';
+import { Board } from './Board';
 import type { DioramaView } from './DioramaView';
 import { PropsLayer } from './Props';
 import { MANIFEST_KINDS } from './propLayout';
@@ -103,7 +103,7 @@ function FullBoard() {
   const view = useMemo(() => ({ revealedTerrain: ALL, setup: null }) as unknown as DioramaView, []);
   return (
     <group>
-      <Blocks view={view} onTap={() => undefined} />
+      <Board view={view} onTap={() => undefined} />
       <Suspense fallback={null}>
         <PropsLayer revealed={ALL} />
       </Suspense>

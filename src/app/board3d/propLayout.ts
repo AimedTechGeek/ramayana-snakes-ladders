@@ -11,7 +11,8 @@ import {
 } from '../../game/board/blockRules';
 import { squareWorld } from '../../game/iso/boardIso';
 import { FAN_WORLD, FIELD_C_OFFSET, SIZE } from '../../game/iso/world';
-import { BLOCK_TOP, UNIT } from './coords';
+import { blockTopY } from './boardLayout';
+import { UNIT } from './coords';
 import manifest from './propsManifest.json';
 
 export interface ManifestKind extends PropKind {
@@ -30,7 +31,7 @@ export const CATALOG: readonly ManifestKind[] = Object.values(MANIFEST_KINDS).fi
 export const PROP_LAYOUT: readonly (readonly PlacedProp[])[] = layoutProps(CATALOG);
 
 export type BlockTopY = (square: number) => number;
-export const defaultBlockTopY: BlockTopY = () => BLOCK_TOP;
+export const defaultBlockTopY: BlockTopY = blockTopY;
 
 export interface PropInstance {
   kind: string;
