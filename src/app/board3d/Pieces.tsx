@@ -10,17 +10,12 @@ import { toThree } from './coords';
 import type { DioramaView } from './DioramaView';
 import { Hero as HeroFigure, blob, useHeroActor, type HeroHandle, type HeroId } from './Hero';
 import { angleDelta } from './heroClips';
-import { bridgeCurve, snakeCurve } from './jumpCurves';
+import { Bridges } from './Bridge';
+import { snakeCurve } from './jumpCurves';
 
 function JumpPiece({ view, jump, kind }: { view: DioramaView; jump: Jump; kind: 'ladder' | 'snake' }) {
   const group = useRef<Group>(null);
-  const geometry = useMemo(
-    () =>
-      kind === 'ladder'
-        ? new TubeGeometry(bridgeCurve(jump), 48, 0.09, 8, false)
-        : new TubeGeometry(snakeCurve(jump), 64, 0.08, 8, false),
-    [jump, kind],
-  );
+  const geometry = useMemo(() => new TubeGeometry(snakeCurve(jump), 64, 0.08, 8, false), [jump]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   const head = useMemo(() => snakeCurve(jump).getPoint(0), [jump]);
 
@@ -56,9 +51,7 @@ export function Jumps({ view }: { view: DioramaView }) {
   if (!board) return null;
   return (
     <group>
-      {board.ladders.map((jump) => (
-        <JumpPiece key={`l${jump.from}`} view={view} jump={jump} kind="ladder" />
-      ))}
+      <Bridges view={view} />
       {board.snakes.map((jump) => (
         <JumpPiece key={`s${jump.from}`} view={view} jump={jump} kind="snake" />
       ))}
