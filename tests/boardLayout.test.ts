@@ -5,6 +5,7 @@ import {
   LEDGE,
   PLINTH_TOP_Y,
   TRAY_ANCHOR,
+  TRAY_BASE,
   VARIANT_NAMES,
   WATER_LIFT,
   blockHeight,
@@ -115,7 +116,7 @@ describe('mount points for the die and tray (spec 7.2)', () => {
     expect(TRAY_ANCHOR[0]).toBeLessThan(LEDGE.x1);
     expect(TRAY_ANCHOR[2]).toBeGreaterThan(LEDGE.z0);
     expect(TRAY_ANCHOR[2]).toBeLessThan(LEDGE.z1);
-    expect(TRAY_ANCHOR[1]).toBe(PLINTH_TOP_Y);
+    expect(TRAY_ANCHOR[1]).toBe(PLINTH_TOP_Y + TRAY_BASE); // the tray stands on the ledge, its felt above the oak
   });
 });
 

@@ -24,8 +24,13 @@ export const RIM_HALF = 6.0;
 
 /** The oak ledge that carries the dice tray: x0, x1, z0, z1 on the plinth top. */
 export const LEDGE = { x0: 6.8, x1: 8.2, z0: 4.8, z1: 6.8 } as const;
-/** Centre of the tray well on the ledge top: the die (T44.7) and its tap box hang from here. */
-export const TRAY_ANCHOR: readonly [number, number, number] = [7.55, PLINTH_TOP_Y, 5.8];
+/** die.py's tray floor: its teak base sits this far below the felt (the tray origin). */
+export const TRAY_BASE = 0.12;
+/**
+ * The middle of the die tray's felt: the die (T44.7) and its tap box hang from here. The tray stands on the plain oak
+ * ledge (T44.14: it used to sink in with its felt level with the ledge top, which hid the indigo felt).
+ */
+export const TRAY_ANCHOR: readonly [number, number, number] = [7.55, PLINTH_TOP_Y + TRAY_BASE, 5.8];
 /** The scene origin of props and landmarks (T44.4): positions are (squareCentre x, blockTopY, squareCentre z). */
 export const PROPS_ORIGIN: readonly [number, number, number] = [0, 0, 0];
 

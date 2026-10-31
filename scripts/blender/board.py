@@ -478,11 +478,11 @@ def build_plinth():
             for k in range(count):
                 k2 = (k + 1) % count
                 part.face([top[k], top[k2], fan], None, (0, 1, 0))
-    # ledge for the dice tray (front-right): an oak block joined to the plinth, with a darker inset well
+    # ledge for the dice tray (front-right): an oak block joined to the plinth. The tray itself (teak, brass rim,
+    # indigo felt) is die.glb's: an inset well here covered its felt (T44.14), so the ledge top stays plain oak.
     x0, x1, z0, z1 = LEDGE
     part.box(((x0 + x1) / 2 - 0.1, (PLINTH_BOTTOM + PLINTH_TOP) / 2, (z0 + z1) / 2),
              (x1 - x0 + 0.2, PLINTH_TOP - PLINTH_BOTTOM, z1 - z0), OAK_SIDE, jitter=0.04)
-    part.box(((x0 + x1) / 2 + 0.05, PLINTH_TOP + 0.002, (z0 + z1) / 2), (1.15, 0.008, 1.7), "#A58058", jitter=0.02)
     return part.finish(attr_material("clay"), bevel=(0.03, 2, math.radians(55)))
 
 
