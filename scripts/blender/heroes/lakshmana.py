@@ -1,4 +1,4 @@
-"""Lakshmana, complete: clay-toy mesh on the shared hero rig (no tail bones: 27 bones), nine clips, meshopt GLB.
+"""Lakshmana, complete: clay-toy mesh on the shared hero rig (no tail bones, plus quiver.strap: 28 bones), nine clips, meshopt GLB.
 
 Run:  node scripts/blender/run.mjs scripts/blender/heroes/lakshmana.py public/models/heroes/lakshmana.glb
 Built the same way as hanuman.py (ClayKit + HERO_BONES + motion.py). What is his own: golden-fair skin, dark top-knot
@@ -39,6 +39,7 @@ HAIR = INK
 
 # ---------------------------------------------------------------- rig: the shared rig without Hanuman's tail
 BONES = {k: v for k, v in HERO_BONES.items() if not k.startswith("tail.")}
+BONES["quiver.strap"] = ("chest", (4.8, 0.5, 50.5), (5.4, 6.0, 50.5))   # T44 4.1 hero extra: the strap over the left shoulder (28 bones)
 
 # ---------------------------------------------------------------- the bow (prop.R, rest pose in design units)
 GRIP = V(HERO_BONES["prop.R"][1])          # fist centre; the bow stands along +Z through it
@@ -154,7 +155,7 @@ def _build_quiver(kit, torso_w):
     kit.paint("spine", LEATHER, torso_w)
     over = [on_torso(4.8, 49.6, 1.15), V((5.6, 0.6, 50.6)), V((5.6, 4.6, 51.0)), V((5.2, 7.0, 49.6))]
     kit.tube(over, 0.85, sides=4)
-    kit.paint("chest", LEATHER)
+    kit.paint("quiver.strap", LEATHER)
     behind = [on_torso(-4.6, 33.0, 1.15), on_torso(-4.9, 33.5, 1.2, back=True), V((-3.6, 7.4, 34.0))]
     kit.tube(behind, 0.85, sides=4)
     kit.paint("spine", LEATHER, torso_w)
@@ -251,7 +252,7 @@ def build_mesh():
     # ---- arms (L +X): tube blended at the elbow, shoulder, armlet (left only), bracer (right), fists
     for side, sx in (("L", 1), ("R", -1)):
         ua, fa = f"upperArm.{side}", f"foreArm.{side}"
-        kit.sphere((sx * 6.2, 0, 49.0), 2.9, u=7, v=5)
+        kit.sphere((sx * 6.2, 0, 49.0), 3.1, u=8, v=6)
         kit.paint(f"shoulder.{side}", SKIN)
         pts = [V((sx * 6.2, 0, 48.6)), V((sx * 6.55, 0, 44.2)), V((sx * 6.9, 0, 40.0)),
                V((sx * 7.15, 0, 35.8)), V((sx * 7.4, 0, 31.8))]
@@ -403,7 +404,7 @@ def scared_pose(f):
 
 
 def sad_pose(f):
-    """A sulk: one stamp of the foot, then arms folded, the bow held diagonally across the chest."""
+    """A sulk: one stamp of the foot, then arms folded over the belly with the bow stood near-upright in the right fist (R5)."""
     pose = _base()
     stamp = math.sin(math.pi * (f - 4) / 8) if 4 <= f <= 12 else 0.0
     slam = max(0.0, 1 - abs(f - 12) / 2.0)
@@ -416,9 +417,9 @@ def sad_pose(f):
     sigh = math.sin(2 * math.pi * f / 36)
     pose.rot("chest", rot_x(-1.4 * sigh))
     kin = SKEL.kin(pose)
-    reach(pose, "R", kin.point("chest", V((4.8, -8.4, 41.0))), V((-0.3, -0.6, -1.0)))
-    reach(pose, "L", kin.point("chest", V((-4.6, -6.0, 42.2))), V((0.3, -0.4, -1.0)))
-    STYLE.hold_bow(pose, 6.0, -36.0, -25.0)
+    reach(pose, "R", kin.point("chest", V((-1.4, -8.8, 36.5))), V((-0.4, -0.5, -1.0)))
+    reach(pose, "L", kin.point("chest", V((-5.6, -6.2, 39.6))), V((0.3, -0.4, -1.0)))
+    STYLE.hold_bow(pose, 0.0, 16.0, -35.0)
     return pose
 
 

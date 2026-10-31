@@ -298,10 +298,11 @@ describe('Lakshmana GLB: planted feet in motion', () => {
 describe('Lakshmana GLB: his own identity (T44 4.3, 4.4 R4 R5 R7)', () => {
   const report = JSON.parse(extras.report as string) as Record<string, { max_bow_tilt: number }>;
 
-  it('Rig_(NoTail)_ShouldCarryTheSharedRigWithoutHanumansTailBones', () => {
+  it('Rig_(NoTail)_ShouldCarrySharedRigPlusTheQuiverStrapAndNoTailBones', () => {
     const names = json.nodes.map((n) => n.name ?? '');
     expect(names.filter((n) => n.startsWith('tail'))).toEqual([]);
-    expect(json.skins[0]!.joints.length).toBe(27);
+    expect(json.skins[0]!.joints.length).toBe(28);
+    expect(names).toContain('quiver.strap');
   });
 
   it('R5_(BowNeverAimed)_ShouldStayWithin50DegreesOfUprightInEveryBoardClip', () => {
