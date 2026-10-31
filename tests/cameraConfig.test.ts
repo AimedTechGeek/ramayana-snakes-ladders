@@ -20,8 +20,9 @@ import {
   fitPose,
   focusPose,
   fovFor,
-  fitScreenShift,
-  worldPerPixel,
+  FIT_AZIMUTH,
+  KEEP_CLEAR,
+  projectToCanvas,
 } from '../src/app/board3d/cameraConfig';
 
 const deg = (rad: number) => (rad * 180) / Math.PI;
@@ -92,18 +93,48 @@ describe('Fit and Focus poses (spec 9.2)', () => {
   });
 });
 
-describe('Fit composition (T44.8)', () => {
-  it('FitShift_(DesktopCanvas)_Should_SlideTheBoardRightOfTheSeatCards', () => {
-    expect(fitScreenShift(1280)).toBeGreaterThan(0);
-    expect(fitScreenShift(1280)).toBeLessThanOrEqual(96);
+describe('Fit composition with the HUD (T44.14)', () => {
+  // the HUD boxes measured in the game at 4 seats (seat cards, banner + hint, toolbar, Roll pill), CSS px
+  const DESKTOP_HUD = [
+    { left: 24, top: 88, right: 264, bottom: 412 },
+    { left: 532, top: 24, right: 748, bottom: 93 },
+    { left: 1182, top: 88, right: 1256, bottom: 526 },
+    { left: 1095, top: 648, right: 1257, bottom: 696 },
+  ];
+  const PHONE_HUD = [
+    { left: 8, top: 8, right: 206, bottom: 94 },
+    { left: 336, top: 8, right: 508, bottom: 75 },
+    { left: 778, top: 8, right: 836, bottom: 306 },
+    { left: 699, top: 330, right: 829, bottom: 374 },
+  ];
+  const covered = (width: number, height: number, hud: typeof DESKTOP_HUD) => {
+    const pose = fitPose(width, height, FIT_AZIMUTH, hud);
+    return KEEP_CLEAR.filter((p) => {
+      const [x, y] = projectToCanvas(p, pose, width, height);
+      return hud.some((r) => x > r.left && x < r.right && y > r.top && y < r.bottom);
+    });
+  };
+
+  it('Fit_(Desktop1280x720FourSeats)_Should_LeaveNoEdgeSquareGateWaitingHeroOrTrayUnderTheHud', () => {
+    expect(covered(1280, 720, DESKTOP_HUD)).toEqual([]);
   });
 
-  it('FitShift_(PhoneCanvas)_Should_KeepTheBoardCentred', () => {
-    expect(fitScreenShift(844)).toBe(0);
+  it('Fit_(Phone844x390FourSeats)_Should_LeaveNoEdgeSquareGateWaitingHeroOrTrayUnderTheHud', () => {
+    expect(covered(844, 390, PHONE_HUD)).toEqual([]);
   });
 
-  it('WorldPerPixel_(FitDistance)_Should_MatchTheFrustumHeightOverTheCanvas', () => {
-    // 2 * 19 * tan(17.5 deg) = 11.98 u over 720 px
-    expect(worldPerPixel(19, 35, 720)).toBeCloseTo(11.98 / 720, 4);
+  it('Fit_(NoHudGiven)_Should_ReproduceThePlainBoxFit', () => {
+    // the T44.8 fit without the HUD: the seat cards then cover the front-left corner (the bug this replaces)
+    const plain = fitPose(1280, 720);
+    const front = KEEP_CLEAR.filter((p) => {
+      const [x, y] = projectToCanvas(p, plain, 1280, 720);
+      return x > 24 && x < 264 && y > 88 && y < 412;
+    });
+    expect(front.length).toBeGreaterThan(0);
+  });
+
+  it('Fit_(WithTheHud)_Should_StayWithinTheDistanceClamps', () => {
+    expect(fitPose(1280, 720, FIT_AZIMUTH, DESKTOP_HUD).distance).toBeLessThanOrEqual(MAX_DISTANCE);
+    expect(fitPose(844, 390, FIT_AZIMUTH, PHONE_HUD).distance).toBeLessThanOrEqual(MAX_DISTANCE_PHONE);
   });
 });

@@ -20,11 +20,10 @@ import {
   TRUCK_SPEED,
   clampDistance,
   fitPose,
-  fitScreenShift,
   focusPose,
   fovFor,
   isPhoneWidth,
-  worldPerPixel,
+  type ScreenRect,
 } from './cameraConfig';
 import type { DioramaView } from './DioramaView';
 
@@ -33,6 +32,16 @@ const DOLLY_STEP = 1.2;
 
 function prefersReducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** The HUD boxes Fit keeps the board out from under (elements marked `data-fit-reserve`), in canvas CSS px. */
+function hudRects(canvas: HTMLElement): ScreenRect[] {
+  const origin = canvas.getBoundingClientRect();
+  return [...document.querySelectorAll<HTMLElement>('[data-fit-reserve]')].flatMap((element) => {
+    const r = element.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return [];
+    return [{ left: r.left - origin.left, top: r.top - origin.top, right: r.right - origin.left, bottom: r.bottom - origin.top }];
+  });
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -48,14 +57,14 @@ export function CameraRig({ view }: { view: DioramaView }) {
   /** The player has orbited, panned or zoomed since the last fit: a resize then keeps their view. */
   const moved = useRef(false);
   const camera = useThree((state) => state.camera) as PerspectiveCamera;
+  const canvas = useThree((state) => state.gl.domElement);
   const width = useThree((state) => state.size.width);
   const height = useThree((state) => state.size.height);
   const reduced = useMemo(prefersReducedMotion, []);
 
   const fitTo = (rig: CameraControls, azimuth: number, animate: boolean): void => {
-    const { position, target, distance } = fitPose(width, height, azimuth);
-    const shift = fitScreenShift(width) * worldPerPixel(distance, fovFor(width), height);
-    void rig.setFocalOffset(-shift, 0, 0, animate && !reduced);
+    const { position, target } = fitPose(width, height, azimuth, hudRects(canvas));
+    void rig.setFocalOffset(0, 0, 0, animate && !reduced);
     void rig.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, animate && !reduced);
   };
   const latest = useRef({ fitTo });

@@ -95,7 +95,7 @@ export function Hud({
         <Sparkle />
       </div>
 
-      <ol className="seat-cards">
+      <ol className="seat-cards" data-fit-reserve>
         {hud.seats.map((seat, i) => (
           <SeatCard
             key={i}
@@ -108,7 +108,7 @@ export function Hud({
         ))}
       </ol>
 
-      <div className="turn-panel">
+      <div className="turn-panel" data-fit-reserve>
         <div className="banner glass" data-testid="banner">
           {speaker && <span className="banner-dot" style={{ background: HEROES[speaker.hero].cssColor }} />}
           {hud.banner}
@@ -118,7 +118,7 @@ export function Hud({
 
       <AnchoredBubbles view={view} anchors={bubbleAnchors} />
 
-      <div className="toolbar">
+      <div className="toolbar" data-fit-reserve>
         <IconButton icon="fit" label={t('ui.fit')} caption data-testid="fit" onClick={onFit} />
         <IconButton icon="focus" label={t('ui.focus')} caption data-testid="focus" onClick={onFocus} />
         <IconButton
@@ -152,6 +152,7 @@ export function Hud({
         variant="primary"
         className={`roll${hud.diceEnabled ? ' ready' : ''}${dice.rolling ? ' rolling' : ''}${six ? ' six' : ''}`}
         data-testid="dice"
+        data-fit-reserve
         aria-label={`${t('ui.roll')}. ${t('ui.rollHint')}`}
         disabled={!hud.diceEnabled}
         onClick={onRoll}
