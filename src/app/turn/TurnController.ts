@@ -19,7 +19,7 @@ import {
 } from '../../game/reveal';
 import { clearSave, saveGame } from '../../game/save';
 import { speech, t } from '../../i18n/i18n';
-import type { BoardView, Clock, HudSink, MotionOptions, SaveSink, SeatInfo, TurnAudio } from './ports';
+import type { BoardView, Clock, HudSink, MotionOptions, SaveSink, SeatInfo, SoundCue, TurnAudio } from './ports';
 
 export const BOT_DELAY_MS = 1000;
 /** Fast is for watching bots: a 4-bot Hard game (about 180 rolls) fits a minute (T44.14; was 400). */
@@ -291,13 +291,13 @@ export class TurnController {
         await this.advance(event.player, event.from, event.path);
         return;
       case 'Laddered':
-        await this.view.reveal(jumpChanges, this.motion);
+        await this.view.reveal(jumpChanges, this.motion, this.cue);
         await this.view.cross(event.player, event.jump, this.motion, this.arrive);
         this.ensureArrived(event.jump.to);
         this.audio.ladder(true);
         return;
       case 'Bitten':
-        await this.view.reveal(jumpChanges, this.motion);
+        await this.view.reveal(jumpChanges, this.motion, this.cue);
         await this.biteAt(event.player, event.jump);
         return;
       case 'TripleSixVoid':
@@ -323,7 +323,7 @@ export class TurnController {
   }
 
   private async biteAt(player: number, jump: Jump): Promise<void> {
-    await this.view.bite(player, jump, this.motion, this.arrive);
+    await this.view.bite(player, jump, this.motion, this.arrive, this.cue);
     this.ensureArrived(jump.to);
   }
 
@@ -348,10 +348,21 @@ export class TurnController {
     if (this.landedOnHidden) this.audio.reveal(motion.fast);
   }
 
+  /** Plays a sound on the beat the view cues it (the audio module itself stays silent under Mute). */
+  private readonly cue = (sound: SoundCue): void => {
+    if (this.disposed) return;
+    const fast = this.settings.fast;
+    if (sound === 'stone') this.audio.stone(fast);
+    else if (sound === 'hiss') this.audio.hiss(fast);
+    else if (sound === 'strike') this.audio.snake(fast);
+    else if (sound === 'gulp') this.audio.gulp(fast);
+    else this.audio.pop(fast);
+  };
+
   /** Lifts the fog of a square this event revealed, as the token arrives on it (once per square). */
   private readonly arrive = (square: number): void => {
     this.landedOnHidden = this.pendingTerrain.delete(square);
-    if (this.landedOnHidden) void this.view.reveal([{ kind: 'terrain', square }], this.motion);
+    if (this.landedOnHidden) void this.view.reveal([{ kind: 'terrain', square }], this.motion, this.cue);
   };
 
   /** The square is reached for sure (a view that skipped calling `arrive`); does not reset the airy-cue flag. */
@@ -364,7 +375,7 @@ export class TurnController {
     if (this.pendingTerrain.size === 0) return;
     const changes: RevealChange[] = [...this.pendingTerrain].map((square) => ({ kind: 'terrain', square }));
     this.pendingTerrain.clear();
-    void this.view.reveal(changes, this.motion);
+    void this.view.reveal(changes, this.motion, this.cue);
   }
 
   /**

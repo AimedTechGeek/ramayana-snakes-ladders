@@ -42,12 +42,15 @@ interface Trace {
   doneAt: number;
   scaleAtHide: number;
   squareWhileHidden: number;
+  /** Sound cues in order, with the clip that was playing when each was cued. */
+  cues: { sound: string; at: number }[];
 }
 
 /** Plays reveal + bite with fake time, polling every 4 ms. */
 async function run(view: DioramaView, motion: { fast: boolean; reducedMotion: boolean }): Promise<Trace> {
   const trace: Trace = {
     starts: [],
+    cues: [],
     hiddenFrom: -1,
     hiddenTo: -1,
     arrivedAt: -1,
@@ -75,8 +78,11 @@ async function run(view: DioramaView, motion: { fast: boolean; reducedMotion: bo
   const arrive = (square: number): void => {
     if (square === SNAKE.to) trace.arrivedAt = performance.now() - t0;
   };
-  await view.reveal([{ kind: 'jump', jumpId: SNAKE.from, jumpType: 'snake' }], motion);
-  const done = view.bite(0, SNAKE, motion, arrive).then(() => {
+  const cue = (sound: string): void => {
+    trace.cues.push({ sound, at: performance.now() - t0 });
+  };
+  await view.reveal([{ kind: 'jump', jumpId: SNAKE.from, jumpType: 'snake' }], motion, cue);
+  const done = view.bite(0, SNAKE, motion, arrive, cue).then(() => {
     trace.doneAt = performance.now() - t0;
   });
   for (let i = 0; i < 3000 && trace.doneAt < 0; i++) {
@@ -156,6 +162,16 @@ describe('Snake bite (T44 5.4)', () => {
     expect(Math.abs(startOf(trace, 'swallow') - startOf(trace, 'strike') - 50)).toBeLessThanOrEqual(20);
     expect(Math.abs(trace.arrivedAt - startOf(trace, 'swallow') - 80)).toBeLessThanOrEqual(20);
     expect(trace.doneAt).toBeLessThan(300);
+  });
+
+  it('Bite_(FirstTime)_ShouldCueHissStrikeGulpAndPopOnTheirBeats', async () => {
+    const view = makeView('rama');
+    const trace = await run(view, { fast: false, reducedMotion: false });
+    expect(trace.cues.map((c) => c.sound)).toEqual(['hiss', 'strike', 'gulp', 'pop']);
+    const at = (sound: string): number => trace.cues.find((c) => c.sound === sound)!.at;
+    expect(Math.abs(at('strike') - startOf(trace, 'strike'))).toBeLessThanOrEqual(20);
+    expect(Math.abs(at('gulp') - startOf(trace, 'swallow'))).toBeLessThanOrEqual(20);
+    expect(Math.abs(at('pop') - trace.arrivedAt)).toBeLessThanOrEqual(20);
   });
 
   it('Bite_(ReducedMotion)_ShouldPlaceTheTokenAtTheTailWithoutFlourish', async () => {

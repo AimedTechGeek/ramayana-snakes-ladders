@@ -19,6 +19,11 @@ export interface MotionOptions {
  */
 export type Arrive = (square: number) => void;
 
+/** A sound inside a view animation: a bridge's stones rising, a snake's hiss, strike, gulp and the token's pop. */
+export type SoundCue = 'stone' | 'hiss' | 'strike' | 'gulp' | 'pop';
+/** Called by the view on the beat a sound belongs to; the controller plays it (Fast and Mute applied there). */
+export type Cue = (sound: SoundCue) => void;
+
 /** Everything the view needs to draw the board as it is now: a new game, or a resumed one with its fog. */
 export interface BoardSetup {
   board: StoryBoard;
@@ -48,14 +53,14 @@ export interface BoardView {
   ): Promise<void>;
   /** The token crosses the bridge (ladder) `jump` from its foot to its top square. */
   cross(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive): Promise<void>;
-  /** The snake `jump` bites the token at its head and it reappears at the tail square. */
-  bite(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive): Promise<void>;
+  /** The snake `jump` bites the token at its head and it reappears at the tail square (cues: hiss on the first rise, strike, gulp, pop). */
+  bite(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive, cue: Cue): Promise<void>;
   /** The token turned round at 144 (a puff at the last square). */
   bounce(player: number, motion: MotionOptions): void;
   /** Three sixes: the token slides back to `restoredTo` (0: back to its seat), a penalty with no celebration. */
   voidTriple(player: number, restoredTo: number, motion: MotionOptions): Promise<void>;
-  /** Lifts fog from squares or raises jumps. A raised jump resolves when it stands; terrain may resolve at once. */
-  reveal(changes: readonly RevealChange[], motion: MotionOptions): Promise<void>;
+  /** Lifts fog from squares or raises jumps. A raised jump resolves when it stands; terrain may resolve at once. A bridge cues `stone` as it rises. */
+  reveal(changes: readonly RevealChange[], motion: MotionOptions, cue: Cue): Promise<void>;
   /** A seat's hero reacts (emotion and gesture, already scaled for Fast). Resolves when the gesture ends. */
   react(seat: number, reaction: Reaction, fast: boolean): Promise<void>;
   /** A speech bubble for a seat. */
@@ -105,6 +110,11 @@ export interface TurnAudio {
   dice(): void;
   reveal(fast?: boolean): void;
   ladder(short?: boolean): void;
+  stone(fast?: boolean): void;
+  hiss(fast?: boolean): void;
+  snake(fast?: boolean): void;
+  gulp(fast?: boolean): void;
+  pop(fast?: boolean): void;
   bounce(): void;
   tripleSix(): void;
   win(): void;

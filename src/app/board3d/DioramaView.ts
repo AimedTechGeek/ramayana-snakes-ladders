@@ -2,7 +2,7 @@
 // jumps, puffs) plus a small requestAnimationFrame tween runner that plays each animation and resolves when done.
 // No React here; components subscribe for discrete changes and read token transforms in useFrame.
 
-import type { Arrive, BoardSetup, BoardView, MotionOptions } from '../turn/ports';
+import type { Arrive, BoardSetup, BoardView, Cue, MotionOptions } from '../turn/ports';
 import type { Emotion, Reaction } from '../../characters/reactions';
 import { TIMING } from '../../characters/reactions';
 import type { StoryJump } from '../../core/boards';
@@ -346,7 +346,7 @@ export class DioramaView implements BoardView {
     await this.refan(player, motion);
   }
 
-  async bite(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive): Promise<void> {
+  async bite(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive, cue: Cue): Promise<void> {
     const token = this.token(player);
     const id = this.setup?.board.snakes.find((snake) => snake.from === jump.from)?.id ?? '';
     const meta = SNAKE_META[id];
@@ -364,6 +364,7 @@ export class DioramaView implements BoardView {
     // rise (the first reveal only): the snake appears from the ground
     if (this.snakePending.has(jump.from)) {
       this.snakePending.delete(jump.from);
+      cue('hiss');
       if (loaded) await play('rise', ms('rise'));
     }
     // hold: the head turns to the token
@@ -372,11 +373,13 @@ export class DioramaView implements BoardView {
     const snakeAt = toWorld(idleMouth[0], idleMouth[2]);
     token.heading = headingOf(spot, snakeAt, token.heading);
     if (ms('hold') > 0) await play('hold', ms('hold'));
+    cue('strike');
     await play('strike', ms('strike'));
     // swallow: the token flies to the mouth, shrinking; hidden at the end
     const feet = this.tokenPosition(player) ?? toThree(spot, 0);
     const mouth = mouthPoint(jump.from, id, 'strike');
     token.gliding = true;
+    cue('gulp');
     await play('swallow', ms('swallow'), (u) => {
       const e = u * u;
       const x = feet[0] + (mouth[0] - feet[0]) * e;
@@ -398,6 +401,7 @@ export class DioramaView implements BoardView {
     token.hidden = false;
     arrive(jump.to);
     this.puff(jump.to, motion);
+    cue('pop');
     await this.tween(ms('reappear'), (u) => (token.scale = 0.1 + 0.9 * backOut(u)));
     token.scale = 1;
     await this.refan(player, motion);
@@ -427,7 +431,7 @@ export class DioramaView implements BoardView {
     await this.refan(player, motion);
   }
 
-  async reveal(changes: readonly RevealChange[], motion: MotionOptions): Promise<void> {
+  async reveal(changes: readonly RevealChange[], motion: MotionOptions, cue: Cue): Promise<void> {
     this.revealMs = motion.reducedMotion ? 0 : motion.fast ? 60 : 420;
     const rising: number[] = [];
     for (const change of changes) {
@@ -440,6 +444,7 @@ export class DioramaView implements BoardView {
     }
     this.changed();
     if (rising.length === 0) return;
+    cue('stone');
     await this.tween(this.ms(RISE_MS, motion), (u) =>
       rising.forEach((id) => this.jumpRise.set(id, easeInOut(u))),
     );

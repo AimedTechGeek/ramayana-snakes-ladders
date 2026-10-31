@@ -10,6 +10,7 @@ import type {
   BoardSetup,
   BoardView,
   Clock,
+  Cue,
   GameResult,
   HudSink,
   MotionOptions,
@@ -94,9 +95,12 @@ class Recorder implements BoardView, HudSink {
     this.log.push(`view.cross ${player} ${jump.from}->${jump.to}`);
     arrive(jump.to);
   }
-  async bite(player: number, jump: Jump, _motion: MotionOptions, arrive: Arrive): Promise<void> {
+  async bite(player: number, jump: Jump, _motion: MotionOptions, arrive: Arrive, cue: Cue): Promise<void> {
     this.log.push(`view.bite ${player} ${jump.from}->${jump.to}`);
+    cue('strike');
+    cue('gulp');
     arrive(jump.to);
+    cue('pop');
   }
   bounce(player: number): void {
     this.log.push(`view.bounce ${player}`);
@@ -104,8 +108,10 @@ class Recorder implements BoardView, HudSink {
   async voidTriple(player: number, restoredTo: number): Promise<void> {
     this.log.push(`view.voidTriple ${player} ${restoredTo}`);
   }
-  async reveal(changes: readonly RevealChange[]): Promise<void> {
+  async reveal(changes: readonly RevealChange[], _motion: MotionOptions, cue: Cue): Promise<void> {
     this.log.push(`view.reveal ${changes.map(describeChange).join(', ')}`);
+    // like the diorama: a bridge cues its stones as it rises (a snake's hiss belongs to its bite)
+    if (changes.some((change) => change.kind === 'jump' && change.jumpType === 'ladder')) cue('stone');
   }
   async react(seat: number, reaction: Reaction): Promise<void> {
     this.reactions.push({ seat, reaction });
@@ -160,6 +166,21 @@ class FakeAudio implements TurnAudio {
   }
   ladder(): void {
     this.calls.push('ladder');
+  }
+  stone(fast = false): void {
+    this.calls.push(`stone${fast ? ' fast' : ''}`);
+  }
+  hiss(fast = false): void {
+    this.calls.push(`hiss${fast ? ' fast' : ''}`);
+  }
+  snake(fast = false): void {
+    this.calls.push(`snake${fast ? ' fast' : ''}`);
+  }
+  gulp(fast = false): void {
+    this.calls.push(`gulp${fast ? ' fast' : ''}`);
+  }
+  pop(fast = false): void {
+    this.calls.push(`pop${fast ? ' fast' : ''}`);
   }
   bounce(): void {
     this.calls.push('bounce');
@@ -430,6 +451,25 @@ describe('TurnController', () => {
 
     expect(view.gaits[0]).toEqual(gaitFor(3, false));
     expect(view.motions.every((motion) => motion.reducedMotion)).toBe(true);
+  });
+
+  it('LandingOnALadderFoot_Should_PlayTheStonesOfTheRisingBridge', async () => {
+    const { controller, audio } = rig(newGame([human('Asha'), human('Ravi')]), [4]);
+    await controller.start();
+    await controller.requestRoll();
+
+    expect(audio.calls).toContain('stone');
+    expect(audio.calls.indexOf('stone')).toBeLessThan(audio.calls.indexOf('ladder'));
+  });
+
+  it('Bitten_Should_PlayStrikeGulpAndPopOnTheViewsCuesWithTheFastFlag', async () => {
+    const state = midGame([human('Asha'), human('Ravi')], [33, 0]);
+    const { controller, audio } = rig({ state, reveal: { terrain: [1, 33, 144], jumps: [] } }, [4], { fast: true });
+    await controller.start();
+    await controller.requestRoll(); // 33 + 4 = 37: manthara's head
+
+    const snakeCalls = audio.calls.filter((c) => /^(hiss|snake|gulp|pop)/.test(c));
+    expect(snakeCalls).toEqual(['snake fast', 'gulp fast', 'pop fast']);
   });
 
   it('Mute_Should_SilenceTheAudioAndShowOnTheHud', async () => {
