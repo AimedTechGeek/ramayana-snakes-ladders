@@ -1,0 +1,41 @@
+{
+  "sheet": "atlas-test",
+  "width": 256,
+  "height": 512,
+  "padding": 2,
+  "frames": {
+    "coarse-small": {
+      "marker": "#FF00FF",
+      "world": {
+        "note": "dummy"
+      },
+      "w": 100,
+      "h": 68,
+      "factor": 4,
+      "anchorX": 52.4,
+      "anchorY": 34.4
+    },
+    "coarse-wide": {
+      "marker": "#FF00FF",
+      "world": {
+        "note": "dummy"
+      },
+      "w": 244,
+      "h": 192,
+      "factor": 4,
+      "anchorX": 122,
+      "anchorY": 99
+    },
+    "fine-tall": {
+      "marker": "#FF00FF",
+      "world": {
+        "note": "dummy"
+      },
+      "w": 104,
+      "h": 134,
+      "factor": 5,
+      "anchorX": 53.5,
+      "anchorY": 120.5
+    }
+  }
+}

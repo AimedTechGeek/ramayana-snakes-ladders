@@ -1,4 +1,5 @@
 // Typed manifest of the vector art under public/assets. URLs are relative so the GitHub Pages sub-path works.
+import type Phaser from 'phaser';
 import ladderPalette from '../../public/assets/ladders/palette.json';
 import snakePalette from '../../public/assets/snakes/palette.json';
 import type { Emotion } from '../characters/reactions';
@@ -113,4 +114,102 @@ export function figurineAssets(
         ),
       ),
     );
+}
+
+// ---- Texture atlases (T42.1): sheets built by scripts/art/iso/atlas.mjs into public/assets/iso/<sheet>.{png,json,meta.json}.
+
+/** Per-frame sidecar entry: sizes and the anchor are in frame (device) pixels; extra art-task meta rides along. */
+export interface AtlasFrameMeta {
+  w: number;
+  h: number;
+  /** Device px per logical px the frame was rasterised at; draw the sprite at scale 1 / factor. */
+  factor: number;
+  anchorX: number;
+  anchorY: number;
+  [extra: string]: unknown;
+}
+
+export interface AtlasMeta {
+  sheet: string;
+  width: number;
+  height: number;
+  padding: number;
+  frames: Record<string, AtlasFrameMeta>;
+}
+
+export interface AtlasSheet {
+  /** Phaser texture key; the sidecar is cached as json under `atlasMetaKey(key)`. */
+  key: string;
+  png: string;
+  json: string;
+  meta: string;
+}
+
+export function atlasMetaKey(key: string): string {
+  return `${key}-meta`;
+}
+
+/** URLs of a built sheet; `base` defaults to the shared iso folder. */
+export function atlasSheet(name: string, base = 'assets/iso'): AtlasSheet {
+  return {
+    key: name,
+    png: `${base}/${name}.png`,
+    json: `${base}/${name}.json`,
+    meta: `${base}/${name}.meta.json`,
+  };
+}
+
+/**
+ * Sheets every scene loads. Art tasks append theirs here (T42.2 `blocks`, `shared`; T42.3 `props`; T42.4 `frame`);
+ * level-specific `snakes-<level>` and `bridges-<level>` are loaded per level with `loadAtlas`.
+ */
+export const ATLAS_SHEETS: readonly AtlasSheet[] = [];
+
+/** Queues a sheet (image, Phaser atlas data and sidecar) on the scene's loader; call from preload(). */
+export function loadAtlas(scene: Phaser.Scene, sheet: AtlasSheet): void {
+  scene.load.atlas(sheet.key, sheet.png, sheet.json);
+  scene.load.json(atlasMetaKey(sheet.key), sheet.meta);
+}
+
+/** The sidecar of a loaded sheet. */
+export function atlasMeta(scene: Phaser.Scene, key: string): AtlasMeta {
+  const meta = scene.cache.json.get(atlasMetaKey(key)) as AtlasMeta | undefined;
+  if (!meta) throw new Error(`Atlas ${key} has no loaded meta`);
+  return meta;
+}
+
+/** One frame's sidecar entry; throws for an unknown frame so a typo fails loudly. */
+export function atlasFrameMeta(scene: Phaser.Scene, key: string, frame: string): AtlasFrameMeta {
+  const entry = atlasMeta(scene, key).frames[frame];
+  if (!entry) throw new Error(`Atlas ${key} has no frame ${frame}`);
+  return entry;
+}
+
+/** The anchor (world point of the object) in frame pixels. */
+export function atlasAnchor(meta: AtlasFrameMeta): { x: number; y: number } {
+  return { x: meta.anchorX, y: meta.anchorY };
+}
+
+/** The anchor as a Phaser origin (0..1): `sprite.setOrigin(origin.x, origin.y).setScale(1 / meta.factor)`. */
+export function atlasOrigin(meta: AtlasFrameMeta): { x: number; y: number } {
+  return { x: meta.anchorX / meta.w, y: meta.anchorY / meta.h };
+}
+
+/**
+ * A sprite of an atlas frame placed so its anchor sits at (x, y) in the container's logical px, drawn at 1 / factor
+ * (the board camera supplies the DPR and zoom).
+ */
+export function addAtlasSprite(
+  scene: Phaser.Scene,
+  key: string,
+  frame: string,
+  x: number,
+  y: number,
+): Phaser.GameObjects.Image {
+  const meta = atlasFrameMeta(scene, key, frame);
+  const origin = atlasOrigin(meta);
+  return scene.add
+    .image(x, y, key, frame)
+    .setOrigin(origin.x, origin.y)
+    .setScale(1 / meta.factor);
 }

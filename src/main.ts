@@ -47,6 +47,8 @@ async function startGame(): Promise<void> {
     height: LOGICAL_HEIGHT * DPR,
     backgroundColor: CSS.deepIndigo,
     dom: { createContainer: true },
+    // Atlas sheets are power-of-two; mipmaps stop fine textures sparkling when drawn small at Fit zoom (T42 spec 3.1).
+    render: { mipmapFilter: 'LINEAR_MIPMAP_LINEAR' },
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,

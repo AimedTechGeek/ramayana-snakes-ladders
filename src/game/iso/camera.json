@@ -9,5 +9,8 @@
   "topZ": 2.4,
   "headroom": 84,
   "rect": { "x": 0, "y": 0, "width": 784, "height": 720 },
-  "pad": 12
+  "pad": 12,
+  "zoom": { "min": 1.0, "follow": 2.0, "max": 2.5 },
+  "raster": { "fine": 5, "coarse": 4 },
+  "panMargin": 80
 }

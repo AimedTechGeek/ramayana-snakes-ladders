@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { applyHiDpi, LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../hidpi';
-import { ASSETS } from '../assets';
+import { ASSETS, ATLAS_SHEETS, loadAtlas } from '../assets';
+import { loadAtlasTest } from '../atlasTest';
 import { COLORS } from '../palette';
 
 const BAR = { width: 480, height: 20 };
@@ -23,6 +24,8 @@ export class PreloadScene extends Phaser.Scene {
     for (const asset of ASSETS) {
       this.load.svg(asset.key, asset.url, { width: asset.size, height: asset.size });
     }
+    for (const sheet of ATLAS_SHEETS) loadAtlas(this, sheet);
+    if (import.meta.env.DEV) loadAtlasTest(this);
   }
 
   create(): void {
