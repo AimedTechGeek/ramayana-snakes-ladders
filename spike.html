@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3 spike: Blender GLB Hanuman</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #8d9acb;
+        font-family: system-ui, sans-serif;
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+      }
+      #ui {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        display: flex;
+        gap: 6px;
+        z-index: 2;
+      }
+      button {
+        border: 0;
+        border-radius: 14px;
+        padding: 6px 12px;
+        background: #fff8ea;
+        color: #3a2418;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #f08a2c;
+        color: #fff;
+      }
+      #hud {
+        position: fixed;
+        bottom: 6px;
+        left: 8px;
+        color: #fff;
+        font-size: 12px;
+        z-index: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="ui">
+      <button id="btn-idle" aria-pressed="false">idle</button>
+      <button id="btn-walk" aria-pressed="true">walk</button>
+    </div>
+    <div id="hud"></div>
+    <script type="module" src="/src/spike/main.ts"></script>
+  </body>
+</html>
