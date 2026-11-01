@@ -76,7 +76,7 @@ function readAccessor(json, bin, index) {
     bytes = bin.subarray(bufferView.byteOffset ?? 0, (bufferView.byteOffset ?? 0) + bufferView.byteLength);
   }
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const base = ext ? accessor.byteOffset ?? 0 : accessor.byteOffset ?? 0;
+  const base = ext ? (accessor.byteOffset ?? 0) : (accessor.byteOffset ?? 0);
   const out = [];
   for (let i = 0; i < accessor.count; i++) {
     const row = [];
@@ -131,9 +131,11 @@ export async function pruneGlb(path) {
     for (const primitive of mesh.primitives) {
       Object.values(primitive.attributes).forEach((a) => usedAccessors.add(a));
       if (primitive.indices !== undefined) usedAccessors.add(primitive.indices);
-      for (const target of primitive.targets ?? []) Object.values(target).forEach((a) => usedAccessors.add(a));
+      for (const target of primitive.targets ?? [])
+        Object.values(target).forEach((a) => usedAccessors.add(a));
     }
-  for (const skin of json.skins ?? []) if (skin.inverseBindMatrices !== undefined) usedAccessors.add(skin.inverseBindMatrices);
+  for (const skin of json.skins ?? [])
+    if (skin.inverseBindMatrices !== undefined) usedAccessors.add(skin.inverseBindMatrices);
   for (const animation of json.animations ?? [])
     for (const sampler of animation.samplers) usedAccessors.add(sampler.input).add(sampler.output);
   const accessorMap = new Map();
@@ -145,12 +147,15 @@ export async function pruneGlb(path) {
   const remapAccessor = (i) => accessorMap.get(i);
   for (const mesh of json.meshes ?? [])
     for (const primitive of mesh.primitives) {
-      for (const key of Object.keys(primitive.attributes)) primitive.attributes[key] = remapAccessor(primitive.attributes[key]);
+      for (const key of Object.keys(primitive.attributes))
+        primitive.attributes[key] = remapAccessor(primitive.attributes[key]);
       if (primitive.indices !== undefined) primitive.indices = remapAccessor(primitive.indices);
-      for (const target of primitive.targets ?? []) for (const key of Object.keys(target)) target[key] = remapAccessor(target[key]);
+      for (const target of primitive.targets ?? [])
+        for (const key of Object.keys(target)) target[key] = remapAccessor(target[key]);
     }
   for (const skin of json.skins ?? [])
-    if (skin.inverseBindMatrices !== undefined) skin.inverseBindMatrices = remapAccessor(skin.inverseBindMatrices);
+    if (skin.inverseBindMatrices !== undefined)
+      skin.inverseBindMatrices = remapAccessor(skin.inverseBindMatrices);
   for (const animation of json.animations ?? [])
     for (const sampler of animation.samplers) {
       sampler.input = remapAccessor(sampler.input);
@@ -159,7 +164,8 @@ export async function pruneGlb(path) {
 
   // buffer views still referenced; the binary chunk (buffer 0) is rebuilt from their bytes only
   const usedViews = new Set();
-  for (const accessor of json.accessors) if (accessor.bufferView !== undefined) usedViews.add(accessor.bufferView);
+  for (const accessor of json.accessors)
+    if (accessor.bufferView !== undefined) usedViews.add(accessor.bufferView);
   for (const image of json.images ?? []) if (image.bufferView !== undefined) usedViews.add(image.bufferView);
   const viewMap = new Map();
   const chunks = [];
@@ -180,11 +186,14 @@ export async function pruneGlb(path) {
     viewMap.set(i, viewMap.size);
     const ext = bufferView.extensions?.EXT_meshopt_compression;
     if (ext && ext.buffer === 0) ext.byteOffset = place(ext.byteOffset, ext.byteLength);
-    else if (bufferView.buffer === 0) bufferView.byteOffset = place(bufferView.byteOffset ?? 0, bufferView.byteLength);
+    else if (bufferView.buffer === 0)
+      bufferView.byteOffset = place(bufferView.byteOffset ?? 0, bufferView.byteLength);
     return true;
   });
-  for (const accessor of json.accessors) if (accessor.bufferView !== undefined) accessor.bufferView = viewMap.get(accessor.bufferView);
-  for (const image of json.images ?? []) if (image.bufferView !== undefined) image.bufferView = viewMap.get(image.bufferView);
+  for (const accessor of json.accessors)
+    if (accessor.bufferView !== undefined) accessor.bufferView = viewMap.get(accessor.bufferView);
+  for (const image of json.images ?? [])
+    if (image.bufferView !== undefined) image.bufferView = viewMap.get(image.bufferView);
   const newBin = new Uint8Array(offset);
   let at = 0;
   for (const chunk of chunks) {

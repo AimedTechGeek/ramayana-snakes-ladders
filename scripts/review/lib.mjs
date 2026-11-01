@@ -20,7 +20,11 @@ export async function launch() {
 }
 
 /** A fresh page on the app, ready (`__app.ready`), with console/page errors collected into `problems`. */
-export async function openApp(browser, base, { viewport = DESKTOP, reducedMotion = false, touch = false } = {}) {
+export async function openApp(
+  browser,
+  base,
+  { viewport = DESKTOP, reducedMotion = false, touch = false } = {},
+) {
   const context = await browser.newContext({
     viewport,
     deviceScaleFactor: 1,
@@ -32,7 +36,8 @@ export async function openApp(browser, base, { viewport = DESKTOP, reducedMotion
   const problems = [];
   page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
   page.on('console', (m) => {
-    if (m.type() === 'error' && !m.location().url.endsWith('favicon.ico')) problems.push(`console: ${m.text()}`);
+    if (m.type() === 'error' && !m.location().url.endsWith('favicon.ico'))
+      problems.push(`console: ${m.text()}`);
   });
   await page.goto(base);
   await page.waitForFunction(() => window.__app?.ready === true, null, { timeout: 30000 });
@@ -83,7 +88,7 @@ export async function drive(page, seat, plan, fillers = {}) {
       const who = await current(page);
       if (who === seat) break;
       const pending = fillers[who];
-      await roll(page, Array.isArray(pending) ? pending.shift() ?? 1 : pending ?? 1);
+      await roll(page, Array.isArray(pending) ? (pending.shift() ?? 1) : (pending ?? 1));
     }
     await roll(page, value);
   }
@@ -95,7 +100,7 @@ export async function waitTurn(page, seat, fillers = {}) {
     const who = await current(page);
     if (who === seat) return;
     const pending = fillers[who];
-    await roll(page, Array.isArray(pending) ? pending.shift() ?? 1 : pending ?? 1);
+    await roll(page, Array.isArray(pending) ? (pending.shift() ?? 1) : (pending ?? 1));
   }
 }
 
@@ -155,10 +160,17 @@ export async function sheet(browser, dir, names, outPath, { cols = 4, w = 480, h
   const urls = await Promise.all(
     names.map(async (n) => 'data:image/png;base64,' + (await readFile(join(dir, n))).toString('base64')),
   );
-  const page = await browser.newPage({ viewport: { width: cols * w, height: h * Math.ceil(urls.length / cols) } });
+  const page = await browser.newPage({
+    viewport: { width: cols * w, height: h * Math.ceil(urls.length / cols) },
+  });
   await page.setContent(
     `<body style="margin:0;display:grid;grid-template-columns:repeat(${cols},${w}px)">` +
-      urls.map((u, i) => `<div style="position:relative"><img src="${u}" width="${w}" height="${h}"><b style="position:absolute;left:4px;top:2px;color:#fff;background:#000a;font:12px sans-serif;padding:1px 4px">${names[i]}</b></div>`).join('') +
+      urls
+        .map(
+          (u, i) =>
+            `<div style="position:relative"><img src="${u}" width="${w}" height="${h}"><b style="position:absolute;left:4px;top:2px;color:#fff;background:#000a;font:12px sans-serif;padding:1px 4px">${names[i]}</b></div>`,
+        )
+        .join('') +
       '</body>',
   );
   await page.waitForTimeout(300);

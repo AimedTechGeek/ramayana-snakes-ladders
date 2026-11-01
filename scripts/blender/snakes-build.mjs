@@ -26,6 +26,8 @@ for (const id of Object.keys(JSON.parse(text).snakes)) {
   const at = text.indexOf('"bytes": ', entry);
   const end = text.slice(at).search(/[,\n]/);
   text = text.slice(0, at) + `"bytes": ${pruned.after}` + text.slice(at + end);
-  console.log(`${id}: pruned ${pruned.dropped} rest-pose channels, ${pruned.before} -> ${pruned.after} bytes`);
+  console.log(
+    `${id}: pruned ${pruned.dropped} rest-pose channels, ${pruned.before} -> ${pruned.after} bytes`,
+  );
 }
 writeFileSync(MANIFEST, text);

@@ -360,7 +360,7 @@ Total per hero ≈ 340 keyframed frames at 28–31 bones → ≈ 180 KB of anima
 | `settle` | 5 f / 220 (0) | back to idle pose `Sine.easeOut` |
 | reappear | 260 (120) | at the tail square's field centre + fan slot: dust (6 motes), token scale 0.1 → 1 `Back.easeOut`; `audio.pop()`; tail block revealed |
 | Hold before strike | 260 (0) | head turns to face the token (160 ms), one tongue flick; bystander reactions start (T05) |
-| Total | ≈ 2.1 s first time, 1.7 s revealed; Fast ≈ 0.5 s | no body, trail or line between head and tail, ever |
+| Total | ≈ 2.1 s first time, 1.7 s revealed; Fast ≈ 0.25 s (T44.14 halved the Fast column: rise 60, strike 50, swallow 80, reappear 60) | no body, trail or line between head and tail, ever |
 
 ### 5.5 RESPECT (T42 5.6 binds, restated for 3D)
 
@@ -392,9 +392,9 @@ Total per hero ≈ 340 keyframed frames at 28–31 bones → ≈ 180 KB of anima
 | Deck height | `y(s) = blockTop + 0.054 + h·sin(π s / L)`, `h = min(0.39, 0.125 + 0.08 L)` (u) |
 | Arches | `n = max(1, round(L / 0.80))` semicircular openings between piers; pier = 0.14 x 0.14 base plate + 0.11 shaft + cap |
 | Deck | 0.25 wide, 0.045 thick, flagstone seams every 0.14 u (vertex-colour lines); parapets 0.018 wide x 0.045 tall with posts every 0.29 |
-| Per bridge (L u, h u, openings) | vishwamitra 3.25 / 0.39 / 4 · shiva-bow 1.61 / 0.25 / 2 · wedding 2.38 / 0.32 / 3 · guha 1.61 / 0.25 / 2 · shabari 0.27 / 0.14 / 1 · hanuman-meeting 1.61 / 0.25 / 2 · sugriva 2.38 / 0.32 / 3 · hanuman-leap 2.27 / 0.30 / 3 · rama-setu 2.38 (+ bow) / 0.32 / 3 |
+| Per bridge (L u, h u, openings) | vishwamitra 3.25 / 0.39 / 4 · shiva-bow 1.61 / 0.25 / 2 · wedding 2.38 (+ bow 0.6 toward +z) / 0.20 / 3 (owner, T44.14: Kaikeyi strikes in full behind the bowed, flattened deck) · guha 1.61 / 0.25 / 2 · shabari 0.27 / 0.14 / 1 · hanuman-meeting 1.61 / 0.25 / 2 · sugriva 2.38 / 0.32 / 3 · hanuman-leap 2.27 / 0.30 / 3 · rama-setu 2.38 (+ bow) / 0.32 / 3 |
 | Tris | ≤ 3,000 each; one GLB per bridge; 1 draw call (2 for rama-setu's slabs + water foam) |
-| Audit | T42 6.5 pairs re-asserted in the build (wedding deck over kaikeyi's coil clearance ≥ 0.125 u; rama-setu bow clears indrajit's coil on 114; no bridge overlaps another) |
+| Audit | T42 6.5 pairs re-asserted in the build (wedding deck at least 0.05 u clear of kaikeyi's coil, neck and head in every clip; rama-setu bow clears indrajit's coil on 114; no bridge overlaps another) |
 
 ### 6.3 Story identity (T42 6.3 kept)
 

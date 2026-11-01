@@ -11,7 +11,11 @@ import { DESKTOP, PHONE, launch, openApp, startGame } from './lib.mjs';
 const BASE = process.argv[2] ?? 'http://localhost:4173';
 const LEVEL = process.argv[3] ?? 'hard';
 const DIST = process.argv[4] ?? 'dist';
-const BOTS = ['hanuman', 'rama', 'sita', 'lakshmana'].map((hero) => ({ hero, controller: 'bot', name: hero }));
+const BOTS = ['hanuman', 'rama', 'sita', 'lakshmana'].map((hero) => ({
+  hero,
+  controller: 'bot',
+  name: hero[0].toUpperCase() + hero.slice(1),
+}));
 
 const kindOf = (url) => {
   if (/\/models\/snakes\//.test(url)) return 'snakes';
@@ -96,7 +100,10 @@ function distSizes() {
 
 const browser = await launch();
 const results = [];
-for (const [name, viewport] of [['desktop 1280x720', DESKTOP], ['phone 844x390', PHONE]]) {
+for (const [name, viewport] of [
+  ['desktop 1280x720', DESKTOP],
+  ['phone 844x390', PHONE],
+]) {
   console.log('profile', name);
   results.push(await profile(browser, name, viewport));
 }
