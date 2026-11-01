@@ -46,7 +46,7 @@ export async function openApp(
 }
 
 /** Queued dice: `roll(page, v)` makes the next roll come out as v. */
-async function installDice(page) {
+export async function installDice(page) {
   await page.evaluate(() => {
     window.__queue = [];
     const real = crypto.getRandomValues.bind(crypto);
