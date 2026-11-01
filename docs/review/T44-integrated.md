@@ -115,12 +115,18 @@ Downloads (JS and CSS brotli as a host serves them; GLBs and fonts at file size)
 | **Total, 4 heroes, every jump** | ≈ 3.8 MB | **≈ 2.85 MB** | ≤ 6.0 MB |
 | Dead files in `dist/` (iso atlases, spike) | 5.5 MB | 0 | — |
 
-Snakes and bridges are not requested before their first reveal; both sets are then preloaded in idle time
-(`requestIdleCallback`), which in headless Edge fires within a second of the board appearing.
+The first-interactive figures above are sums by kind (everything the board needs before the first roll). Measured in
+the browser, `bytesLoaded` 2.5 s after the board appears is **2.87 MB**: it also holds the snake and bridge sets
+(0.79 + 0.13 MB), which a snake or bridge does not wait for, but which `Snakes`/`Bridges` preload in idle time
+(`requestIdleCallback`) and headless Edge runs that within a second of the board appearing. So the board is
+interactive on about 1.9 MB, and by the time the idle preload has finished the page has fetched 2.87 MB, over the
+2.6 MB line if that line is meant to include the idle preload. Deferring the preload until after the first turn would
+keep the measured number under it; not done.
 
 ## Full games
 
-Production build (`vite preview`), 4 bots (Hanuman, Rama, Sita, Lakshmana), `scripts/review/games.mjs`; time from
+Production build (`vite preview`), 4 bots (Hanuman, Rama, Sita, Lakshmana; these runs and the Win capture used
+lower-case bot names, since fixed in the scripts), `scripts/review/games.mjs`; time from
 the board appearing to the Win dialog. Zero console errors and zero page errors in every game.
 
 | Game | Speed | Winner | Time |
@@ -132,7 +138,8 @@ the board appearing to the Win dialog. Zero console errors and zero page errors 
 | Easy, 4 bots, `prefers-reduced-motion: reduce` | Fast | Sita | 98 s |
 
 Other Hard 4-bot Fast games to Win in this task: 35 s and 41 s (perf runs, desktop and phone, production build) and
-61 s on the dev server with 211 rolls. Before T44.14 the same game took 147 s (T44.8) and 215–340 s on `ac8357f`.
+61 s on the dev server with 211 rolls. Before T44.14 the same game took 147 s (T44.8) and 215–340 s on `ac8357f` (those two ran while a capture run
+competed for the CPU, so they are upper bounds).
 The time follows the number of rolls (about 0.29 s per roll in Fast, 150–210 rolls for a Hard game), so a long game
 can still go just over a minute. Under reduced motion moves glide at run speed instead of Fast's sprint.
 
@@ -147,6 +154,10 @@ rotate prompt). `npm run verify`: lint, 688 tests, sim, build and smoke (with th
 | 2 | Real-phone frame rate | Headless only. |
 | 3 | `PerformanceMonitor` DPR policy (spec 10: 1.5 → 1.25 under load) | Not built; headless phone profile holds 60 fps. |
 | 4 | Sita's garland idle sway | The garland is weighted rigidly to the chest; a sway needs a new bone and clip keys in `sita.py`. |
-| 5 | Wedding bridge plan change | The owner asked to lower the hump; lowering alone cannot clear a full strike (see above), so the deck also bows 0.6 u toward the viewer. It now hangs over the front edge of 45–46 and clips 27's back corner. Owner to confirm the look. |
+| 5 | Wedding bridge plan change (look) | The owner asked to lower the hump; lowering alone cannot clear a full strike (see above), so the deck also bows 0.6 u toward the viewer. It now hangs over the front edge of 45–46 and clips 27's back corner, and the white dome on 45 stands right against its back parapet (captured with every jump standing from two angles; no prop pokes through the deck itself). The hump is 0.20 u along the whole span, not only over 46. Owner to confirm the look. |
 | 6 | A long Hard Fast game can take just over 60 s | 61 s in one run of four; see Full games. |
 | 7 | Fast numbers diverge from spec 4/5.4/7 Fast columns | Spec 5.4 annotated; locomotion, die and crossing Fast values changed with their tests. |
+| 8 | Download line with the idle preload | 2.87 MB measured vs 2.6 MB; see Metrics. |
+| 9 | T44.8 scenes not ported | Boot, Setup, region close-ups, fog mid-reveal, bubble, die rolling and chhatra are not in `scripts/review/capture.mjs` (only the scenes of this pack). |
+| 10 | Pier dust | Built and type-checked; not caught in a capture. |
+| 11 | Hero shots | Medium shots: the camera's minimum distance is 6 u. |
