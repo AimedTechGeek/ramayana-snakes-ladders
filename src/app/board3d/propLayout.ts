@@ -15,6 +15,16 @@ import { FAN_WORLD, FIELD_C_OFFSET, SIZE } from '../../game/iso/world';
 import { blockTopY } from './boardLayout';
 import { UNIT } from './coords';
 import manifest from './propsManifest.json';
+import {
+  blocksLane,
+  bounds,
+  lanesOfSquare,
+  placeRect,
+  fieldCentreU,
+  type Lane,
+  type Polygon,
+  type Rect,
+} from './walkways';
 
 export interface ManifestKind extends PropKind {
   tris: number;
@@ -23,6 +33,10 @@ export interface ManifestKind extends PropKind {
   fly: boolean;
   landmark: boolean;
   glb: 'props' | 'landmarks';
+  /** Ground box of the whole kind, relative to its origin (u, three-space axes); measured in Blender. */
+  footprint: Rect;
+  /** Solid parts of a kind with a doorway (walls, gate, palace); the gap between them is the doorway. */
+  colliders?: Rect[];
 }
 
 export const MANIFEST_KINDS = manifest.kinds as unknown as Record<string, ManifestKind>;
@@ -30,6 +44,23 @@ export const MANIFEST_KINDS = manifest.kinds as unknown as Record<string, Manife
 export const CATALOG: readonly ManifestKind[] = Object.values(MANIFEST_KINDS).filter((k) => !k.fly);
 /** Placement of every square 1..144 (index = square). Identical to `layoutProps` over the same catalog. */
 export const PROP_LAYOUT: readonly (readonly PlacedProp[])[] = layoutProps(CATALOG);
+
+/** The solid parts of a kind on the ground: its colliders when it has a doorway, else its footprint box. */
+export function solidParts(kind: string): readonly Rect[] {
+  const meta = MANIFEST_KINDS[kind];
+  if (!meta) return [];
+  return meta.colliders ?? [meta.footprint];
+}
+
+/** Flat water decals (height 0: foam ring, fish ripple) are walked over; everything else is solid for a hero. */
+export function isSolid(kind: string): boolean {
+  return (MANIFEST_KINDS[kind]?.height ?? 0) > 0;
+}
+
+/** Kinds with a doorway stand square to their lane (no skew), so the doorway lines up with it. */
+export function hasDoorway(kind: string): boolean {
+  return MANIFEST_KINDS[kind]?.colliders !== undefined;
+}
 
 export type BlockTopY = (square: number) => number;
 export const defaultBlockTopY: BlockTopY = blockTopY;
@@ -78,6 +109,7 @@ const ROUND_KINDS = new Set([
 const SKEW = 0.25;
 
 function yawOf(kind: string, square: number): number {
+  if (hasDoorway(kind)) return 0;
   const unit = (((seedOf(square) >>> 11) & 255) / 255) * 2 - 1;
   return ROUND_KINDS.has(kind) ? unit * Math.PI : unit * SKEW;
 }
@@ -149,45 +181,69 @@ function dressingSeed(square: number, k: number): number {
 export function dressingOf(square: number): (PlacedProp & { scale: number })[] {
   if (square === FINAL_SQUARE) return [];
   const kinds = DRESSING_KINDS[regionOf(square)];
-  const taken = (PROP_LAYOUT[square] ?? []).map((p) => ({ x: p.x, y: p.y }));
+  const taken = (SCENERY_LAYOUT[square] ?? []).map((p) => ({ x: p.x, y: p.y }));
   const free = DRESSING_SLOTS.filter((slot) =>
     taken.every((p) => Math.hypot(p.x - slot.x, p.y - slot.y) >= SLOT_CLEARANCE),
   );
+  const lanes = lanesOf(square);
   const out: (PlacedProp & { scale: number })[] = [];
   for (let k = 0; k < DRESSING_PER_BLOCK && free.length > 0; k++) {
     const seed = dressingSeed(square, k);
-    const slot = free.splice(seed % free.length, 1)[0]!;
     const kind = kinds[(seed >>> 8) % kinds.length]!;
     const jitterX = ((seed >>> 16) % 5) - 2;
     const jitterY = ((seed >>> 20) % 5) - 2;
     const scale = renderScaleOf(kind) * (0.75 + (((seed >>> 24) & 255) / 255) * 0.3);
-    out.push({ kind, x: slot.x + jitterX, y: slot.y + jitterY, scale });
+    const yaw = dressingYaw(square, kind, out.length);
+    // the seed picks a slot; a slot whose piece would stand in a walkway passes to the next one (T45.2)
+    const first = seed % free.length < 0 ? (seed % free.length) + free.length : seed % free.length; // as splice(negative)
+    let chosen: { index: number; x: number; y: number } | undefined;
+    for (let i = 0; i < free.length && !chosen; i++) {
+      const index = (first + i) % free.length;
+      const slot = free[index]!;
+      for (const [jx, jy] of [
+        [jitterX, jitterY],
+        [0, 0],
+      ] as const) {
+        const polygons = solidPolygons(kind, square, slot.x + jx, slot.y + jy, scale, yaw);
+        if (clearOfLanes(polygons, lanes)) {
+          chosen = { index, x: slot.x + jx, y: slot.y + jy };
+          break;
+        }
+      }
+    }
+    if (!chosen) continue;
+    free.splice(chosen.index, 1);
+    out.push({ kind, x: chosen.x, y: chosen.y, scale });
   }
   return out;
+}
+
+function dressingYaw(square: number, kind: string, index: number): number {
+  const unit = ((dressingSeed(square, index + 7) & 1023) / 1023) * 2 - 1;
+  return ROUND_KINDS.has(kind) ? unit * Math.PI : unit * SKEW;
 }
 
 /** Every prop standing on the board (random and fixed, then the dressing), in square order. */
 export function layoutInstances(blockTopY: BlockTopY = defaultBlockTopY): PropInstance[] {
   const out: PropInstance[] = [];
   for (let square = 1; square <= FINAL_SQUARE; square++) {
-    for (const placed of PROP_LAYOUT[square] ?? []) {
+    for (const placed of SCENERY_LAYOUT[square] ?? []) {
       if (!isInstancedProp(placed.kind, square)) continue;
       out.push({
         kind: placed.kind,
         square,
         position: spotOf(square, placed.x, placed.y, blockTopY(square)),
-        yaw: yawOf(placed.kind, square),
-        scale: renderScaleOf(placed.kind),
+        yaw: yawOf(placed.kind, square) + placed.turn,
+        scale: renderScaleOf(placed.kind) * placed.fit,
         dressing: false,
       });
     }
     dressingOf(square).forEach((placed, k) => {
-      const unit = ((dressingSeed(square, k + 7) & 1023) / 1023) * 2 - 1;
       out.push({
         kind: placed.kind,
         square,
         position: spotOf(square, placed.x, placed.y, blockTopY(square)),
-        yaw: ROUND_KINDS.has(placed.kind) ? unit * Math.PI : unit * SKEW,
+        yaw: dressingYaw(square, placed.kind, k),
         scale: placed.scale,
         dressing: true,
       });
@@ -215,7 +271,7 @@ export const CANOPY_BEHIND = 0.5;
 export const CANOPY_RADIUS = 0.34;
 /** Canopy rim height: well above a standing hero (80 px) so it never sits behind a head like a halo (R6). */
 export const CANOPY_HEIGHT = 104 * PX;
-export const THRONE_Z = -0.4;
+export const THRONE_Z = -0.485;
 /** The dais ring is 0.08 u tall; the throne stands on it. */
 export const DAIS_HEIGHT = 4.6 * PX;
 
@@ -244,6 +300,183 @@ export function underCanopy(x: number, z: number, margin = 0): boolean {
   const [px, pz] = CORONATION.pole;
   return Math.hypot(x - px, z - pz) < CORONATION.canopyRadius + margin;
 }
+
+// ---------------------------------------------------------------- walkways (T45.2)
+
+/**
+ * A seed-rule prop after the walkway pass: its offset (px from the tile centre), an extra quarter turn, and `fit`, the
+ * share of its render scale it keeps (1, or less when a big piece only fits its block smaller).
+ */
+export interface ScenicProp extends PlacedProp {
+  turn: number;
+  fit: number;
+}
+
+/** Palace yaw: the long hall faces the block centre (the front turns toward +x on a left strip, -x on a right one). */
+export const palaceYaw = (x: number): number => (x < 0 ? Math.PI / 2 : -Math.PI / 2);
+
+/** The lane from the gate on the rim, between its two posts, to square 1's field centre. */
+export function gateLane(): Lane {
+  const [x, , z] = spotOf(1, 0, 0, 0);
+  return { a: [x, z + GATE_OFFSET_Z], b: fieldCentreU(1) };
+}
+
+/** Every lane that crosses a block: the steps to its neighbours, its fan spokes and, on 1, the gate lane. */
+export function lanesOf(square: number): Lane[] {
+  const lanes = lanesOfSquare(square);
+  if (square === 1) lanes.push(gateLane());
+  return lanes;
+}
+
+/** The solid ground polygons of a prop of `kind` standing `x`, `y` px from a block centre ([] for a flat decal). */
+export function solidPolygons(
+  kind: string,
+  square: number,
+  x: number,
+  y: number,
+  scale: number,
+  yaw: number,
+): Polygon[] {
+  if (!isSolid(kind)) return [];
+  const [px, , pz] = spotOf(square, x, y, 0);
+  return solidParts(kind).map((part) => placeRect(part, [px, pz], yaw, scale));
+}
+
+export function clearOfLanes(polygons: readonly Polygon[], lanes: readonly Lane[]): boolean {
+  return polygons.every((polygon) => lanes.every((lane) => !blocksLane(polygon, lane)));
+}
+
+/** Solid pieces of the landmarks that stand on blocks: the gate on the rim, the palace hall, the empty throne. */
+export function landmarkSolids(): { name: string; square: number; polygons: Polygon[] }[] {
+  const out: { name: string; square: number; polygons: Polygon[] }[] = [];
+  const [gx, , gz] = gatePosition(0);
+  out.push({
+    name: 'ayodhya-threshold',
+    square: 1,
+    polygons: solidParts('ayodhya-threshold').map((part) => placeRect(part, [gx, gz], 0, 1)),
+  });
+  const palace = PROP_LAYOUT[36]?.find((p) => p.kind === 'janaka-palace');
+  if (palace) {
+    const [px, , pz] = spotOf(36, palace.x, palace.y, 0);
+    out.push({
+      name: 'janaka-palace',
+      square: 36,
+      polygons: solidParts('janaka-palace').map((part) => placeRect(part, [px, pz], palaceYaw(palace.x), 1)),
+    });
+  }
+  const throne = coronationSpots(0).throne;
+  const seat = (manifest.landmarkMeshes as unknown as Record<string, { colliders?: Rect[] }>).throne?.colliders ?? [];
+  out.push({
+    name: 'throne',
+    square: FINAL_SQUARE,
+    polygons: seat.map((part) => placeRect(part, [throne[0], throne[2]], 0, 1)),
+  });
+  return out;
+}
+
+/** Candidate moves (px), nearest first: a prop that stands in a lane slides to the closest free spot. */
+const MOVES: readonly (readonly [number, number])[] = (() => {
+  const out: [number, number][] = [];
+  for (let dy = -40; dy <= 40; dy += 2) for (let dx = -40; dx <= 40; dx += 2) out.push([dx, dy]);
+  return out.sort((a, b) => Math.hypot(...a) - Math.hypot(...b) || b[1] - a[1] || a[0] - b[0]);
+})();
+/** A moved prop's origin stays on its block, off the token field core and the chip corner (the T44 placement rules). */
+/** A doorway kind's side-strip distance from the block centre (px): its inner face clears the fan slots. */
+const WALL_X = 23;
+/** A big piece that fits nowhere at full size is tried smaller: these shares of its render scale, in order. */
+const FITS: readonly number[] = [1, 0.85, 0.7, 0.55];
+const CENTRE_LIMIT = 26;
+const POLYGON_LIMIT = 0.62;
+const PROP_GAP = 0.02;
+
+function allowedSpot(x: number, y: number): boolean {
+  if (Math.abs(x) > CENTRE_LIMIT || Math.abs(y) > CENTRE_LIMIT) return false;
+  if (Math.abs(x) < 16 && y > -22 && y < 4) return false;
+  return !(x < -10 && y > 12);
+}
+
+function apart(a: readonly Polygon[], b: readonly Polygon[]): boolean {
+  return a.every((p) =>
+    b.every((q) => {
+      const u = bounds(p);
+      const v = bounds(q);
+      return u.x1 + PROP_GAP < v.x0 || v.x1 + PROP_GAP < u.x0 || u.z1 + PROP_GAP < v.z0 || v.z1 + PROP_GAP < u.z0;
+    }),
+  );
+}
+
+function withinBlock(polygons: readonly Polygon[], square: number): boolean {
+  const [cx, , cz] = spotOf(square, 0, 0, 0);
+  return polygons.every((polygon) => {
+    const box = bounds(polygon);
+    const reach = Math.max(
+      Math.abs(box.x0 - cx),
+      Math.abs(box.x1 - cx),
+      Math.abs(box.z0 - cz),
+      Math.abs(box.z1 - cz),
+    );
+    return reach <= POLYGON_LIMIT;
+  });
+}
+
+/**
+ * The seed rule's props with every prop moved out of the walkways. A prop that stands clear stays; a doorway kind
+ * (wall, palace) stays and lets the lane through its gap; any other prop that blocks a lane slides to the nearest spot on
+ * its block that is clear of every lane, other props and the token field, quarter-turned when only that fits (long
+ * crops). Square 144 is the coronation set's.
+ */
+export const SCENERY_LAYOUT: readonly (readonly ScenicProp[])[] = (() => {
+  const out: ScenicProp[][] = [[]];
+  for (let square = 1; square <= FINAL_SQUARE; square++) {
+    const placed: ScenicProp[] = (PROP_LAYOUT[square] ?? []).map((p) => ({ ...p, turn: 0, fit: 1 }));
+    // a wall's doorway sits on the lane: the wall stands on the lane's line (the field centre's y), on its side strip
+    for (const p of placed)
+      if (hasDoorway(p.kind) && Math.abs(p.x) > 16) {
+        p.y = FIELD_C_OFFSET[1];
+        p.x = Math.sign(p.x) * WALL_X;
+      }
+    if (square === FINAL_SQUARE) {
+      out.push(placed);
+      continue;
+    }
+    const lanes = lanesOf(square);
+    const polygonsOf = (p: ScenicProp, turn = p.turn, fit = p.fit): Polygon[] =>
+      solidPolygons(
+        p.kind,
+        square,
+        p.x,
+        p.y,
+        renderScaleOf(p.kind) * fit,
+        p.kind === 'janaka-palace' ? palaceYaw(p.x) : yawOf(p.kind, square) + turn,
+      );
+    const fixed = (p: ScenicProp): boolean =>
+      MANIFEST_KINDS[p.kind]?.landmark === true || hasDoorway(p.kind) || clearOfLanes(polygonsOf(p), lanes);
+    const standing: Polygon[] = placed.filter(fixed).flatMap((p) => polygonsOf(p));
+    for (const prop of placed.filter((p) => !fixed(p))) {
+      const turns = ROUND_KINDS.has(prop.kind) ? [0] : [0, Math.PI / 2];
+      const found = FITS.some((fit) =>
+        turns.some((turn) =>
+          MOVES.some(([dx, dy]) => {
+            const moved = { ...prop, x: prop.x + dx, y: prop.y + dy };
+            if (!allowedSpot(moved.x, moved.y)) return false;
+            const polygons = polygonsOf(moved, turn, fit);
+            if (!clearOfLanes(polygons, lanes) || !withinBlock(polygons, square) || !apart(polygons, standing))
+              return false;
+            prop.x = moved.x;
+            prop.y = moved.y;
+            prop.turn = turn;
+            prop.fit = fit;
+            standing.push(...polygons);
+            return true;
+          }),
+        ),
+      );
+      if (!found) standing.push(...polygonsOf(prop));
+    }
+    out.push(placed);
+  }
+  return out;
+})();
 
 // ---------------------------------------------------------------- ambient spots
 

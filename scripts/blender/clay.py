@@ -347,8 +347,10 @@ def build_kinds(table):
         objects[name] = objs
         tris = sum(tri_count(o) for o in objs.values())
         size, lo, hi = extents_px(list(objs.values()))
+        # ground footprint in board units, three-space axes (x right, z toward the viewer = -Blender y), T45.2 walkways
+        footprint = dict(x=[round(lo[0], 4), round(hi[0], 4)], z=[round(-hi[1], 4), round(-lo[1], 4)])
         stats[name] = dict(tris=tris, glow="glow" in objs, width=round(size[0], 1), depth=round(size[1], 1),
-                           height=round(size[2], 1))
+                           height=round(size[2], 1), footprint=footprint)
     return objects, stats
 
 

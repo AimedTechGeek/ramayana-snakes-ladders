@@ -21,6 +21,7 @@ import { bridgeCurve, bridgeLeads } from './jumpCurves';
 import { DECK_SAMPLES, bridgeById, type Bridge } from './bridgeGeometry';
 import { glideLift, planHops, sampleHopWalk } from './bridgeHops';
 import { groundHeightAt } from './boardLayout';
+import { HERO_SCALE } from './figureScale';
 import { SNAKE_META, backOut, biteTimeline, mouthPoint, type SnakeClip } from './snakeChoreo';
 import { toThree, toWorld, waitingSpot } from './coords';
 import { crossingPlan, hopHeight, leapProgress } from './crossing';
@@ -107,7 +108,8 @@ const RISE_MS = 450;
 const REFAN_MS = 80;
 const PUFF_MS = 600;
 const ENTER_ARC = 0.6;
-const BOB = 0.08;
+/** Walk bob of the token (u): the full-size 0.08 u, scaled with the hero (T45.2). */
+const BOB = 0.08 * HERO_SCALE;
 
 export class DioramaView implements BoardView {
   setup: BoardSetup | null = null;
@@ -281,7 +283,7 @@ export class DioramaView implements BoardView {
     const glide = motion.reducedMotion;
     // T45.3: hop over every risen bridge the path crosses (hidden bridges are ignored: no reveal is given away)
     const hero = this.setup?.state.players[player]?.hero ?? 'rama';
-    const plan = planHops(path, this.risenBridges(), hero, gait, motion.fast, gait.cycle);
+    const plan = planHops(path, this.risenBridges(), hero, gait, motion.fast, gait.cycle * HERO_SCALE);
     const duration = glide ? (path.length / gait.speed) * 1000 : plan.totalMs;
     let passed = 0;
     let lastFrame = -1;
@@ -301,7 +303,7 @@ export class DioramaView implements BoardView {
         token.lift = sample.lift;
         return;
       }
-      const phase = phaseAt(sample.walked, gait.cycle);
+      const phase = phaseAt(sample.walked, gait.cycle * HERO_SCALE); // steps get shorter with the hero (Hero.tsx scaledStride)
       token.lift = Math.abs(Math.sin(phase * Math.PI * 2)) * BOB;
       const frame = frameIndexOf(phase, gait.frames);
       if (frame !== lastFrame && frame % (gait.frames / 2) === 0) this.sound?.step();

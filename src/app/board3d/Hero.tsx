@@ -44,6 +44,7 @@ import {
   type Beats,
   type HeroClip,
 } from './heroClips';
+import { HERO_SCALE } from './figureScale';
 import { HeroDirector } from './heroDirector';
 import { faceSetOf, faceTextureFor, showFrame } from './heroFace';
 
@@ -60,8 +61,11 @@ export interface PlayOptions {
 export interface HeroHandle {
   /** Crossfade to a clip (150 ms; never between walk and run). */
   play(clip: HeroClip, options?: PlayOptions): void;
-  /** Show `gait` at the phase of `distance` board units walked since the move began (no free-running). */
-  setLocomotion(gait: 'walk' | 'run', distance: number): void;
+  /**
+   * Show `gait` at the phase of `distance` board units walked since the move began (no free-running). `scale` is the
+   * figure's render scale: the stride on the board is the GLB stride times it, so the feet stay planted (default 1).
+   */
+  setLocomotion(gait: 'walk' | 'run', distance: number, scale?: number): void;
   /** Show the leap `ms` into its four beats (anticipation, takeoff, flight, land). */
   leap(ms: number, beats: Beats): void;
   /** Heading in radians (0 faces +z, the viewer). Eased over 120 ms unless `snap`. */
@@ -90,6 +94,11 @@ export interface HeroProps {
 
 const url = (hero: HeroId): string => `${import.meta.env.BASE_URL}models/heroes/${hero}.glb`;
 export const preloadHero = (hero: HeroId): void => useGLTF.preload(url(hero), false, true);
+
+/** Board length of one gait cycle of a figure drawn at `scale`: the GLB stride shrinks with it, so steps get shorter. */
+export function scaledStride(stride: number, scale: number): number {
+  return stride * scale;
+}
 
 /** The walk bob is at most 0.08; the 360 ms entry arc peaks at 0.6: above this the token is on the arc. */
 const ENTRY_ARC_LIFT = 0.1;
@@ -226,10 +235,10 @@ export function Hero({
         const weight = options.intensity === undefined ? 1 : clipWeight(options.intensity);
         activate(clip, options.fadeMs ?? CROSSFADE_MS, options.loop ?? isLooping(clip), weight);
       },
-      setLocomotion(gait, distance) {
+      setLocomotion(gait, distance, scale = 1) {
         const action = s.clip === gait ? s.action : activate(gait, CROSSFADE_MS, true, 1);
         if (!action) return;
-        const cycle = gait === 'walk' ? rig.extras.walk : rig.extras.run;
+        const cycle = scaledStride(gait === 'walk' ? rig.extras.walk : rig.extras.run, scale);
         action.time = clipTimeAtPhase(gait, phaseFromDistance(distance, cycle));
       },
       leap(ms, beats) {
@@ -376,7 +385,7 @@ export function useHeroActor(
     if (token.leap && !reduced) {
       handle.leap(token.leap.ms, token.leap.beats);
     } else if (!reduced && (directive.clip === 'walk' || directive.clip === 'run')) {
-      handle.setLocomotion(directive.clip, directive.distance / CELL);
+      handle.setLocomotion(directive.clip, directive.distance / CELL, HERO_SCALE);
     } else {
       // reduced motion: the token glides in the idle pose (T44 4.6), no steps, and the winner is glad, not spinning
       const gait = directive.clip === 'walk' || directive.clip === 'run';
