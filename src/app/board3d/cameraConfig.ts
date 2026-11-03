@@ -5,6 +5,8 @@ import { Box3, Matrix4, PerspectiveCamera, Vector3 } from 'three';
 import { HERO_SCALE } from './figureScale';
 import { BLOCK_HALF, LEDGE, PLINTH_BOTTOM_Y, PLINTH_HALF, TRAY_ANCHOR, blockTopY, squareCentre } from './boardLayout';
 import type { CameraPose } from './DioramaView';
+import { coronationSpots } from './propLayout';
+import manifest from './propsManifest.json';
 
 const DEG = Math.PI / 180;
 
@@ -59,8 +61,8 @@ export const HERO_HEIGHT = 1.43 * HERO_SCALE;
 
 /**
  * Points Fit keeps out from under the HUD (T44.14): the top corners of every edge square (the inner squares lie inside
- * them on screen), the gate south of square 1, the four waiting heroes on the front rim (feet and heads), and the
- * die tray's rim (it is tapped to roll).
+ * them on screen), the gate south of square 1, the throne's top (T45.1), the four waiting heroes on the front rim (feet
+ * and heads), and the die tray's rim (it is tapped to roll).
  */
 export const KEEP_CLEAR: readonly Vector3[] = (() => {
   const points: Vector3[] = [];
@@ -76,6 +78,10 @@ export const KEEP_CLEAR: readonly Vector3[] = (() => {
   const [gx, gz] = squareCentre(1);
   const rim = blockTopY(1);
   points.push(new Vector3(gx, rim, gz + 0.58), new Vector3(gx, rim + 1, gz + 0.58));
+  // T45.1: the throne on the top terrace now rises under the banner, so its top is kept clear too (the chhatra's tall
+  // canopy already sat under the banner on the flat T44 board and still may)
+  const { throne } = coronationSpots(blockTopY(144));
+  points.push(new Vector3(throne[0], throne[1] + manifest.landmarkMeshes.throne.height / 56, throne[2]));
   for (let seat = 0; seat < 4; seat++) {
     const x = -3 + seat * 0.5; // coords.waitingSpot
     points.push(new Vector3(x, rim, 6.15), new Vector3(x, rim + HERO_HEIGHT, 6.15));
