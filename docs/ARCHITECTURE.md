@@ -31,7 +31,7 @@ format (`src/game/save.ts`), locomotion timing (`src/game/iso/locomotion.ts`), b
 | `src/app/App.tsx` | Screen flow (Boot, Setup, Game, Gallery), the portrait `RotatePrompt`, and app-wide settings (language, Fast, Mute). |
 | `src/app/appHooks.ts` | `window.__app`, the test surface for the browser scripts, and the `bridge` object the React tree keeps current. |
 | `src/app/turn/` | `TurnController.ts` and `ports.ts` (`BoardView`, `HudSink`, `TurnAudio`, `Clock`, `SaveSink`, `MotionOptions`). |
-| `src/app/board3d/` | The 3D diorama: `BoardCanvas.tsx` (the R3F `<Canvas>`), `DioramaView.ts`, and one component per part of the scene (see [section 5](#5-the-3d-scene-graph)), plus pure helpers: `boardLayout.ts` (world positions and block heights), `cameraConfig.ts` (camera clamps, `fitPose`, `focusPose`), `crossing.ts` (bridge crossing plan), `snakeChoreo.ts` (`biteTimeline`), `bridgeGeometry.ts` (deck curves), `heroClips.ts` and `heroDirector.ts` (clip choice), `heroFace.ts` (face atlas), `fogField.ts`, `chips.ts`, `plaqueLayout.ts` (stage plaques and their atlas, drawn by `Plaques.tsx`), `propLayout.ts`, `dieRoll.ts`, `coords.ts`. |
+| `src/app/board3d/` | The 3D diorama: `BoardCanvas.tsx` (the R3F `<Canvas>`), `DioramaView.ts`, and one component per part of the scene (see [section 5](#5-the-3d-scene-graph)), plus pure helpers: `boardLayout.ts` (world positions and block heights), `cameraConfig.ts` (camera clamps, `fitPose`, `focusPose`), `crossing.ts` (bridge crossing plan), `snakeChoreo.ts` (`biteTimeline`), `bridgeGeometry.ts` (deck curves), `heroClips.ts` and `heroDirector.ts` (clip choice), `heroFace.ts` (face atlas), `fogField.ts`, `chips.ts`, `signpostLayout.ts` (stage signposts and their painted atlas, drawn by `Signposts.tsx`), `propLayout.ts`, `dieRoll.ts`, `coords.ts`. |
 | `src/app/hud/` | `HudStore.ts` (the `HudSink`), `Hud.tsx` (seat cards, banner, toolbar, Roll pill), `SeatCard.tsx`, `SpeechBubbles.tsx`, `bubbleLayout.ts`, `ChapterCard.tsx` (the stage card, timed and queued by `HudStore`). |
 | `src/app/screens/` | `BootScreen`, `SetupScreen`, `GameScreen`, `GalleryScreen`, `LoadingScreen`, and `Dialogs.tsx` (`MenuDialog`, `WinDialog`, `RotatePrompt`). |
 | `src/app/ui/` | Shared controls (`Pill`, `IconButton`, `Segmented`, `Toggle`, `LangSwitch` in `Controls.tsx`), `Dialog`, `Icon` (the `public/icons.svg` sprite), `Portrait` (monogram badges), `Toast`. |
@@ -157,6 +157,7 @@ graph TD
     PropsLayer --> Props["Props (props.glb, instanced per kind)"]
     PropsLayer --> Landmarks["Landmarks (landmarks.glb: gate, palace, dais, throne, chhatra)"]
     PropsLayer --> Ambient["Ambient (birds, animals, off under reduced motion)"]
+    Board --> Signposts["Signposts (stage names, one merged mesh)"]
     Suspense1 --> PlinthShadow["PlinthShadow"]
     Canvas --> Die["Die at TRAY_ANCHOR (die.glb: die and tray)"]
     Canvas --> Jumps["Jumps"]
