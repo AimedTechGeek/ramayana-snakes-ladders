@@ -139,12 +139,37 @@ def crenels(k, n, z, colour, x0, span, size=(3.2, 2.6, 1.8), along="y"):
         k.box((0, t, z) if along == "y" else (t, 0, z), size, colour)
 
 
+# T45.2 walkways: a wall's doorway sits at its middle, on the heroes' lane (the wall stands on the lane's line).
+# The clear gap is 18 px = 0.45 u after the 1.4 render scale (a lane is 0.22 u; walkers starting on a fan slot sweep wider); the wall is 36 px long along Y.
+WALL_LEN = 36.0
+DOOR = 18.0
+HALF_LEN = (WALL_LEN - DOOR) / 2   # each half of the wall
+JAMB = 3.2
+
+
+def doored_wall(k, h, body, cap, cap_z, crenel, plate):
+    """Two wall halves around the doorway, a taller jamb pillar on each side of the gap, a crenel per half."""
+    for s in (-1, 1):
+        yc = s * (DOOR / 2 + HALF_LEN / 2)
+        k.box((0, yc, 0), (7.4, HALF_LEN, h), body)
+        k.box((0, yc, h), (8.6, HALF_LEN + 0.5, 1.6), cap)
+        k.box((0, s * (DOOR / 2 + JAMB / 2), 0), (8.6, JAMB, h + 3.0), body)
+        k.box((0, s * 13.0, cap_z), (4.4, 4.6, 3.2), crenel)
+    k.box((0, -16.2, 0), (4.4, 0.8, 5.6), plate)
+
+
+def wall_colliders():
+    """Solid parts of a doored wall, px (Blender x, y): the two halves, jamb pillars included."""
+    return [dict(x=[-4.3, 4.3], y=[DOOR / 2, WALL_LEN / 2 + 0.5]), dict(x=[-4.3, 4.3], y=[-WALL_LEN / 2 - 0.5, -DOOR / 2])]
+
+
+COLLIDERS = {"rampart": wall_colliders(), "lanka-wall": wall_colliders()}
+COLLIDERS.update(landmarks.COLLIDERS)
+
+
 @kind("rampart", 120, ["ayodhya"], "side", "none", squares=[48, 47])
 def rampart(k):
-    k.box((0, 0, 0), (7.4, 32, 11), "#EFD9A8")
-    k.box((0, 0, 11), (8.6, 33, 1.6), "#E9C98A")
-    crenels(k, 4, 12.6, "#EFD9A8", -12, 24, (4.4, 4.6, 3.2))
-    k.box((0, -16.2, 0), (4.4, 0.8, 5.6), "#B89A64")
+    doored_wall(k, 11, "#EFD9A8", "#E9C98A", 12.6, "#EFD9A8", "#B89A64")
 
 
 @kind("dome", 160, ["ayodhya"], "side", "none", squares=[45])
@@ -413,10 +438,7 @@ def gull_perch(k):
 # =========================================================== lanka
 @kind("lanka-wall", 120, ["lanka"], "side", "none", squares=[121, 132])
 def lanka_wall(k):
-    k.box((0, 0, 0), (7.4, 32, 11.5), INDIGO)
-    k.box((0, 0, 11.5), (8.6, 33, 1.6), GOLD)
-    crenels(k, 4, 13, INDIGO, -12, 24, (4.4, 4.6, 3.2))
-    k.box((0, -16.2, 0), (4.4, 0.8, 5.6), INDIGO2)
+    doored_wall(k, 11.5, INDIGO, GOLD, 13, INDIGO, INDIGO2)
 
 
 @kind("tower-banner", 150, ["lanka"], "side", "sway", squares=[125, 129])
@@ -486,6 +508,15 @@ def butterfly(k):
         k.sheet((sx * 0.9, 0, 0), 1.8, 1.8, "#F8D56B", cols=1, rows=1, vertical=False)
 
 
+def colliders_of(name):
+    """Solid parts (board units, three-space x / z) for kinds with a doorway; others use their footprint box."""
+    parts = COLLIDERS.get(name)
+    if not parts:
+        return {}
+    return {"colliders": [dict(x=[round(p["x"][0] / 56, 4), round(p["x"][1] / 56, 4)],
+                              z=[round(-p["y"][1] / 56, 4), round(-p["y"][0] / 56, 4)]) for p in parts]}
+
+
 def main():
     out_dir, manifest_path = sys.argv[sys.argv.index("--") + 1:][:2]
     os.makedirs(out_dir, exist_ok=True)
@@ -495,6 +526,8 @@ def main():
     flat = [o for objs in objects.values() for o in objs.values()]
     clay.export_glb(os.path.join(out_dir, "props.glb"), flat)
     lm_stats = landmarks.export_landmarks(out_dir)
+    for name, s in lm_stats.items():
+        s.update(colliders_of(name))
 
     kinds = {}
     for name, meta in KINDS.items():
@@ -502,12 +535,14 @@ def main():
         kinds[name] = dict(kind=name, regions=meta["regions"], zone=meta["zone"], height=s["height"],
                            anim=meta["anim"], variety=meta["variety"], fly=meta["fly"], glow=s["glow"],
                            tris=s["tris"], budget=meta["budget"], glb="props", landmark=False,
+                           footprint=s["footprint"], **colliders_of(name),
                            **({"squares": meta["squares"]} if meta["squares"] else {}))
     for name, meta in landmarks.CATALOG.items():
         s = lm_stats[name]
         kinds[name] = dict(kind=name, regions=meta["regions"], zone=meta["zone"], height=s["height"],
                            anim=meta["anim"], variety=False, fly=False, glow=s["glow"], tris=s["tris"],
-                           budget=meta["budget"], glb="landmarks", landmark=True,
+                           budget=meta["budget"], glb="landmarks", landmark=True, footprint=s["footprint"],
+                           **colliders_of(name),
                            **({"squares": meta["squares"]} if meta["squares"] else {}))
     with open(manifest_path, "w", encoding="utf-8") as fh:
         json.dump({"kinds": kinds, "landmarkMeshes": {n: s for n, s in lm_stats.items()},

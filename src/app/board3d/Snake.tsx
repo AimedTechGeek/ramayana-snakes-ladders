@@ -12,10 +12,12 @@ import { AnimationAction, AnimationMixer, Group, LoopOnce, LoopRepeat, Mesh, Obj
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { Jump } from '../../core/types';
 import type { DioramaView } from './DioramaView';
+import { SNAKE_SCALE } from './figureScale';
 import {
   SNAKE_META,
   clipSeconds,
   snakeAnchor,
+  swayAt,
   tongueScale,
   type SnakeClip,
 } from './snakeChoreo';
@@ -120,6 +122,13 @@ export function SnakeFigure({ id, ref }: FigureProps) {
 /** One revealed snake on the board: placed at its head block, driven by the view's beat and the clock. */
 function SnakePiece({ view, jump, reducedMotion }: { view: DioramaView; jump: Jump & { id: string }; reducedMotion: boolean }) {
   const outer = useRef<Group>(null);
+  /**
+   * The close-up bite's growth (T45.4): a multiplier on top of whatever scale the root `outer` carries, about the coil
+   * centre on the block top, so the coil swells up and out over the hero. Owner exception to respect rule R9
+   * (2026-11-03): only while it bites, the grown head may rise above the hero; `view.snakeGrow` is empty at every
+   * other moment (never in Fast, never under reduced motion), so R9 holds everywhere else.
+   */
+  const grown = useRef<Group>(null);
   const handle = useRef<SnakeHandle>(null);
   const anchor = useMemo(() => snakeAnchor(jump.from, jump.id), [jump.from, jump.id]);
   const flick = useRef({ next: performance.now() + 1500 + Math.random() * 3000, start: -1e9, lastAct: '' });
@@ -139,6 +148,14 @@ function SnakePiece({ view, jump, reducedMotion }: { view: DioramaView; jump: Ju
     if (!node.visible) return;
     const f = flick.current;
     const act = view.snakeAct.get(jump.from);
+    const scale = grown.current;
+    if (scale) {
+      const grow = view.snakeGrow.get(jump.from);
+      scale.scale.setScalar(grow ?? 1);
+      // the satisfied sway as the grown coil shrinks back (settle beat of a close-up bite)
+      scale.rotation.z =
+        grow !== undefined && act?.clip === 'settle' && act.ms > 0 ? swayAt((now - act.start) / act.ms) : 0;
+    }
     if (act) {
       snake.sample(act.clip, act.ms <= 0 ? 1 : (now - act.start) / act.ms);
       if (act.clip === 'hold' && f.lastAct !== 'hold') f.start = now; // one flick as the head turns to the token
@@ -155,8 +172,10 @@ function SnakePiece({ view, jump, reducedMotion }: { view: DioramaView; jump: Ju
   });
 
   return (
-    <group ref={outer} position={anchor} visible={false}>
-      <SnakeFigure id={jump.id} ref={handle} />
+    <group ref={outer} position={anchor} scale={SNAKE_SCALE} visible={false}>
+      <group ref={grown}>
+        <SnakeFigure id={jump.id} ref={handle} />
+      </group>
     </group>
   );
 }

@@ -23,6 +23,22 @@ def catalog(name, regions, zone, squares, budget=1200, anim="none"):
     CATALOG[name] = dict(regions=regions, zone=zone, squares=squares, budget=budget, anim=anim)
 
 
+# T45.2 walkways: the solid parts of landmarks whose doorway sits on a hero lane, px (Blender x, y) from the origin.
+# The gate's doorway is the gap between its two posts (lane at x = 0); the palace hall is split by a 25 px doorway.
+GATE_POST_X, GATE_POST_R = 17.0, 4.6
+PALACE_DOOR = 25.0
+PALACE_HALL = (44.0, 11.0)
+COLLIDERS = {
+    "ayodhya-threshold": [dict(x=[s * GATE_POST_X - GATE_POST_R, s * GATE_POST_X + GATE_POST_R],
+                               y=[-GATE_POST_R, GATE_POST_R]) for s in (-1, 1)]
+    + [dict(x=[s * 25.5 - 3.2, s * 25.5 + 3.2], y=[-2.7, 2.7]) for s in (-1, 1)],
+    # the empty throne's seat and back (its front step is 1.6 px high: walked over)
+    "throne": [dict(x=[-6.5, 6.5], y=[-4.7, 4.9])],
+    "janaka-palace": [dict(x=[s * PALACE_DOOR / 2, s * PALACE_HALL[0] / 2][::s], y=[-PALACE_HALL[1] / 2 - 0.5,
+                                                                               PALACE_HALL[1] / 2 + 0.5])
+                      for s in (-1, 1)],
+}
+
 catalog("ayodhya-threshold", ["mithila"], "side", [1], anim="flicker")
 catalog("janaka-palace", ["mithila"], "side", [36])
 catalog("dais", ["lanka"], "centre", [144], budget=144)
@@ -73,25 +89,28 @@ def gate(k):
 
 @kind("janaka-palace", 1200)
 def janaka_palace(k):
-    """Mithila palace silhouette, 0.5 u tall: a long hall, three domed pavilions, balcony, flags. Faces -Y."""
-    k.rbox((0, 0, 0), (32, 11, 12), "#F3E3BD", r=0.18)
-    k.box((0, 0, 12), (34, 12, 1.8), "#E6C88A")
-    for x in (-10, 0, 10):
+    """Mithila palace silhouette, 0.5 u tall: a long hall in two wings around a 25 px doorway (T45.2: the heroes' lane
+    runs through it), two domed pavilions, balcony, flags. Faces -Y."""
+    wing = (PALACE_HALL[0] / 2 - PALACE_DOOR / 2)
+    for s in (-1, 1):
+        xc = s * (PALACE_DOOR / 2 + wing / 2)
+        k.rbox((xc, 0, 0), (wing, PALACE_HALL[1], 12), "#F3E3BD", r=0.18)
+        k.box((xc, 0, 12), (wing + 1, 12, 1.8), "#E6C88A")
+    for x in (-17.25, 17.25):
         k.rbox((x, -1, 13.8), (8, 8, 7), "#F6EBD0", r=0.3)
         k.lathe((x, -1, 20.8), [(0, 4.4), (1.4, 4.7), (4.4, 3.4), (6.6, 1.2), (7.8, 0.3)], "#F8F1E0", sides=9)
         k.cone((x, -1, 28.2), 0.4, 3.6, GOLD, sides=4)
         k.box((x, -5.2, 13.8), (3, 0.8, 4.6), "#B89A64")
         k.blob((x, -5.4, 18.4), (1.5, 0.5, 1.4), "#9ACFE0", u=6, v=4)
-    for x in (-13.5, 13.5):
+    for x in (-19.5, 19.5):
         k.lathe((x, 0, 12), [(0, 3.2), (9, 2.6), (10.4, 3.4)], "#F6EBD0", sides=8)
         k.lathe((x, 0, 22.4), [(0, 3.4), (4.4, 0.4)], SAFFRON, sides=8)
         k.tube([(x, 0, 26.8), (x, 0, 31)], 0.35, GOLD, sides=3)
         k.sheet((x, 0, 28.4), 3, 2.4, SAFFRON, cols=1, rows=1, rot=PI / 2)
-    for i in range(7):
-        k.box((-12 + i * 4, -6.4, 12), (1.8, 1.4, 2.0), "#E6C88A")
-    k.box((0, -7.4, 0), (10, 5, 1.0), "#E6C88A")
-    k.box((0, -8.8, 0), (13, 3.6, 0.6), "#E6C88A")
-    k.box((0, -5.7, 0), (3.6, 0.5, 6.6), "#8C6A3C")
+    for x in (-20.5, -17.5, -14.5, 14.5, 17.5, 20.5):
+        k.box((x, -6.4, 12), (1.8, 1.4, 2.0), "#E6C88A")
+    # a flat threshold mat in the doorway (1 px high: nothing to step over)
+    k.box((0, -2.0, 0), (PALACE_DOOR - 1.0, 11.0, 0.6), "#E6C88A")
 
 
 @kind("dais", 144)

@@ -5,6 +5,7 @@
 
 import manifest from './snakesManifest.json';
 import { blockTopY, squareCentre } from './boardLayout';
+import { SNAKE_SCALE } from './figureScale';
 
 export type SnakeClip = 'rise' | 'idle' | 'hold' | 'strike' | 'swallow' | 'settle';
 export const SNAKE_CLIPS: readonly SnakeClip[] = ['rise', 'idle', 'hold', 'strike', 'swallow', 'settle'];
@@ -28,22 +29,113 @@ export const SNAKE_META = manifest.snakes as unknown as Record<string, SnakeMeta
 /** The coil's centre sits this far behind its block's centre (5.2 placement); the token stands at the block centre. */
 export const ANCHOR_BACK: number = manifest.anchorBack;
 
-export type BiteStepName = 'rise' | 'hold' | 'strike' | 'swallow' | 'settle' | 'reappear';
+/**
+ * Beats of a bite. The classic bite (T44 5.4) is rise, hold, strike, swallow, settle, reappear. The cinematic bite
+ * (T45.4, "Bite close-ups") adds `focus` (the camera glides to the head block while the board dims), `grow` (the coil
+ * swells to BITE_GROW, in place of `hold`), `toTail` (the camera glides to the tail square) and `restore` (it eases
+ * back to the pose the player had).
+ */
+export type BiteStepName =
+  | 'focus'
+  | 'rise'
+  | 'grow'
+  | 'hold'
+  | 'strike'
+  | 'swallow'
+  | 'settle'
+  | 'toTail'
+  | 'reappear'
+  | 'restore';
 export interface BiteStep {
   name: BiteStepName;
   ms: number;
 }
 
 /** Spec 5.4, normal and Fast (Fast is not always half: hold and settle vanish; T44.14 halved spec 5.4's Fast again). */
-const NORMAL_MS: Record<BiteStepName, number> = { rise: 380, hold: 260, strike: 180, swallow: 320, settle: 220, reappear: 260 };
-const FAST_MS: Record<BiteStepName, number> = { rise: 60, hold: 0, strike: 50, swallow: 80, settle: 0, reappear: 60 };
+const NORMAL_MS: Record<BiteStepName, number> = {
+  focus: 0,
+  rise: 380,
+  grow: 0,
+  hold: 260,
+  strike: 180,
+  swallow: 320,
+  settle: 220,
+  toTail: 0,
+  reappear: 260,
+  restore: 0,
+};
+const FAST_MS: Record<BiteStepName, number> = {
+  focus: 0,
+  rise: 60,
+  grow: 0,
+  hold: 0,
+  strike: 50,
+  swallow: 80,
+  settle: 0,
+  toTail: 0,
+  reappear: 60,
+  restore: 0,
+};
+/**
+ * T45.4 close-ups, normal speed, about 4.2 s: focus 0.7 (the first-time rise plays inside the glide), grow 0.7,
+ * strike 0.3, swallow 0.6, settle 0.6 (shrink, sway, puff), to the tail 0.4, reappear 0.3, restore 0.6.
+ */
+const CINEMA_MS: Record<BiteStepName, number> = {
+  focus: 700,
+  rise: 380,
+  grow: 700,
+  hold: 0,
+  strike: 300,
+  swallow: 600,
+  settle: 600,
+  toTail: 400,
+  reappear: 300,
+  restore: 600,
+};
+/** Close-ups under reduced motion: no camera, no growth, the beats are instant; the board's dim fades in and out. */
+export const CINEMA_FADE_MS = 350;
 
-export function biteTimeline(options: { fast: boolean; reducedMotion: boolean; firstTime: boolean }): BiteStep[] {
-  const table = options.fast ? FAST_MS : NORMAL_MS;
-  const names: BiteStepName[] = ['hold', 'strike', 'swallow', 'settle', 'reappear'];
-  if (options.firstTime) names.unshift('rise');
-  // Reduced motion keeps the three static beats: the snake is there, the token vanishes, the token appears at the tail.
-  return names.map((name) => ({ name, ms: options.reducedMotion ? 0 : table[name] }));
+/** The coil swells to this multiple of its base scale during a close-up bite (T45.4; R9 exception, see Snake.tsx). */
+export const BITE_GROW = 1.6;
+/** Share of the close-up swallow beat the token takes to reach the mouth; the jaw closes over the rest. */
+export const SWALLOW_IN = 0.55;
+
+export function biteTimeline(options: {
+  fast: boolean;
+  reducedMotion: boolean;
+  firstTime: boolean;
+  /** The "Bite close-ups" setting (T45.4): the cinematic beats. Fast keeps the short bite whatever the setting. */
+  closeUps?: boolean;
+}): BiteStep[] {
+  const cinema = options.closeUps === true && !options.fast;
+  const table = options.fast ? FAST_MS : cinema ? CINEMA_MS : NORMAL_MS;
+  const names: BiteStepName[] = cinema
+    ? ['focus', 'grow', 'strike', 'swallow', 'settle', 'toTail', 'reappear', 'restore']
+    : ['hold', 'strike', 'swallow', 'settle', 'reappear'];
+  // the first-time rise sits inside the focus glide: the coil uncoils as the camera arrives
+  if (options.firstTime) names.splice(cinema ? 1 : 0, 0, 'rise');
+  const ms = (name: BiteStepName): number => {
+    if (options.reducedMotion) {
+      // Reduced motion keeps the three static beats: the snake is there, the token vanishes, the token appears at the
+      // tail; close-ups add only a fade of the board's dim (an opacity change, no movement).
+      return cinema && (name === 'focus' || name === 'restore') ? CINEMA_FADE_MS : 0;
+    }
+    // the focus glide keeps its length when the rise plays inside it: focus + rise = CINEMA_MS.focus
+    return name === 'focus' && options.firstTime ? table.focus - table.rise : table[name];
+  };
+  return names.map((name) => ({ name, ms: ms(name) }));
+}
+
+/** Growth multiplier at progress u of the grow beat (1 -> BITE_GROW) or of the settle beat (BITE_GROW -> 1), eased. */
+export function growAt(u: number, direction: 'grow' | 'shrink'): number {
+  const e = 0.5 - Math.cos(Math.max(0, Math.min(1, u)) * Math.PI) / 2;
+  return direction === 'grow' ? 1 + (BITE_GROW - 1) * e : BITE_GROW + (1 - BITE_GROW) * e;
+}
+
+/** The satisfied sway of the settle beat: a roll about the coil's axis that fades out, radians at progress u. */
+export function swayAt(u: number): number {
+  const t = Math.max(0, Math.min(1, u));
+  return Math.sin(t * Math.PI * 2) * 0.07 * (1 - t);
 }
 
 /** Coil centre, three units: the head block's centre pushed back, standing on the block top. */
@@ -53,10 +145,27 @@ export function snakeAnchor(square: number, id?: string): Vec3 {
   return [x, blockTopY(square), z - back];
 }
 
-export function mouthPoint(square: number, id: string, phase: 'idle' | 'hold' | 'strike'): Vec3 {
+/**
+ * Where the mouth is in three units. The manifest's offsets are for the authored snake; the snake root is drawn at
+ * `scale` (default `SNAKE_SCALE`, about the coil centre), so the offsets scale with it. A growing snake (T45.4) passes
+ * `SNAKE_SCALE * growth`.
+ */
+export function mouthPoint(
+  square: number,
+  id: string,
+  phase: 'idle' | 'hold' | 'strike',
+  scale: number = SNAKE_SCALE,
+): Vec3 {
   const a = snakeAnchor(square, id);
   const m = SNAKE_META[id]?.mouth[phase] ?? [0, 0.5, 0];
-  return [a[0] + m[0], a[1] + m[1], a[2] + m[2]];
+  return [a[0] + m[0] * scale, a[1] + m[1] * scale, a[2] + m[2] * scale];
+}
+
+/** The mouth point of a coil grown by `grow` about its anchor (a multiplier on whatever scale `mouthPoint` has). */
+export function grownMouthPoint(square: number, id: string, phase: 'idle' | 'hold' | 'strike', grow: number): Vec3 {
+  const a = snakeAnchor(square, id);
+  const m = mouthPoint(square, id, phase);
+  return [a[0] + (m[0] - a[0]) * grow, a[1] + (m[1] - a[1]) * grow, a[2] + (m[2] - a[2]) * grow];
 }
 
 /** Seconds into `clip` at progress u (0..1) of the beat it is stretched over. */

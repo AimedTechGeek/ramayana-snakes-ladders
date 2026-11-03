@@ -9,8 +9,6 @@ import type { StoryJump } from '../../core/boards';
 import type { Jump } from '../../core/types';
 import { fieldCentre, type Vec2 } from '../../game/iso/boardIso';
 import {
-  durationOf,
-  distanceAt,
   frameIndexOf,
   phaseAt,
   pathOf,
@@ -20,9 +18,22 @@ import {
 import { restingSpot } from '../../game/iso/tokenPose';
 import type { RevealChange } from '../../game/reveal';
 import { bridgeCurve, bridgeLeads } from './jumpCurves';
-import { DECK_SAMPLES, bridgeById } from './bridgeGeometry';
-import { groundHeightAt } from './boardLayout';
-import { SNAKE_META, backOut, biteTimeline, mouthPoint, type SnakeClip } from './snakeChoreo';
+import { DECK_SAMPLES, bridgeById, type Bridge } from './bridgeGeometry';
+import { glideLift, planHops, sampleHopWalk } from './bridgeHops';
+import { blockTopY, groundHeightAt, squareCentre } from './boardLayout';
+import { bitePose } from './cameraConfig';
+import { HERO_SCALE } from './figureScale';
+import {
+  SNAKE_META,
+  backOut,
+  biteTimeline,
+  growAt,
+  grownMouthPoint,
+  mouthPoint,
+  snakeAnchor,
+  SWALLOW_IN,
+  type SnakeClip,
+} from './snakeChoreo';
 import { toThree, toWorld, waitingSpot } from './coords';
 import { crossingPlan, hopHeight, leapProgress } from './crossing';
 import type { Beats } from './heroClips';
@@ -88,6 +99,12 @@ export interface CameraApi {
   /** Test hooks (`window.__app.camera`): an exact pose, angles in radians, instantly. */
   set(pose: CameraPose): void;
   get(): CameraPose;
+  /**
+   * Bite close-ups (T45.4), the one move the game makes by itself: an eased glide to `pose` over `ms`. A later glide
+   * retargets from wherever the camera is; any player input (drag, wheel, keys, Fit, Focus) drops it and calls
+   * `DioramaView.cancelCamera`, so the player always keeps control.
+   */
+  glide(pose: CameraPose, ms: number): void;
 }
 
 export interface CameraPose {
@@ -108,7 +125,8 @@ const RISE_MS = 450;
 const REFAN_MS = 80;
 const PUFF_MS = 600;
 const ENTER_ARC = 0.6;
-const BOB = 0.08;
+/** Walk bob of the token (u): the full-size 0.08 u, scaled with the hero (T45.2). */
+const BOB = 0.08 * HERO_SCALE;
 
 export class DioramaView implements BoardView {
   setup: BoardSetup | null = null;
@@ -125,6 +143,18 @@ export class DioramaView implements BoardView {
   snakePending = new Set<number>();
   /** Head squares whose snake GLB has mounted (Snake.tsx). */
   snakeLoaded = new Set<number>();
+  /**
+   * Growth of a coil in a close-up bite, per head square (a multiplier on the snake root's base scale; absent: 1).
+   * Owner exception to respect rule R9 (2026-11-03): while it bites, a grown head may rise above the hero. Set only
+   * between the grow and settle beats of `bite()` and never in Fast or under reduced motion.
+   */
+  snakeGrow = new Map<number, number>();
+  /** The "Bite close-ups" setting (T45.4): the staged bite with the camera. Fast keeps the short bite regardless. */
+  biteCloseUps = true;
+  /** A close-up bite is on: the board dims round the scene (GameScreen draws the vignette). */
+  cinema = false;
+  /** The player took the camera during a close-up: the bite finishes in place and does not restore the pose. */
+  private cameraCancelled = false;
   current = -1;
   moods: (SeatMood | null)[] = [];
   bubbles: (Bubble | null)[] = [];
@@ -188,9 +218,30 @@ export class DioramaView implements BoardView {
     this.winShown = shown;
   }
 
+  setBiteCloseUps(on: boolean): void {
+    this.biteCloseUps = on;
+  }
+
+  /** The player moved the camera (drag, wheel, keys, Fit, Focus): the bite's camera part stops at once (T45.4). */
+  cancelCamera(): void {
+    this.cameraCancelled = true;
+    if (this.cinema) {
+      this.cinema = false;
+      this.changed();
+    }
+  }
+
   /** The story ladder (id, names) behind an engine jump on the current board. */
   private ladderOf(jump: Jump): StoryJump | undefined {
     return this.setup?.board.ladders.find((ladder) => ladder.from === jump.from);
+  }
+
+  /** The bridges standing now (revealed jumps with any rise): what a walk must hop over. */
+  private risenBridges(): Bridge[] {
+    const ladders = this.setup?.board.ladders ?? [];
+    return ladders
+      .filter((ladder) => (this.jumpRise.get(ladder.from) ?? 0) > 0)
+      .flatMap((ladder) => bridgeById(ladder.id) ?? []);
   }
 
   dispose(): void {
@@ -272,23 +323,36 @@ export class DioramaView implements BoardView {
     token.square = last;
     const path = pathOf(token.spot, squares, this.spotOf(player));
     const glide = motion.reducedMotion;
-    const duration = glide ? (path.length / gait.speed) * 1000 : durationOf(path.length, gait, motion.fast);
+    // T45.3: hop over every risen bridge the path crosses (hidden bridges are ignored: no reveal is given away)
+    const hero = this.setup?.state.players[player]?.hero ?? 'rama';
+    const plan = planHops(path, this.risenBridges(), hero, gait, motion.fast, gait.cycle * HERO_SCALE);
+    const duration = glide ? (path.length / gait.speed) * 1000 : plan.totalMs;
     let passed = 0;
     let lastFrame = -1;
     await this.tween(duration, (u) => {
-      const walked = glide ? u * path.length : distanceAt(u, path.length, gait, motion.fast);
+      const sample = glide ? null : sampleHopWalk(plan, path.length, gait, motion.fast, u * duration);
+      const walked = sample ? sample.d : u * path.length;
       const at = sampleAt(path, walked);
       token.spot = at.point;
       if (at.dir[0] !== 0 || at.dir[1] !== 0) token.heading = Math.atan2(at.dir[0], at.dir[1]);
       while (passed < squares.length - 1 && walked >= path.centreAt[passed]!) arrive(squares[passed++]!);
-      if (glide) return;
-      const phase = phaseAt(walked, gait.cycle);
+      if (!sample) {
+        token.lift = glideLift(plan, walked);
+        return;
+      }
+      token.leap = sample.leap;
+      if (sample.leap) {
+        token.lift = sample.lift;
+        return;
+      }
+      const phase = phaseAt(sample.walked, gait.cycle * HERO_SCALE); // steps get shorter with the hero (Hero.tsx scaledStride)
       token.lift = Math.abs(Math.sin(phase * Math.PI * 2)) * BOB;
       const frame = frameIndexOf(phase, gait.frames);
       if (frame !== lastFrame && frame % (gait.frames / 2) === 0) this.sound?.step();
       lastFrame = frame;
     });
     token.lift = 0;
+    token.leap = null;
     arrive(last);
     await this.refan(player, motion);
   }
@@ -353,65 +417,123 @@ export class DioramaView implements BoardView {
     await this.refan(player, motion);
   }
 
+  /**
+   * The bite (T44 5.4), or with "Bite close-ups" on and not Fast the staged scene of T45.4: the camera glides to the
+   * head block and the board dims (`cinema`), the coil swells (`snakeGrow`) as the head turns to the hero, a slow
+   * strike, the hero into the mouth and a bulge down the body, the coil shrinks back with a sway and a puff, the camera
+   * glides to the tail where the hero reappears sad, and eases back to the player's pose. Any player camera input
+   * cancels the camera part (`cancelCamera`); the rest of the scene finishes in place.
+   */
   async bite(player: number, jump: Jump, motion: MotionOptions, arrive: Arrive, cue: Cue): Promise<void> {
     const token = this.token(player);
-    const id = this.setup?.board.snakes.find((snake) => snake.from === jump.from)?.id ?? '';
+    const head = jump.from;
+    const id = this.setup?.board.snakes.find((snake) => snake.from === head)?.id ?? '';
     const meta = SNAKE_META[id];
-    const loaded = meta !== undefined && (await this.snakeReady(jump.from));
-    const steps = biteTimeline({
-      fast: motion.fast,
-      reducedMotion: motion.reducedMotion,
-      firstTime: this.snakePending.has(jump.from),
-    });
+    const loaded = meta !== undefined && (await this.snakeReady(head));
+    const firstTime = this.snakePending.has(head);
+    const cinema = this.biteCloseUps && !motion.fast;
+    const steps = biteTimeline({ fast: motion.fast, reducedMotion: motion.reducedMotion, firstTime, closeUps: cinema });
     const ms = (name: string): number => steps.find((step) => step.name === name)?.ms ?? 0;
     const play = async (clip: SnakeClip, beat: number, each?: (u: number) => void): Promise<void> => {
-      if (loaded) this.snakeAct.set(jump.from, { clip, start: performance.now(), ms: beat });
+      if (loaded) this.snakeAct.set(head, { clip, start: performance.now(), ms: beat });
       await this.tween(beat, each ?? (() => undefined));
     };
+    const still = (): void => undefined;
+    // focus: the camera glides to the head block and the board dims (no camera under reduced motion: the dim fades)
+    this.cameraCancelled = false;
+    const home = cinema && !motion.reducedMotion ? (this.camera?.get() ?? null) : null;
+    if (cinema) this.setCinema(true);
+    if (home) this.glide(bitePose(blockPoint(head), home.azimuth), ms('focus') + ms('rise'));
+    if (ms('focus') > 0) await this.tween(ms('focus'), still);
     // rise (the first reveal only): the snake appears from the ground
-    if (this.snakePending.has(jump.from)) {
-      this.snakePending.delete(jump.from);
+    if (firstTime) {
+      this.snakePending.delete(head);
       cue('hiss');
       if (loaded) await play('rise', ms('rise'));
     }
-    // hold: the head turns to the token
+    // hold: the head turns to the token; in a close-up the coil swells meanwhile (grow) and the hero is scared
     const spot = token.spot;
-    const idleMouth = mouthPoint(jump.from, id, 'idle');
+    const idleMouth = mouthPoint(head, id, 'idle');
     const snakeAt = toWorld(idleMouth[0], idleMouth[2]);
     token.heading = headingOf(spot, snakeAt, token.heading);
-    if (ms('hold') > 0) await play('hold', ms('hold'));
+    if (ms('grow') > 0) {
+      this.mood(player, 'scared', ms('grow') + ms('strike') + ms('swallow'));
+      await play('hold', ms('grow'), (u) => this.snakeGrow.set(head, growAt(u, 'grow')));
+    } else if (ms('hold') > 0) await play('hold', ms('hold'));
     cue('strike');
     await play('strike', ms('strike'));
-    // swallow: the token flies to the mouth, shrinking; hidden at the end
+    // swallow: the token flies to the mouth, shrinking, and is hidden there (the close-up's jaw closes over the rest)
     const feet = this.tokenPosition(player) ?? toThree(spot, 0);
-    const mouth = mouthPoint(jump.from, id, 'strike');
+    const mouth = grownMouthPoint(head, id, 'strike', this.snakeGrow.get(head) ?? 1);
+    const into = cinema ? SWALLOW_IN : 1;
     token.gliding = true;
     cue('gulp');
     await play('swallow', ms('swallow'), (u) => {
-      const e = u * u;
+      const v = Math.min(1, u / into);
+      const e = v * v;
       const x = feet[0] + (mouth[0] - feet[0]) * e;
       const z = feet[2] + (mouth[2] - feet[2]) * e;
       token.spot = toWorld(x, z);
       token.lift = feet[1] + (mouth[1] - feet[1]) * e - groundHeightAt(x, z);
       token.scale = 1 - 0.9 * e;
+      if (v >= 1) token.hidden = true;
     });
     token.hidden = true;
     token.gliding = false;
     token.lift = 0;
-    // settle: the head goes back to idle (Fast: at once)
-    if (ms('settle') > 0) await play('settle', ms('settle'));
-    this.snakeAct.delete(jump.from);
-    // reappear at the tail square
+    // settle: the head goes back to idle (Fast: at once); a close-up shrinks the coil back with a sway and a soft puff
+    if (ms('settle') > 0) {
+      if (cinema) this.coilPuff(head, id, ms('settle'));
+      await play('settle', ms('settle'), (u) => {
+        if (cinema) this.snakeGrow.set(head, growAt(u, 'shrink'));
+      });
+    }
+    this.snakeGrow.delete(head);
+    this.snakeAct.delete(head);
+    // to the tail: the camera glides to the tail square ahead of the hero
     token.square = jump.to;
+    if (home) this.glide(bitePose(blockPoint(jump.to), home.azimuth), ms('toTail'));
+    if (ms('toTail') > 0) await this.tween(ms('toTail'), still);
+    // reappear at the tail square
     token.spot = this.spotOf(player);
     token.scale = 0.1;
     token.hidden = false;
     arrive(jump.to);
     this.puff(jump.to, motion);
     cue('pop');
+    if (cinema) this.mood(player, 'sad', TIMING.faceHoldMs);
     await this.tween(ms('reappear'), (u) => (token.scale = 0.1 + 0.9 * backOut(u)));
     token.scale = 1;
+    // restore: the camera eases back to the pose the player had while the board brightens again
+    if (home) this.glide(home, ms('restore'));
+    if (cinema) this.setCinema(false);
+    if (ms('restore') > 0) await this.tween(ms('restore'), still);
     await this.refan(player, motion);
+  }
+
+  /** A bite's camera move, unless the player has taken the camera during this bite. */
+  private glide(pose: CameraPose, ms: number): void {
+    if (!this.cameraCancelled) this.camera?.glide(pose, ms);
+  }
+
+  private setCinema(on: boolean): void {
+    if (this.cinema === on) return;
+    this.cinema = on;
+    this.changed();
+  }
+
+  /** A mood the view sets itself (the bitten hero: scared as the coil swells, sad as it reappears). */
+  private mood(seat: number, emotion: 'scared' | 'sad', ms: number): void {
+    // the tween only picks the clip (heroClips.clipForTween): shake -> scared, sigh -> sad
+    const tween = emotion === 'scared' ? 'shake' : 'sigh';
+    void this.react(seat, { emotion, intensity: 0.6, tween, durationMs: ms });
+  }
+
+  /** The soft puff of dust round a coil shrinking back to its size. */
+  private coilPuff(head: number, id: string, ms: number): void {
+    const [x, , z] = snakeAnchor(head, id);
+    this.puffs.push({ at: toWorld(x, z), start: performance.now(), ms, size: 0.75 });
+    this.changed();
   }
 
   /** Resolves true once the snake's GLB has mounted for this head square; false after 1.5 s (the bite then plays without it). */
@@ -576,6 +698,12 @@ export class DioramaView implements BoardView {
       requestAnimationFrame(tick);
     });
   }
+}
+
+/** A square's centre on its block top, three units (the close-up camera looks here). */
+function blockPoint(square: number): [number, number, number] {
+  const [x, z] = squareCentre(square);
+  return [x, blockTopY(square), z];
 }
 
 function lerp2(a: Vec2, b: Vec2, u: number): Vec2 {

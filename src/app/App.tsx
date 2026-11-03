@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { GameConfig } from '../core/types';
 import { getAudio } from '../game/audio';
 import { loadGame, type LoadedGame } from '../game/save';
+import { loadSettings, saveSettings } from '../game/settings';
 import { getLocale, setLocale } from '../i18n/i18n';
 import { bridge, type ScreenName } from './appHooks';
 import { BoardVignette } from './board3d/BoardVignette';
@@ -41,6 +42,7 @@ export function App() {
   const [language, setLanguage] = useState(getLocale);
   const [fast, setFast] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [settings, setSettings] = useState(loadSettings);
   const portrait = usePortrait();
 
   const openGame = useCallback((next: TurnStart) => {
@@ -64,6 +66,15 @@ export function App() {
   }, []);
   const toggleFast = useCallback(() => setFast((on) => !on), []);
   const toggleMute = useCallback(() => setMuted((on) => !on), []);
+  const toggleBiteCloseUps = useCallback(
+    () =>
+      setSettings((previous) => {
+        const next = { ...previous, biteCloseUps: !previous.biteCloseUps };
+        saveSettings(next);
+        return next;
+      }),
+    [],
+  );
 
   useEffect(() => {
     bridge.screen = screen;
@@ -115,9 +126,11 @@ export function App() {
           start={game.start}
           fast={fast}
           muted={muted}
+          biteCloseUps={settings.biteCloseUps}
           portrait={portrait}
           onFast={toggleFast}
           onMute={toggleMute}
+          onBiteCloseUps={toggleBiteCloseUps}
           onLanguage={toggleLanguage}
           onNewGame={toNewGame}
           onExit={toBoot}

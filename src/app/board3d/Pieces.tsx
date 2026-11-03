@@ -11,6 +11,7 @@ import type { DioramaView } from './DioramaView';
 import { Hero as HeroFigure, blob, useHeroActor, type HeroHandle, type HeroId } from './Hero';
 import { angleDelta } from './heroClips';
 import { Bridges } from './Bridge';
+import { HERO_SCALE } from './figureScale';
 
 export function Jumps({ view }: { view: DioramaView }) {
   useSyncExternalStore(view.subscribe, view.getVersion);
@@ -32,7 +33,7 @@ function useTokenPlacement(view: DioramaView, player: number) {
     const at = view.tokenPosition(player);
     if (!node || !token || !at) return;
     node.position.set(at[0], at[1], at[2]);
-    node.scale.setScalar(Math.max(0.001, token.scale));
+    node.scale.setScalar(Math.max(0.001, token.scale) * HERO_SCALE); // the ring, blob and figure inside scale with it
     node.visible = !token.hidden;
   });
   return group;
@@ -81,7 +82,7 @@ const PEG_BAND: Record<Hero, { color: string; tube: number }> = {
 };
 const PEG_HEAD_Y = 0.98;
 const PEG_HEAD_R = 0.155;
-/** Viewport anchor for a figure's speech bubble: just above its crown (Hanuman and the pegs alike). */
+/** Viewport anchor for a figure's speech bubble: just above its crown at full size; the board uses `HEAD_TOP * HERO_SCALE`. */
 export const HEAD_TOP = 1.4;
 const RING_RADIUS = 0.26;
 const PULSE_MS = 1200;
@@ -254,7 +255,7 @@ export function BubbleAnchors({ view }: { view: DioramaView }) {
       view.tokens.map((_, player) => {
         const at = view.tokenPosition(player);
         if (!at || view.tokens[player]!.square === 0) return null;
-        point.set(at[0], at[1] + HEAD_TOP, at[2]).project(camera);
+        point.set(at[0], at[1] + HEAD_TOP * HERO_SCALE, at[2]).project(camera);
         if (point.z > 1 || Math.abs(point.x) > 1 || Math.abs(point.y) > 1) return null;
         return {
           x: rect.left + ((point.x + 1) / 2) * rect.width,

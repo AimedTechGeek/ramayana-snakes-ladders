@@ -6,7 +6,7 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import { Group, type BufferGeometry } from 'three';
 import { FINAL_SQUARE } from '../../game/board/blockRules';
-import { coronationSpots, defaultBlockTopY, gatePosition, PROP_LAYOUT, spotOf } from './propLayout';
+import { coronationSpots, defaultBlockTopY, gatePosition, palaceYaw, PROP_LAYOUT, spotOf } from './propLayout';
 import { bodyMaterial, easeToward, glowMaterial, kindGeometry, popScale, useLandmarksScene } from './scenery';
 import type { SceneryProps } from './Props';
 
@@ -71,7 +71,7 @@ export function Landmarks({ revealed, blockTopY = defaultBlockTopY, rimTopY }: L
           name="janaka-palace"
           square={palaceSquare}
           position={palacePosition}
-          yaw={palace.x < 0 ? Math.PI / 2 : -Math.PI / 2}
+          yaw={palaceYaw(palace.x)}
           revealed={revealed}
           {...geo.palace}
         />

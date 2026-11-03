@@ -20,10 +20,13 @@ interface GameScreenProps {
   start: TurnStart;
   fast: boolean;
   muted: boolean;
+  /** "Bite close-ups" (T45.4): the staged, camera-led bite. */
+  biteCloseUps: boolean;
   /** The portrait prompt is up: hold the game. */
   portrait: boolean;
   onFast: () => void;
   onMute: () => void;
+  onBiteCloseUps: () => void;
   onLanguage: () => void;
   /** Leave for Setup (the menu's New Game). */
   onNewGame: () => void;
@@ -41,9 +44,11 @@ export function GameScreen({
   start,
   fast,
   muted,
+  biteCloseUps,
   portrait,
   onFast,
   onMute,
+  onBiteCloseUps,
   onLanguage,
   onNewGame,
   onExit,
@@ -92,6 +97,7 @@ export function GameScreen({
   }, [view, hudStore]);
   useEffect(() => controller.current?.setFast(fast), [fast]);
   useEffect(() => controller.current?.setMuted(muted), [muted]);
+  useEffect(() => view.setBiteCloseUps(biteCloseUps), [biteCloseUps, view]);
   useEffect(() => controller.current?.setPaused(menuOpen || portrait), [menuOpen, portrait]);
   useEffect(() => {
     bridge.menuOpen = menuOpen;
@@ -134,6 +140,8 @@ export function GameScreen({
         onDieTap={roll}
         reducedMotion={reducedMotion}
       />
+      {/* the board dims round a close-up bite (T45.4); under the HUD, over the canvas, never catching a pointer */}
+      <div className="bite-vignette" data-on={view.cinema || undefined} aria-hidden="true" />
       {!result && (
         <Hud
           hud={hud}
@@ -154,9 +162,11 @@ export function GameScreen({
         <MenuDialog
           fast={fast}
           muted={muted}
+          biteCloseUps={biteCloseUps}
           onContinue={() => setMenuOpen(false)}
           onFast={onFast}
           onMute={onMute}
+          onBiteCloseUps={onBiteCloseUps}
           onNewGame={onNewGame}
           onFit={() => view.camera?.fit()}
           onFocus={focusCurrent}

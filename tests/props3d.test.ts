@@ -20,6 +20,7 @@ import {
   fanSlots,
   DRESSING_PER_BLOCK,
   PROP_HEIGHT_CAP,
+  SCENERY_LAYOUT,
   dressingOf,
   layoutInstances,
   renderScaleOf,
@@ -213,7 +214,7 @@ describe('charm pass: scale and dressing (T44.8)', () => {
   it('Dressing_(AnyPiece)_Should_KeepClearOfTheSeedRuleProps', () => {
     for (const square of SQUARES)
       for (const p of dressingOf(square))
-        for (const q of PROP_LAYOUT[square]!)
+        for (const q of SCENERY_LAYOUT[square]!)
           expect(Math.hypot(p.x - q.x, p.y - q.y)).toBeGreaterThanOrEqual(9);
   });
 
@@ -226,7 +227,8 @@ describe('charm pass: scale and dressing (T44.8)', () => {
     for (const square of SQUARES) {
       const [cx, cz] = squareCentre(square);
       const here = instances.filter((i) => i.square === square && !i.dressing);
-      const placed = PROP_LAYOUT[square]!.filter((p) => !MANIFEST_KINDS[p.kind]!.landmark && square !== 144);
+      // T45.2: the walkway pass moves props out of the lanes, so the offsets are the scenery layout's
+      const placed = SCENERY_LAYOUT[square]!.filter((p) => !MANIFEST_KINDS[p.kind]!.landmark && square !== 144);
       expect(here.length).toBe(placed.length);
       here.forEach((inst, k) => {
         expect(inst.position[0]).toBeCloseTo(cx + placed[k]!.x * PX, 6);
