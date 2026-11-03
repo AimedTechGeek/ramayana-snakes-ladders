@@ -41,7 +41,7 @@ function useTokenPlacement(view: DioramaView, player: number) {
 
 /** Heroes with a rigged clay GLB (the others are pegs until their models land). */
 const RIGGED: readonly Hero[] = ['hanuman', 'rama', 'lakshmana', 'sita'];
-const isRigged = (hero: Hero): hero is HeroId => RIGGED.includes(hero);
+const isRigged = (hero: Hero): hero is Hero & HeroId => RIGGED.includes(hero);
 
 /** A rigged clay hero (Hanuman, Rama, Lakshmana, Sita), driven by the view through heroDirector (useHeroActor). */
 function RiggedToken({
