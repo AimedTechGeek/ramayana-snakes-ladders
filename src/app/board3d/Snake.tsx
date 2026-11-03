@@ -12,6 +12,7 @@ import { AnimationAction, AnimationMixer, Group, LoopOnce, LoopRepeat, Mesh, Obj
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { Jump } from '../../core/types';
 import type { DioramaView } from './DioramaView';
+import { SNAKE_SCALE } from './figureScale';
 import {
   SNAKE_META,
   clipSeconds,
@@ -155,7 +156,7 @@ function SnakePiece({ view, jump, reducedMotion }: { view: DioramaView; jump: Ju
   });
 
   return (
-    <group ref={outer} position={anchor} visible={false}>
+    <group ref={outer} position={anchor} scale={SNAKE_SCALE} visible={false}>
       <SnakeFigure id={jump.id} ref={handle} />
     </group>
   );

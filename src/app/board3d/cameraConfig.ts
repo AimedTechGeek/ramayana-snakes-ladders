@@ -2,6 +2,7 @@
 // instance; `Camera.tsx` feeds these numbers to drei's CameraControls, and a unit test asserts them.
 
 import { Box3, Matrix4, PerspectiveCamera, Vector3 } from 'three';
+import { HERO_SCALE } from './figureScale';
 import { BLOCK_HALF, LEDGE, PLINTH_BOTTOM_Y, PLINTH_HALF, TRAY_ANCHOR, blockTopY, squareCentre } from './boardLayout';
 
 const DEG = Math.PI / 180;
@@ -9,7 +10,8 @@ const DEG = Math.PI / 180;
 /** Polar angle from the zenith: 17 deg (almost top-down) to 78 deg (never below the slab's soil band). */
 export const MIN_POLAR = 0.3;
 export const MAX_POLAR = 1.36;
-export const MIN_DISTANCE = 6;
+/** T45.2: heroes are about half size, so the camera may come in to half the old closest distance (was 6). */
+export const MIN_DISTANCE = 3;
 export const MAX_DISTANCE = 28;
 export const MAX_DISTANCE_PHONE = 30;
 export const SMOOTH_TIME = 0.28;
@@ -28,9 +30,10 @@ export const PAN_BOX = new Box3(new Vector3(-5, -0.5, -5), new Vector3(5, 2.5, 5
 export const FIT_TARGET: readonly [number, number, number] = [0.3, 0.2, 1.3];
 export const FIT_POLAR = 52 * DEG;
 export const FIT_AZIMUTH = 22 * DEG;
-export const FOCUS_DISTANCE = 7;
+export const FOCUS_DISTANCE = 4.5;
 export const FOCUS_POLAR = 55 * DEG;
-export const FOCUS_LIFT = 0.5;
+/** Focus looks at the hero's middle: 0.5 u up a 1.43 u hero at full size. */
+export const FOCUS_LIFT = 0.5 * HERO_SCALE;
 
 /** The box Fit frames: the plinth with its tray ledge and the brass posts. */
 export const FIT_BOX = new Box3(
@@ -49,7 +52,8 @@ export interface ScreenRect {
 }
 /** Fit keeps this many CSS px between a HUD box and the board points it must not cover. */
 const HUD_PAD = 6;
-const HERO_HEIGHT = 1.43;
+/** A standing hero's height on the board: the authored 1.43 u times `HERO_SCALE`. */
+export const HERO_HEIGHT = 1.43 * HERO_SCALE;
 
 /**
  * Points Fit keeps out from under the HUD (T44.14): the top corners of every edge square (the inner squares lie inside
@@ -224,7 +228,7 @@ export function projectToCanvas(
   return [((ndc.x + 1) / 2) * cssWidth, ((1 - ndc.y) / 2) * cssHeight];
 }
 
-/** Focus: close on a token's feet, azimuth kept, polar 55 deg, distance 7 u. Only ever called from the Focus button. */
+/** Focus: close on a token's feet, azimuth kept, polar 55 deg, distance 4.5 u. Only ever called from the Focus button. */
 export function focusPose(
   feet: readonly [number, number, number],
   azimuth: number,

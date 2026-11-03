@@ -5,6 +5,7 @@
 
 import manifest from './snakesManifest.json';
 import { blockTopY, squareCentre } from './boardLayout';
+import { SNAKE_SCALE } from './figureScale';
 
 export type SnakeClip = 'rise' | 'idle' | 'hold' | 'strike' | 'swallow' | 'settle';
 export const SNAKE_CLIPS: readonly SnakeClip[] = ['rise', 'idle', 'hold', 'strike', 'swallow', 'settle'];
@@ -53,10 +54,20 @@ export function snakeAnchor(square: number, id?: string): Vec3 {
   return [x, blockTopY(square), z - back];
 }
 
-export function mouthPoint(square: number, id: string, phase: 'idle' | 'hold' | 'strike'): Vec3 {
+/**
+ * Where the mouth is in three units. The manifest's offsets are for the authored snake; the snake root is drawn at
+ * `scale` (default `SNAKE_SCALE`, about the coil centre), so the offsets scale with it. A growing snake (T45.4) passes
+ * `SNAKE_SCALE * growth`.
+ */
+export function mouthPoint(
+  square: number,
+  id: string,
+  phase: 'idle' | 'hold' | 'strike',
+  scale: number = SNAKE_SCALE,
+): Vec3 {
   const a = snakeAnchor(square, id);
   const m = SNAKE_META[id]?.mouth[phase] ?? [0, 0.5, 0];
-  return [a[0] + m[0], a[1] + m[1], a[2] + m[2]];
+  return [a[0] + m[0] * scale, a[1] + m[1] * scale, a[2] + m[2] * scale];
 }
 
 /** Seconds into `clip` at progress u (0..1) of the beat it is stretched over. */

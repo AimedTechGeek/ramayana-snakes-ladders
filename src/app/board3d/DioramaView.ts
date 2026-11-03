@@ -22,6 +22,7 @@ import type { RevealChange } from '../../game/reveal';
 import { bridgeCurve, bridgeLeads } from './jumpCurves';
 import { DECK_SAMPLES, bridgeById } from './bridgeGeometry';
 import { groundHeightAt } from './boardLayout';
+import { HERO_SCALE } from './figureScale';
 import { SNAKE_META, backOut, biteTimeline, mouthPoint, type SnakeClip } from './snakeChoreo';
 import { toThree, toWorld, waitingSpot } from './coords';
 import { crossingPlan, hopHeight, leapProgress } from './crossing';
@@ -108,7 +109,8 @@ const RISE_MS = 450;
 const REFAN_MS = 80;
 const PUFF_MS = 600;
 const ENTER_ARC = 0.6;
-const BOB = 0.08;
+/** Walk bob of the token (u): the full-size 0.08 u, scaled with the hero (T45.2). */
+const BOB = 0.08 * HERO_SCALE;
 
 export class DioramaView implements BoardView {
   setup: BoardSetup | null = null;
@@ -282,7 +284,7 @@ export class DioramaView implements BoardView {
       if (at.dir[0] !== 0 || at.dir[1] !== 0) token.heading = Math.atan2(at.dir[0], at.dir[1]);
       while (passed < squares.length - 1 && walked >= path.centreAt[passed]!) arrive(squares[passed++]!);
       if (glide) return;
-      const phase = phaseAt(walked, gait.cycle);
+      const phase = phaseAt(walked, gait.cycle * HERO_SCALE); // steps get shorter with the hero (Hero.tsx scaledStride)
       token.lift = Math.abs(Math.sin(phase * Math.PI * 2)) * BOB;
       const frame = frameIndexOf(phase, gait.frames);
       if (frame !== lastFrame && frame % (gait.frames / 2) === 0) this.sound?.step();

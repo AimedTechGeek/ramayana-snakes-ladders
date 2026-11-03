@@ -88,7 +88,7 @@ export interface Polyline {
 }
 
 /** The fan slot is blended in over this many units before the last square's centre. */
-const FAN_BLEND = 20;
+export const FAN_BLEND = 20;
 
 /** The polyline from `from` through the field centre of every square, ending at the resting spot of the last square. */
 export function pathOf(from: Vec2, squares: readonly number[], finalSpot: Vec2): Polyline {

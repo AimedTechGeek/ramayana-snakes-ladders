@@ -4,6 +4,8 @@ import {
   DRAGGING_SMOOTH_TIME,
   FIT_POLAR,
   FOCUS_DISTANCE,
+  FOCUS_LIFT,
+  HERO_HEIGHT,
   FOV_DESKTOP,
   FOV_PHONE,
   MAX_DISTANCE,
@@ -24,6 +26,7 @@ import {
   KEEP_CLEAR,
   projectToCanvas,
 } from '../src/app/board3d/cameraConfig';
+import { HERO_SCALE } from '../src/app/board3d/figureScale';
 
 const deg = (rad: number) => (rad * 180) / Math.PI;
 
@@ -35,10 +38,11 @@ describe('camera clamps (spec 9.1)', () => {
     expect(clampPolar(Math.PI)).toBe(MAX_POLAR);
     expect(clampPolar(1)).toBe(1);
   });
-  it('Distance_Should_StayBetween6And28OnDesktop', () => {
-    expect(MIN_DISTANCE).toBe(6);
+  it('Distance_Should_StayBetween3And28OnDesktop', () => {
+    // T45.2: heroes are about half size, so the closest zoom halves too (was 6)
+    expect(MIN_DISTANCE).toBe(3);
     expect(MAX_DISTANCE).toBe(28);
-    expect(clampDistance(1, 1280)).toBe(6);
+    expect(clampDistance(1, 1280)).toBe(3);
     expect(clampDistance(99, 1280)).toBe(28);
   });
   it('Distance_Should_AllowThirtyOnAPhone', () => {
@@ -85,11 +89,30 @@ describe('Fit and Focus poses (spec 9.2)', () => {
   it('FitDistance_Should_ShrinkAsTheViewportGetsWider', () => {
     expect(fitDistance(2.2, 35)).toBeLessThanOrEqual(fitDistance(1.0, 35));
   });
-  it('Focus_Should_ComeToSevenUnitsAtTheTokenKeepingTheAzimuth', () => {
+  it('Focus_Should_ComeToTheTokenKeepingTheAzimuth', () => {
     const { position, target } = focusPose([2, 0.22, 1], 0.5);
     expect(position.distanceTo(target)).toBeCloseTo(FOCUS_DISTANCE, 5);
-    expect(target.toArray()).toEqual([2, 0.72, 1]);
+    expect(target.toArray()).toEqual([2, 0.22 + FOCUS_LIFT, 1]);
     expect(Math.atan2(position.x - target.x, position.z - target.z)).toBeCloseTo(0.5, 5);
+  });
+  it('Focus_(ScaledHero)_Should_FrameTheWholeHeroAndNotComeCloserThanTheClamp', () => {
+    expect(HERO_HEIGHT).toBeCloseTo(1.43 * HERO_SCALE, 9);
+    expect(FOCUS_LIFT).toBeCloseTo(0.5 * HERO_SCALE, 9);
+    expect(FOCUS_DISTANCE).toBeGreaterThanOrEqual(MIN_DISTANCE);
+    const feet: [number, number, number] = [2, 0.22, 1];
+    const pose = focusPose(feet, 0.5);
+    for (const rise of [0, HERO_HEIGHT]) {
+      const [px, py] = projectToCanvas(new Vector3(feet[0], feet[1] + rise, feet[2]), pose, 1280, 720);
+      expect(px, 'x').toBeGreaterThan(0);
+      expect(px, 'x').toBeLessThan(1280);
+      expect(py, 'y').toBeGreaterThan(0);
+      expect(py, 'y').toBeLessThan(720);
+    }
+    // the hero fills a sensible share of the screen height: not a speck, not the whole view
+    const [, top] = projectToCanvas(new Vector3(feet[0], feet[1] + HERO_HEIGHT, feet[2]), pose, 1280, 720);
+    const [, foot] = projectToCanvas(new Vector3(...feet), pose, 1280, 720);
+    expect((foot - top) / 720).toBeGreaterThan(0.12);
+    expect((foot - top) / 720).toBeLessThan(0.6);
   });
 });
 

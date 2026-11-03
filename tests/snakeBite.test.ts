@@ -7,7 +7,9 @@ import { createSeededDice } from '../src/core/dice';
 import type { Hero } from '../src/core/types';
 import { newGameReveal } from '../src/game/reveal';
 import { DioramaView } from '../src/app/board3d/DioramaView';
-import { biteTimeline } from '../src/app/board3d/snakeChoreo';
+import { biteTimeline, mouthPoint } from '../src/app/board3d/snakeChoreo';
+import { SNAKE_SCALE } from '../src/app/board3d/figureScale';
+import { toWorld } from '../src/app/board3d/coords';
 
 const HEROES: Hero[] = ['rama', 'sita', 'lakshmana', 'hanuman'];
 const board = boardFor('hard');
@@ -41,6 +43,8 @@ interface Trace {
   arrivedAt: number;
   doneAt: number;
   scaleAtHide: number;
+  /** The token's world spot at the moment it vanishes (inside the mouth). */
+  spotAtHide: [number, number];
   squareWhileHidden: number;
   /** Sound cues in order, with the clip that was playing when each was cued. */
   cues: { sound: string; at: number }[];
@@ -56,6 +60,7 @@ async function run(view: DioramaView, motion: { fast: boolean; reducedMotion: bo
     arrivedAt: -1,
     doneAt: -1,
     scaleAtHide: -1,
+    spotAtHide: [NaN, NaN],
     squareWhileHidden: -1,
   };
   const t0 = performance.now();
@@ -71,6 +76,7 @@ async function run(view: DioramaView, motion: { fast: boolean; reducedMotion: bo
     if (token.hidden && trace.hiddenFrom < 0) {
       trace.hiddenFrom = now;
       trace.scaleAtHide = token.scale;
+      trace.spotAtHide = [token.spot[0], token.spot[1]];
     }
     if (token.hidden) trace.squareWhileHidden = token.square;
     if (!token.hidden && trace.hiddenFrom >= 0 && trace.hiddenTo < 0) trace.hiddenTo = now;
@@ -152,6 +158,18 @@ describe('Snake bite (T44 5.4)', () => {
     expect(token.square).toBe(SNAKE.to);
     expect(token.scale).toBe(1);
     expect(view.snakeAct.has(SNAKE.from)).toBe(false); // idle again
+  });
+
+  it('Bite_(Swallow)_ShouldEndInTheMouthOfTheScaledSnake', async () => {
+    const view = makeView('rama');
+    const trace = await run(view, { fast: false, reducedMotion: false });
+    const mouth = mouthPoint(SNAKE.from, SNAKE.id, 'strike');
+    expect(SNAKE_SCALE).toBeLessThan(1); // the scaled mouth, not the authored one
+    const [wx, wy] = toWorld(mouth[0], mouth[2]);
+    expect(Math.hypot(trace.spotAtHide[0] - wx, trace.spotAtHide[1] - wy)).toBeLessThan(1); // under 1 world unit (0.02 u)
+    const authored = mouthPoint(SNAKE.from, SNAKE.id, 'strike', 1);
+    const [ax, ay] = toWorld(authored[0], authored[2]);
+    expect(Math.hypot(wx - ax, wy - ay)).toBeGreaterThan(1); // and it is not where the full-size mouth was
   });
 
   it('Bite_(FastAlreadyRevealed)_ShouldTakeUnderAThirdOfASecondWithNoHoldOrSettle', async () => {
