@@ -10,6 +10,7 @@ import type { DioramaView } from '../board3d/DioramaView';
 import { IconButton, Pill, Sparkle } from '../ui/Controls';
 import { Icon } from '../ui/Icon';
 import type { ScreenPoint } from './bubbleLayout';
+import { ChapterCard } from './ChapterCard';
 import type { HudState } from './HudStore';
 import { SeatCard } from './SeatCard';
 import { SpeechBubbles } from './SpeechBubbles';
@@ -117,6 +118,8 @@ export function Hud({
       </div>
 
       <AnchoredBubbles view={view} anchors={bubbleAnchors} />
+
+      <ChapterCard chapter={hud.chapter} />
 
       <div className="toolbar" data-fit-reserve>
         <IconButton icon="fit" label={t('ui.fit')} caption data-testid="fit" onClick={onFit} />

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import type { GameConfig } from '../../core/types';
 import { getAudio } from '../../game/audio';
 import { clearSave } from '../../game/save';
-import { t } from '../../i18n/i18n';
+import { getLocale, t } from '../../i18n/i18n';
 import { bridge, controllerStarted } from '../appHooks';
 import { BoardCanvas } from '../board3d/BoardCanvas';
 import type { DieHandle } from '../board3d/Die';
@@ -56,7 +56,11 @@ export function GameScreen({
   bubbleAnchors,
 }: GameScreenProps) {
   const [view] = useState(() => new DioramaView(getAudio()));
-  const [hudStore] = useState(() => new HudStore());
+  const [hudStore] = useState(() => {
+    const store = new HudStore();
+    store.holdChapters(true); // until the board stands (BoardCanvas onSceneReady)
+    return store;
+  });
   const [reducedMotion] = useState(prefersReducedMotion);
   const controller = useRef<TurnController | null>(null);
   const die = useRef<DieHandle | null>(null);
@@ -108,6 +112,7 @@ export function GameScreen({
     if (hud.hint === t('ui.tripleSix')) setToast(hud.hint);
   }, [hud.hint]);
   const clearToast = useCallback(() => setToast(null), []);
+  const releaseChapters = useCallback(() => hudStore.holdChapters(false), [hudStore]);
 
   const roll = () => void controller.current?.requestRoll();
 
@@ -139,6 +144,8 @@ export function GameScreen({
         dieIdle={hud.diceEnabled && !result}
         onDieTap={roll}
         reducedMotion={reducedMotion}
+        locale={getLocale()}
+        onSceneReady={releaseChapters}
       />
       {/* the board dims round a close-up bite (T45.4); under the HUD, over the canvas, never catching a pointer */}
       <div className="bite-vignette" data-on={view.cinema || undefined} aria-hidden="true" />

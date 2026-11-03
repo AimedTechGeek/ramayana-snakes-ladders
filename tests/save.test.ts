@@ -47,6 +47,24 @@ describe('save', () => {
 
   it('Save_ThenLoad_Should_RoundTripStateAndReveal', () => {
     expect(saveGame(state, reveal)).toBe(true);
+    expect(loadGame()).toEqual({ state, reveal, stages: [] });
+  });
+
+  it('Save_WithShownChapters_Should_RoundTripThemSoResumeDoesNotRepeatThem', () => {
+    saveGame(state, reveal, ['start', 'mithila', 'ayodhya']);
+    expect(loadGame()?.stages).toEqual(['start', 'mithila', 'ayodhya']);
+  });
+
+  it('Load_SaveWithUnknownStageIds_Should_DropThem', () => {
+    localStorage.setItem(
+      'rsl.save.v1',
+      JSON.stringify({ version: 2, state, reveal, stages: ['start', 'atlantis', 7] }),
+    );
+    expect(loadGame()?.stages).toEqual(['start']);
+  });
+
+  it('Load_SaveWithoutStages_Should_LeaveThemForTheControllerToSeed', () => {
+    localStorage.setItem('rsl.save.v1', JSON.stringify({ version: 2, state, reveal }));
     expect(loadGame()).toEqual({ state, reveal });
   });
 

@@ -45,6 +45,25 @@ Each region of the board is a stage of the Ramayana (verify region boundaries in
 - **Start block:** square 1 named "Ayodhya gate — the journey begins" on its plaque and in the first card when the game starts.
 - Budgets unchanged (plaques must be cheap: one instanced mesh or DOM labels; check the smoke budget line).
 
+### As built (T46.5)
+
+The Kanda per stage above matches the board's story order (`regionOf` and T03), so no stage moved. Two one-liners were corrected to their Kanda (Valmiki's division): Guha's boat and the Ganga crossing belong to Ayodhya Kanda, and Rama Setu to Yuddha Kanda, so Dandaka reads "The forest years, Panchavati, Sita taken" and the sea "Hanuman's leap to Lanka, Sita found". (The board itself still shows the Ganga inside the forest rows and the Setu bridge in the sea row; that is the art's story map, not the card text.) Stage table in `src/game/stages.ts` (strings `ui.stage.<id>.name|kanda|line`; tests in `tests/stages.test.ts`):
+
+| Stage id | Squares | Regions (`regionOf`) | Rows | Plaque |
+|---|---|---|---|---|
+| `start` Ayodhya gate | 1 | mithila | 1 | on the plinth ledge below the gate; reads "Ayodhya gate / The journey begins" |
+| `mithila` | 2-36 | mithila | 1-3 | right end of row 1 (the gate's plate holds the left) |
+| `ayodhya` | 37-48 | ayodhya | 4 | right rim beside 37, hanging down (clear of Dandaka's) |
+| `dandaka` | 49-84 | dandaka, ganga (49, 50, 71-74) | 5-7 | right end of row 5: on the left it sat under the desktop seat cards at Fit |
+| `kishkindha` | 85-108 | kishkindha | 8-9 | right rim beside 85 |
+| `sea` | 109-120 | sea | 10 | right rim beside 109 |
+| `lanka` | 121-143 | lanka | 11-12 | left rim beside 121, hanging down (clear of the throne's) |
+| `throne` | 144 | lanka | 12 | back rim behind 144, reaching out past the corner (clear of the turn hint) |
+
+- Plaques: one instanced billboard (one draw call), a canvas atlas redrawn on a language switch; brass plates engraved in Eczar, unreached stages tarnished but readable; scaled up with distance so names read at Fit on 1280x720 and 844x390.
+- Chapter card: bottom left, glass, 2.5 s (Fast 1 s), slide in and out (reduced motion: fade); the first card of a game waits until the board has drawn; a card earned at a snake's tail waits for the bite. Once per stage per game, kept in the save (`stages`). The throne's card belongs to the win, not to a bounce. A stage skipped on a bridge (e.g. Ayodhya on 26 -> 52) has no card until a hero stands in it.
+- **Hindi for native check:** all `ui.stage.*` strings in `src/i18n/hi.json` (names, Kandas, the eight one-line stories).
+
 ## Tasks
 
 | Task | Agent | Scope |

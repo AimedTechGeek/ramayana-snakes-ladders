@@ -2,6 +2,7 @@ import { MAX_PLAYERS, MIN_PLAYERS } from '../core/game';
 import type { GameState, Hero, Level } from '../core/types';
 import { HERO_ORDER } from './heroes';
 import { isRevealState, seedFromGameState, type RevealState } from './reveal';
+import { isStageId, type StageId } from './stages';
 
 const SAVE_KEY = 'rsl.save.v1';
 const SAVE_VERSION = 2;
@@ -13,11 +14,14 @@ interface SaveFile {
   version: number;
   state: GameState;
   reveal: RevealState;
+  /** Stages whose chapter card has shown (T46.5); absent in saves made before it, which seed theirs on resume. */
+  stages?: StageId[];
 }
 
 export interface LoadedGame {
   state: GameState;
   reveal: RevealState;
+  stages?: StageId[];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,8 +61,8 @@ function isGameState(value: unknown): value is GameState {
 }
 
 /** Writes the game to localStorage. Returns false when storage is unavailable or full. */
-export function saveGame(state: GameState, reveal: RevealState): boolean {
-  const file: SaveFile = { version: SAVE_VERSION, state, reveal };
+export function saveGame(state: GameState, reveal: RevealState, stages: readonly StageId[] = []): boolean {
+  const file: SaveFile = { version: SAVE_VERSION, state, reveal, stages: [...stages] };
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(file));
     return true;
@@ -90,7 +94,9 @@ export function loadGame(): LoadedGame | null {
   if (parsed.version === LEGACY_VERSION)
     return { state: parsed.state, reveal: seedFromGameState(parsed.state) };
   if (parsed.version !== SAVE_VERSION || !isRevealState(parsed.reveal)) return null;
-  return { state: parsed.state, reveal: parsed.reveal };
+  const loaded: LoadedGame = { state: parsed.state, reveal: parsed.reveal };
+  if (Array.isArray(parsed.stages)) loaded.stages = parsed.stages.filter(isStageId);
+  return loaded;
 }
 
 /** Removes the save. Returns false when storage is unavailable. */
