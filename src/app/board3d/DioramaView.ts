@@ -9,8 +9,6 @@ import type { StoryJump } from '../../core/boards';
 import type { Jump } from '../../core/types';
 import { fieldCentre, type Vec2 } from '../../game/iso/boardIso';
 import {
-  durationOf,
-  distanceAt,
   frameIndexOf,
   phaseAt,
   pathOf,
@@ -20,7 +18,8 @@ import {
 import { restingSpot } from '../../game/iso/tokenPose';
 import type { RevealChange } from '../../game/reveal';
 import { bridgeCurve, bridgeLeads } from './jumpCurves';
-import { DECK_SAMPLES, bridgeById } from './bridgeGeometry';
+import { DECK_SAMPLES, bridgeById, type Bridge } from './bridgeGeometry';
+import { glideLift, planHops, sampleHopWalk } from './bridgeHops';
 import { groundHeightAt } from './boardLayout';
 import { SNAKE_META, backOut, biteTimeline, mouthPoint, type SnakeClip } from './snakeChoreo';
 import { toThree, toWorld, waitingSpot } from './coords';
@@ -193,6 +192,14 @@ export class DioramaView implements BoardView {
     return this.setup?.board.ladders.find((ladder) => ladder.from === jump.from);
   }
 
+  /** The bridges standing now (revealed jumps with any rise): what a walk must hop over. */
+  private risenBridges(): Bridge[] {
+    const ladders = this.setup?.board.ladders ?? [];
+    return ladders
+      .filter((ladder) => (this.jumpRise.get(ladder.from) ?? 0) > 0)
+      .flatMap((ladder) => bridgeById(ladder.id) ?? []);
+  }
+
   dispose(): void {
     this.disposed = true;
     this.timers.forEach((timer) => clearTimeout(timer));
@@ -272,23 +279,36 @@ export class DioramaView implements BoardView {
     token.square = last;
     const path = pathOf(token.spot, squares, this.spotOf(player));
     const glide = motion.reducedMotion;
-    const duration = glide ? (path.length / gait.speed) * 1000 : durationOf(path.length, gait, motion.fast);
+    // T45.3: hop over every risen bridge the path crosses (hidden bridges are ignored: no reveal is given away)
+    const hero = this.setup?.state.players[player]?.hero ?? 'rama';
+    const plan = planHops(path, this.risenBridges(), hero, gait, motion.fast, gait.cycle);
+    const duration = glide ? (path.length / gait.speed) * 1000 : plan.totalMs;
     let passed = 0;
     let lastFrame = -1;
     await this.tween(duration, (u) => {
-      const walked = glide ? u * path.length : distanceAt(u, path.length, gait, motion.fast);
+      const sample = glide ? null : sampleHopWalk(plan, path.length, gait, motion.fast, u * duration);
+      const walked = sample ? sample.d : u * path.length;
       const at = sampleAt(path, walked);
       token.spot = at.point;
       if (at.dir[0] !== 0 || at.dir[1] !== 0) token.heading = Math.atan2(at.dir[0], at.dir[1]);
       while (passed < squares.length - 1 && walked >= path.centreAt[passed]!) arrive(squares[passed++]!);
-      if (glide) return;
-      const phase = phaseAt(walked, gait.cycle);
+      if (!sample) {
+        token.lift = glideLift(plan, walked);
+        return;
+      }
+      token.leap = sample.leap;
+      if (sample.leap) {
+        token.lift = sample.lift;
+        return;
+      }
+      const phase = phaseAt(sample.walked, gait.cycle);
       token.lift = Math.abs(Math.sin(phase * Math.PI * 2)) * BOB;
       const frame = frameIndexOf(phase, gait.frames);
       if (frame !== lastFrame && frame % (gait.frames / 2) === 0) this.sound?.step();
       lastFrame = frame;
     });
     token.lift = 0;
+    token.leap = null;
     arrive(last);
     await this.refan(player, motion);
   }
