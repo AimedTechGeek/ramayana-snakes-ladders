@@ -36,7 +36,7 @@ format (`src/game/save.ts`), locomotion timing (`src/game/iso/locomotion.ts`), b
 | `src/app/screens/` | `BootScreen`, `SetupScreen`, `GameScreen`, `GalleryScreen`, `LoadingScreen`, and `Dialogs.tsx` (`MenuDialog`, `WinDialog`, `RotatePrompt`). |
 | `src/app/ui/` | Shared controls (`Pill`, `IconButton`, `Segmented`, `Toggle`, `LangSwitch` in `Controls.tsx`), `Dialog`, `Icon` (the `public/icons.svg` sprite), `Portrait` (monogram badges), `Toast`. |
 | `src/app/tokens.css`, `app.css` | Design tokens, the self-hosted `@font-face` rules, the glass styles and the screen layouts. |
-| `src/game/` | `reveal.ts`, `save.ts`, `setupModel.ts` (seats on the Setup screen), `heroes.ts` (names, colours), `audio.ts` (synthesized sounds), `layout.ts`; `board/blockRules.ts` (regions, block patterns); `iso/` (`locomotion.ts` walk and run timing, `boardIso.ts`, `tokenPose.ts`, the vendored `isoKit.ts`). |
+| `src/game/` | `reveal.ts`, `save.ts`, `settings.ts` (remembered player settings: "Bite close-ups"), `setupModel.ts` (seats on the Setup screen), `heroes.ts` (names, colours), `audio.ts` (synthesized sounds), `layout.ts`; `board/blockRules.ts` (regions, block patterns); `iso/` (`locomotion.ts` walk and run timing, `boardIso.ts`, `tokenPose.ts`, the vendored `isoKit.ts`). |
 | `src/characters/` | `reactions.ts` and `reactions.json` (each hero's reaction per event, `TIMING`), `reactionMapper.ts` (`reactionsFor`, `pickSpeakers`, `orderedDelay`). |
 | `src/i18n/` | `i18n.ts` (`t`, `speech`, `setLocale`, `initLocale`), `en.json`, `hi.json`. |
 | `src/spike/dice.tsx`, `hero.html`, `snake.html`, `dice.html` | Developer preview pages for the die, a hero and the snakes; the Blender check scripts drive them. |
@@ -182,13 +182,21 @@ Notes on the parts:
   and run phase come from the distance travelled, so feet do not slide. The face is a canvas atlas from `heroFace.ts`.
 - **Snakes** (`Snake.tsx`) mount a `SnakeFigure` only for snakes that have been revealed (`view.jumpRise`); every GLB of
   the board is preloaded in idle time so the first reveal does not wait; `snakeChoreo.ts` (`biteTimeline`, mouth points from `snakesManifest.json`) times the bite.
+  With "Bite close-ups" on (T45.4, `view.biteCloseUps`, not in Fast) `DioramaView.bite()` plays the staged scene:
+  the camera glides to the head block (`CameraApi.glide`, `bitePose`) while `GameScreen` dims the board round it
+  (`view.cinema`, the `.bite-vignette`), the coil swells to 1.6x (`view.snakeGrow`, a multiplier on the snake root's
+  scale; the owner's R9 exception of 2026-11-03), the hero is swallowed, the coil shrinks back with a sway and a puff,
+  the camera glides to the tail and then back to the pose the player had. Any drag, wheel, key, Fit or Focus calls
+  `view.cancelCamera()`: the camera stops at once and the bite finishes in place. Reduced motion keeps no camera and
+  no growth, only the dim's fade.
 - **Bridges** (`Bridge.tsx`) rise when revealed and fade when they hide a token behind them; `crossing.ts` plans the
   crossing (step leap on, deck run, step leap off; one leap for a short bridge; Hanuman alone takes `hanuman-leap` in one
   long leap).
 - **Die** (`Die.tsx`) plays a tumble clip and corrects the face to the rolled value (`dieRoll.ts`); a tap that is not a
   drag rolls.
 - **Camera** (`Camera.tsx`) is drei's `CameraControls` with the clamps of `cameraConfig.ts` (polar 0.3 to 1.36 rad,
-  distance 6 to 28, 30 on phones, a pan box). It never follows a token. Fit (`fitPose`) frames the board and keeps the
+  distance 6 to 28, 30 on phones, a pan box). It never follows a token; the one move the game makes by itself is a
+  close-up bite's glide (`CameraApi.glide`, cancelled by any player input). Fit (`fitPose`) frames the board and keeps the
   points in `KEEP_CLEAR` out from under HUD elements marked `data-fit-reserve`; Focus (`focusPose`) looks at the current
   player. Keys: arrows orbit, `+`/`-` zoom, `0` fits (in `GameScreen`).
 - **Lighting** (`Lighting.tsx`) holds a hemisphere fill, a shadow-casting key light, a rim light and a prefiltered
@@ -205,6 +213,7 @@ Notes on the parts:
 | View state (token spots, revealed terrain, jump rise, snake beats, moods, bubbles, puffs, camera API) | `DioramaView` | R3F components (per frame and on `changed()`), `Hud` (moods, bubbles) | no; rebuilt from the game state and fog by `init` |
 | Screen, Fast, Mute, menu open, portrait | React state in `App` and `GameScreen` | the components; mirrored to `bridge` for `window.__app` | no |
 | Language | `src/i18n/i18n.ts` | every `t()` call | yes, `localStorage` key `rsl.locale` |
+| Bite close-ups | React state in `App` (`src/game/settings.ts`), mirrored to `view.biteCloseUps` by `GameScreen` | the Menu toggle, `DioramaView.bite()` | yes, `localStorage` key `rsl.settings.v1` |
 
 The rule is one writer per piece of state: the controller is the only code that changes the game and the fog, and it
 talks to the presentation only through the ports. The view may trail the engine while it animates (`TokenState.square`

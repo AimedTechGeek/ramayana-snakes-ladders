@@ -9,9 +9,12 @@ import { Icon } from '../ui/Icon';
 interface MenuDialogProps {
   fast: boolean;
   muted: boolean;
+  /** "Bite close-ups" (T45.4): the camera glides in for a snake's bite. */
+  biteCloseUps: boolean;
   onContinue: () => void;
   onFast: () => void;
   onMute: () => void;
+  onBiteCloseUps: () => void;
   /** New Game: leaves for Setup (the autosave stays until a new game starts). */
   onNewGame: () => void;
   onFit: () => void;
@@ -23,9 +26,11 @@ interface MenuDialogProps {
 export function MenuDialog({
   fast,
   muted,
+  biteCloseUps,
   onContinue,
   onFast,
   onMute,
+  onBiteCloseUps,
   onNewGame,
   onFit,
   onFocus,
@@ -59,6 +64,17 @@ export function MenuDialog({
             onIcon="speaker-off"
             offIcon="speaker"
             testId="menu-mute"
+          />
+        </div>
+        <div className="row">
+          <span className="row-label">{t('ui.biteCloseUps')}</span>
+          <Toggle
+            checked={biteCloseUps}
+            onChange={onBiteCloseUps}
+            label={t('ui.biteCloseUps')}
+            onIcon="focus"
+            offIcon="close"
+            testId="menu-close-ups"
           />
         </div>
         <div className="row">
