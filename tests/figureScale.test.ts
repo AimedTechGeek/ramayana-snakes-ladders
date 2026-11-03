@@ -8,9 +8,9 @@ import { phaseFromDistance } from '../src/app/board3d/heroClips';
 import { SNAKE_META, mouthPoint, snakeAnchor } from '../src/app/board3d/snakeChoreo';
 
 describe('figure scale constants', () => {
-  it('Defaults_Should_BeAboutHalfSize', () => {
+  it('Defaults_Should_ShrinkHeroesToAboutHalfAndKeepSnakesFullSize', () => {
     expect(HERO_SCALE).toBe(0.55);
-    expect(SNAKE_SCALE).toBe(0.55);
+    expect(SNAKE_SCALE).toBe(1); // owner decision 2026-11-04: snakes stay full size (R9 retired on the board)
   });
 });
 

@@ -213,16 +213,12 @@ describe('Snake bite (T44 5.4), close-ups off', () => {
     expect(view.snakeAct.has(SNAKE.from)).toBe(false); // idle again
   });
 
-  it('Bite_(Swallow)_ShouldEndInTheMouthOfTheScaledSnake', async () => {
+  it('Bite_(Swallow)_ShouldEndInTheMouthOfTheSnakeAtItsBoardScale', async () => {
     const view = makeView('rama', false);
     const trace = await run(view, { fast: false, reducedMotion: false });
-    const mouth = mouthPoint(SNAKE.from, SNAKE.id, 'strike');
-    expect(SNAKE_SCALE).toBeLessThan(1); // the scaled mouth, not the authored one
+    const mouth = mouthPoint(SNAKE.from, SNAKE.id, 'strike', SNAKE_SCALE);
     const [wx, wy] = toWorld(mouth[0], mouth[2]);
     expect(Math.hypot(trace.spotAtHide[0] - wx, trace.spotAtHide[1] - wy)).toBeLessThan(1); // under 1 world unit (0.02 u)
-    const authored = mouthPoint(SNAKE.from, SNAKE.id, 'strike', 1);
-    const [ax, ay] = toWorld(authored[0], authored[2]);
-    expect(Math.hypot(wx - ax, wy - ay)).toBeGreaterThan(1); // and it is not where the full-size mouth was
   });
 
   it('Bite_(FastAlreadyRevealed)_ShouldTakeUnderAThirdOfASecondWithNoHoldOrSettle', async () => {
