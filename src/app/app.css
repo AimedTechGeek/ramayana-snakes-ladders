@@ -828,6 +828,29 @@ h2 {
   inset: 0;
 }
 
+/* The board dims round a close-up bite (T45.4): a soft vignette over the canvas, under the HUD; the camera has
+   centred the scene, so the clear middle is the snake and the hero. It fades in over the focus beat and out over
+   the restore beat; it never takes a pointer. */
+.bite-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 56% 60% at 50% 52%,
+    rgba(22, 16, 48, 0) 0%,
+    rgba(22, 16, 48, 0) 26%,
+    rgba(22, 16, 48, 0.34) 68%,
+    rgba(22, 16, 48, 0.62) 100%
+  );
+  transition: opacity 600ms ease;
+}
+
+.bite-vignette[data-on] {
+  opacity: 1;
+  transition-duration: 700ms;
+}
+
 .hud {
   position: absolute;
   inset: 0;
@@ -1649,5 +1672,10 @@ h2 {
   .dialog,
   .toast {
     animation: fade-in 120ms linear;
+  }
+
+  /* the bite's dim is the one fade reduced motion keeps (an opacity change, no movement: T45.4) */
+  .bite-vignette {
+    transition-duration: 350ms !important;
   }
 }

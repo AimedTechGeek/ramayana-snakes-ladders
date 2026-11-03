@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
 import {
+  BITE_DISTANCE,
+  BITE_LIFT,
+  BITE_POLAR,
   DRAGGING_SMOOTH_TIME,
   FIT_POLAR,
   FOCUS_DISTANCE,
@@ -24,6 +27,9 @@ import {
   fovFor,
   FIT_AZIMUTH,
   KEEP_CLEAR,
+  bitePose,
+  easeInOut,
+  lerpPose,
   projectToCanvas,
 } from '../src/app/board3d/cameraConfig';
 import { HERO_SCALE } from '../src/app/board3d/figureScale';
@@ -113,6 +119,36 @@ describe('Fit and Focus poses (spec 9.2)', () => {
     const [, foot] = projectToCanvas(new Vector3(...feet), pose, 1280, 720);
     expect((foot - top) / 720).toBeGreaterThan(0.12);
     expect((foot - top) / 720).toBeLessThan(0.6);
+  });
+});
+
+describe('Bite close-up pose and glide (T45.4)', () => {
+  it('BitePose_Should_LookAtTheBlockPointLiftedKeepingTheAzimuthCloserThanFocus', () => {
+    const pose = bitePose([2, 0.22, 1], 0.5);
+    expect(pose.azimuth).toBe(0.5);
+    expect(pose.polar).toBe(BITE_POLAR);
+    expect(deg(BITE_POLAR)).toBeCloseTo(58, 5);
+    expect(pose.distance).toBe(BITE_DISTANCE);
+    expect(BITE_DISTANCE).toBeLessThan(FOCUS_DISTANCE);
+    expect(pose.target).toEqual([2, 0.22 + BITE_LIFT, 1]);
+  });
+  it('BitePose_Should_KeepTheTargetInsideThePanBox', () => {
+    expect(bitePose([40, 0, -40], 0).target).toEqual([5, BITE_LIFT, -5]);
+  });
+  it('LerpPose_Should_StartAtFromEndAtToAndSitHalfwayInBetween', () => {
+    const from = { azimuth: 0, polar: 1, distance: 10, target: [0, 0, 0] as [number, number, number] };
+    const to = { azimuth: 1, polar: 0.5, distance: 4, target: [2, 1, -2] as [number, number, number] };
+    expect(lerpPose(from, to, 0)).toEqual(from);
+    expect(lerpPose(from, to, 1)).toEqual(to);
+    expect(lerpPose(from, to, 0.5)).toEqual({ azimuth: 0.5, polar: 0.75, distance: 7, target: [1, 0.5, -1] });
+  });
+  it('EaseInOut_Should_BeSymmetricAndRestAtBothEnds', () => {
+    expect(easeInOut(0)).toBe(0);
+    expect(easeInOut(0.5)).toBeCloseTo(0.5, 10);
+    expect(easeInOut(1)).toBeCloseTo(1, 10);
+    expect(easeInOut(0.25)).toBeCloseTo(1 - easeInOut(0.75), 10);
+    expect(easeInOut(0.1)).toBeLessThan(0.1); // slow start
+    expect(easeInOut(2)).toBeCloseTo(1, 10); // clamped
   });
 });
 

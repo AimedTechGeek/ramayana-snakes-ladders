@@ -4,6 +4,7 @@
 import { Box3, Matrix4, PerspectiveCamera, Vector3 } from 'three';
 import { HERO_SCALE } from './figureScale';
 import { BLOCK_HALF, LEDGE, PLINTH_BOTTOM_Y, PLINTH_HALF, TRAY_ANCHOR, blockTopY, squareCentre } from './boardLayout';
+import type { CameraPose } from './DioramaView';
 
 const DEG = Math.PI / 180;
 
@@ -226,6 +227,36 @@ export function projectToCanvas(
   camera.updateMatrixWorld();
   const ndc = point.clone().project(camera);
   return [((ndc.x + 1) / 2) * cssWidth, ((1 - ndc.y) / 2) * cssHeight];
+}
+
+/**
+ * Bite close-ups (T45.4): the only camera moves the game makes by itself. Closer than Focus and a touch lower, so the
+ * grown coil and the hero fill the frame; the azimuth is the player's, so the glide is a dolly, never a spin. The
+ * distance is clamped to the rig's minimum at run time (MIN_DISTANCE follows T45.2).
+ */
+export const BITE_DISTANCE = 3.5;
+export const BITE_POLAR = 58 * DEG;
+export const BITE_LIFT = 0.35;
+
+/** The close-up pose on a block-top point (the snake's head block, then the tail square), azimuth kept. */
+export function bitePose(point: readonly [number, number, number], azimuth: number): CameraPose {
+  const target = clampTarget(new Vector3(point[0], point[1] + BITE_LIFT, point[2]));
+  return { azimuth, polar: BITE_POLAR, distance: BITE_DISTANCE, target: [target.x, target.y, target.z] };
+}
+
+/** An eased camera pose between two, u in 0..1 (the rig's glide; angles are interpolated as the rig reports them). */
+export function lerpPose(from: Required<CameraPose>, to: Required<CameraPose>, u: number): Required<CameraPose> {
+  const mix = (a: number, b: number): number => a + (b - a) * u;
+  return {
+    azimuth: mix(from.azimuth, to.azimuth),
+    polar: mix(from.polar, to.polar),
+    distance: mix(from.distance, to.distance),
+    target: [mix(from.target[0], to.target[0]), mix(from.target[1], to.target[1]), mix(from.target[2], to.target[2])],
+  };
+}
+
+export function easeInOut(u: number): number {
+  return 0.5 - Math.cos(Math.max(0, Math.min(1, u)) * Math.PI) / 2;
 }
 
 /** Focus: close on a token's feet, azimuth kept, polar 55 deg, distance 4.5 u. Only ever called from the Focus button. */

@@ -204,6 +204,9 @@ describe('Hanuman GLB: respect numbers from the Blender build (T44 4.4, T43 7)',
   });
 
   it('R9_(HeroesAboveVillains)_ShouldKeepTheShoulderTopAboveTheTallestSnakeHeadInEveryBoardClip', () => {
+    // Owner exception (2026-11-03, T45.4): during a close-up bite only, the coil grows to 1.6x (DioramaView.snakeGrow,
+    // Snake.tsx) and its head may then rise above the hero. The GLBs themselves keep R9: this test holds at rest scale,
+    // and tests/snakeBite.test.ts proves the growth exists only between the grow and settle beats of a bite.
     const snakeHeadTop = 0.75 * 56;
     for (const clip of BOARD_CLIPS)
       expect(report[clip]!.min_shoulder_top, clip).toBeGreaterThan(snakeHeadTop);

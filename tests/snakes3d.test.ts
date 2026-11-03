@@ -184,6 +184,8 @@ describe('Snake GLBs: RESPECT (T44 5.5, T02)', () => {
   });
 
   it.each(IDS)('Snake_(%s)_ShouldKeepEveryHeadBelow0p75AndTheHeroShoulder_Item6', async (id) => {
+    // R9 at the GLB's own scale. Owner exception (2026-11-03, T45.4): a close-up bite grows the coil to 1.6x at run
+    // time (DioramaView.snakeGrow), so the head may pass the hero's shoulder while it bites, and only then.
     const l = await load(id);
     for (const [clip, u] of CLIPS_SAMPLED) {
       const top = Math.max(...posed(l, id, clip, u).map((v) => v.y));
