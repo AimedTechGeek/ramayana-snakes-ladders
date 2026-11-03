@@ -1,9 +1,8 @@
-// The named stages (T46.5): the stage table against the board's regions, the chapter-card timings and the i18n.
+// The named stages (T46.5): the stage table against the board's regions, the chapter-card timings and the i18n
+// (the signposts that name them on the board: tests/signposts.test.ts).
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHAPTER_FAST_MS, CHAPTER_MS, HudStore } from '../src/app/hud/HudStore';
-import { plaqueSpots } from '../src/app/board3d/plaqueLayout';
-import { PLINTH_HALF, RIM_HALF, SLAB_HALF, blockTopY } from '../src/app/board3d/boardLayout';
 import type { GameState } from '../src/core/types';
 import { FINAL_SQUARE, regionOf } from '../src/game/board/blockRules';
 import { STAGES, STAGE_IDS, seedStages, stageKey, stageOf } from '../src/game/stages';
@@ -92,24 +91,6 @@ describe('stage strings', () => {
       setLocale('hi');
       expect(t(stageKey(id, 'kanda')), id).not.toBe('');
       setLocale('en');
-    }
-  });
-});
-
-describe('plaques', () => {
-  it('EveryStage_Should_HaveOnePlaqueOnTheBoardsEdge_AtItsFirstRowsHeight', () => {
-    const spots = plaqueSpots();
-    expect(spots.map((spot) => spot.id)).toEqual([...STAGE_IDS]);
-    for (const spot of spots) {
-      const [x, y, z] = spot.position;
-      // a row's plate on the left or right rim, the throne's on the back rim, the gate's on the plinth ledge before the slab
-      const onEdge =
-        Math.abs(Math.abs(x) - RIM_HALF) < 1e-6 ||
-        Math.abs(z) === RIM_HALF ||
-        (z > SLAB_HALF && z < PLINTH_HALF && spot.id === 'start');
-      expect(onEdge, spot.id).toBe(true);
-      const stage = STAGES.find((candidate) => candidate.id === spot.id)!;
-      if (spot.id !== 'start') expect(y, spot.id).toBeGreaterThanOrEqual(blockTopY(stage.from));
     }
   });
 });

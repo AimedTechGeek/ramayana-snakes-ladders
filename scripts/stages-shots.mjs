@@ -1,9 +1,10 @@
-// Captures of the named stages (T46.5): the plaques at Fit on desktop and phone, a plaque close-up, the chapter card
-// at game start and on entering Ayodhya, in English and (switched live) Hindi, and the card under reduced motion.
+// Captures of the named stages (T46.5, T46.6): the signposts at Fit on desktop and phone, signpost close-ups (the start
+// signpost at Focus with a hero beside it, Ayodhya's and Lanka's, one in Hindi), the chapter card at game start and on
+// entering Ayodhya, in English and (switched live) Hindi, and the card under reduced motion.
 // Usage: node scripts/stages-shots.mjs <outDir> [baseUrl]   (default baseUrl http://localhost:5184: `npx vite --port 5184`)
-import { DESKTOP, PHONE, launch, openApp, settle, shot, startGame } from './review/lib.mjs';
+import { DESKTOP, PHONE, launch, openApp, roll, settle, shot, startGame } from './review/lib.mjs';
 
-const OUT = process.argv[2] ?? 'screenshots-tmp/t46-stages';
+const OUT = process.argv[2] ?? 'screenshots-tmp/t46b-signposts';
 const BASE = process.argv[3] ?? 'http://localhost:5184';
 
 /** The default game (T46.4): the four brothers. */
@@ -34,10 +35,10 @@ const SAVE_AT_36 = {
 
 async function switchLanguage(page) {
   await page.click('[data-testid=hud-language]');
-  await page.waitForTimeout(900); // the atlas redraws once Eczar's Devanagari is in
+  await page.waitForTimeout(900); // the sign atlas repaints once Eczar's Devanagari is in
 }
 
-/** Fit on desktop and phone, the plaques dimmed for unreached stages; the start card right after the game opens. */
+/** Fit on desktop and phone, the signposts of fogged blocks tarnished; the start card right after the game opens. */
 async function fitScenes(browser) {
   const problems = [];
   for (const [name, viewport] of [
@@ -60,7 +61,7 @@ async function fitScenes(browser) {
     await switchLanguage(app.page);
     await shot(app.page, OUT, `fit-${name}-hi`);
     await switchLanguage(app.page);
-    // Rama steps onto 2, beside the gate's plate: the plate must not cover him
+    // Rama steps onto 2, beside Mithila's signpost
     await app.page.evaluate(() => window.__queue.push(2));
     await app.page.evaluate(() => void window.__app.requestRoll());
     await settle(app.page);
@@ -73,28 +74,40 @@ async function fitScenes(browser) {
   return problems;
 }
 
-/** Plaques up close: the gate's on the plinth ledge (both languages), Mithila's at row 1's right end, Ayodhya's. */
+/** A close camera on a three-space point at the default heading (a little from the right), for a signpost close-up. */
+const near = (target, distance = 3.2) => ({ azimuth: 0.38, polar: 1.0, distance, target });
+
+/**
+ * Signposts up close: the start signpost at Focus with Rama beside it on square 1 (the scale against a hero), then in
+ * Hindi; Ayodhya's on the outer front corner of 37 and Lanka's behind 121's token field.
+ */
 async function closeUps(browser) {
   const { page, problems, context } = await openApp(browser, BASE);
   await startGame(page, { level: 'easy', players: BROTHERS });
-  await page.evaluate(() =>
-    window.__app.camera.set({ azimuth: 0.55, polar: 1.05, distance: 6.5, target: [-5.4, -0.2, 6.2] }),
-  );
+  await page.waitForTimeout(3500); // the start card leaves
+  await roll(page, 1); // Rama walks through the gate onto 1
+  // his brothers walk on to 2, 3 and 5, so it is Rama's turn again and Focus frames him beside the start signpost
+  for (const value of [2, 3, 5]) await roll(page, value);
+  await page.evaluate(() => window.__app.camera.focus());
+  await page.waitForTimeout(1500);
+  await shot(page, OUT, 'sign-focus-start-en');
+  await page.evaluate((pose) => window.__app.camera.set(pose), near([-5.3, 0.5, 5.2]));
   await page.waitForTimeout(1000);
-  await shot(page, OUT, 'plaque-close-gate-en');
+  await shot(page, OUT, 'sign-close-start-en');
   await switchLanguage(page);
-  await shot(page, OUT, 'plaque-close-gate-hi');
+  await shot(page, OUT, 'sign-close-start-hi');
   await switchLanguage(page);
-  await page.evaluate(() =>
-    window.__app.camera.set({ azimuth: -0.3, polar: 1.0, distance: 6.5, target: [5.6, 0.2, 5.2] }),
-  );
-  await page.waitForTimeout(1000);
-  await shot(page, OUT, 'plaque-close-mithila-en');
-  await page.evaluate(() =>
-    window.__app.camera.set({ azimuth: -0.4, polar: 1.0, distance: 7, target: [5.6, 0.6, 2.4] }),
-  );
-  await page.waitForTimeout(1000);
-  await shot(page, OUT, 'plaque-close-ayodhya-en');
+  for (const [name, target] of [
+    ['ayodhya', [5.9, 0.9, 2.9]],
+    ['dandaka', [-5.95, 0.95, 1.7]],
+    ['kishkindha', [5.95, 1.5, -1.25]],
+    ['lanka', [-5.3, 1.95, -4.9]],
+    ['throne', [-5.5, 2.1, -5.25]],
+  ]) {
+    await page.evaluate((pose) => window.__app.camera.set(pose), near(target));
+    await page.waitForTimeout(1000);
+    await shot(page, OUT, `sign-close-${name}-en`);
+  }
   await context.close();
   return problems;
 }

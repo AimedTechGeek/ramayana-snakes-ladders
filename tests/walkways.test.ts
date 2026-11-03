@@ -20,6 +20,7 @@ import {
   layoutInstances,
   solidParts,
 } from '../src/app/board3d/propLayout';
+import { signpostPolygons, signpostSpots } from '../src/app/board3d/signpostLayout';
 import {
   FAN_OFFSETS,
   HERO_RADIUS,
@@ -54,6 +55,8 @@ function solidsBySquare(): Map<number, Solid[]> {
     add(inst.square, { name: inst.kind + (inst.dressing ? ' (dressing)' : ''), polygons });
   }
   for (const solid of landmarkSolids()) add(solid.square, { name: solid.name, polygons: solid.polygons });
+  for (const spot of signpostSpots())
+    add(spot.square, { name: `${spot.id} signpost`, polygons: signpostPolygons(spot) });
   return out;
 }
 

@@ -1,4 +1,12 @@
-# T46 — Six heroes and named stages
+on the dais in front of the empty throne |
+
+
+
+
+
+
+
+
 
 Owner requests (2026-11-04) on branch **`feat/diorama-v2`** (nothing merges to `main`). Builds on T44/T45 (`docs/design/T44-diorama-3d.md`, `docs/design/T45-living-diorama-2.md`, `docs/ARCHITECTURE.md`).
 
@@ -49,20 +57,28 @@ Each region of the board is a stage of the Ramayana (verify region boundaries in
 
 The Kanda per stage above matches the board's story order (`regionOf` and T03), so no stage moved. Two one-liners were corrected to their Kanda (Valmiki's division): Guha's boat and the Ganga crossing belong to Ayodhya Kanda, and Rama Setu to Yuddha Kanda, so Dandaka reads "The forest years, Panchavati, Sita taken" and the sea "Hanuman's leap to Lanka, Sita found". (The board itself still shows the Ganga inside the forest rows and the Setu bridge in the sea row; that is the art's story map, not the card text.) Stage table in `src/game/stages.ts` (strings `ui.stage.<id>.name|kanda|line`; tests in `tests/stages.test.ts`):
 
-| Stage id | Squares | Regions (`regionOf`) | Rows | Plaque |
+| Stage id | Squares | Regions (`regionOf`) | Rows | Signpost (T46.6; the T46.5 edge plaques are gone) |
 |---|---|---|---|---|
-| `start` Ayodhya gate | 1 | mithila | 1 | on the plinth ledge below the gate; reads "Ayodhya gate / The journey begins" |
-| `mithila` | 2-36 | mithila | 1-3 | right end of row 1 (the gate's plate holds the left) |
-| `ayodhya` | 37-48 | ayodhya | 4 | right rim beside 37, hanging down (clear of Dandaka's) |
-| `dandaka` | 49-84 | dandaka, ganga (49, 50, 71-74) | 5-7 | right end of row 5: on the left it sat under the desktop seat cards at Fit |
-| `kishkindha` | 85-108 | kishkindha | 8-9 | right rim beside 85 |
-| `sea` | 109-120 | sea | 10 | right rim beside 109 |
-| `lanka` | 121-143 | lanka | 11-12 | left rim beside 121, hanging down (clear of the throne's) |
-| `throne` | 144 | lanka | 12 | back rim behind 144, reaching out past the corner (clear of the turn hint) |
+| `start` Ayodhya gate | 1 | mithila | 1 | back edge of 1, behind the token field (the gate stands in front); reads "Ayodhya gate / The journey begins" |
+| `mithila` | 2-36 | mithila | 1-3 | back edge of 2 |
+| `ayodhya` | 37-48 | ayodhya | 4 | outer front corner of 37, its board reaching out over the right rim (the stair from 36 arrives at the front, Manthara coils at the back) |
+| `dandaka` | 49-84 | dandaka, ganga (49, 50, 71-74) | 5-7 | outer front corner of 49, board over the left rim (Guha's bridge leaves from the back); the post stands in the Ganga |
+| `kishkindha` | 85-108 | kishkindha | 8-9 | outer front corner of 85, board over the right rim (Shabari's bridge leaves from the back) |
+| `sea` | 109-120 | sea | 10 | back edge of 109, the post in the water |
+| `lanka` | 121-143 | lanka | 11-12 | back edge of 121, clear of the Lanka wall |
+| `throne` | 144 | lanka | 12 | on the dais in front of the empty throne |
 
-- Plaques: one instanced billboard (one draw call), a canvas atlas redrawn on a language switch; brass plates engraved in Eczar, unreached stages tarnished but readable; scaled up with distance so names read at Fit on 1280x720 and 844x390.
 - Chapter card: bottom left, glass, 2.5 s (Fast 1 s), slide in and out (reduced motion: fade); the first card of a game waits until the board has drawn; a card earned at a snake's tail waits for the bite. Once per stage per game, kept in the save (`stages`). The throne's card belongs to the win, not to a bounce. A stage skipped on a bridge (e.g. Ayodhya on 26 -> 52) has no card until a hero stands in it.
 - **Hindi for native check:** all `ui.stage.*` strings in `src/i18n/hi.json` (names, Kandas, the eight one-line stories).
+
+### As built (T46.6 signposts)
+
+Owner feedback (2026-11-04): the T46.5 edge plaques were huge next to the blocks. They are replaced by a small wooden **signpost on each stage's first block** (squares in the table above), at a prop's scale:
+
+- Size: 0.40 u tall (post and cap), board 0.42 x 0.21 u, against a hero of about 0.79 u and a 0.92 u block. Foot stone, post, cap and a two-plank board with a brass nail in each corner; the name painted large on the upper plank, the Kanda (the start block: "The journey begins") on the lower. On a water block (49, 109) the post stands in the water; on 144 it stands on the dais.
+- Placement: hand-placed spots in `src/app/board3d/signpostLayout.ts`, turned 0-22 degrees toward the default camera. `tests/signposts.test.ts` checks that each one is off every walking lane and fan slot (its square, both neighbours and the gate lane), clear of snake coils, bridge decks and the gate, palace and throne, on its block (a board may only reach out over the rim), and from the Fit camera hides no number chip and leaves the throne in view; `tests/walkways.test.ts` walks every move of every level past them. Props give way: a dressing piece skips a slot that touches a signpost, and a seed-rule prop that touches one moves like a prop in a lane (`propLayout.SCENERY_LAYOUT`).
+- Drawing: all eight are one merged mesh (one draw call, one shadow caster) with a 512 x 512 canvas atlas (2 x 4 cells of 256 x 128), redrawn on a language switch; a signpost on a fogged block is tarnished but legible.
+- Legibility: the names read when zoomed in or at Focus; at Fit (desktop and phone) a signpost is a small detail and its name is not readable. The plaques' distance scaling was dropped on purpose (a signpost must keep its real size).
 
 ## Tasks
 

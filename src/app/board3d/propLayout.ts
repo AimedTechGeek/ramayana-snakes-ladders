@@ -15,6 +15,7 @@ import { FAN_WORLD, FIELD_C_OFFSET, SIZE } from '../../game/iso/world';
 import { blockTopY } from './boardLayout';
 import { UNIT } from './coords';
 import manifest from './propsManifest.json';
+import { SIGNPOST_SOLIDS } from './signpostLayout';
 import {
   blocksLane,
   bounds,
@@ -177,7 +178,7 @@ function dressingSeed(square: number, k: number): number {
   return (Math.imul(seedOf(square) ^ (k * 0x9e3779b9), 0x85ebca6b) >>> 0) ^ (square << 7);
 }
 
-/** Dressing of a square: up to two small kinds in free slots, never on the token field or the chip corner. */
+/** Dressing of a square: up to two small kinds in free slots, never on the token field, the chip corner or a signpost. */
 export function dressingOf(square: number): (PlacedProp & { scale: number })[] {
   if (square === FINAL_SQUARE) return [];
   const kinds = DRESSING_KINDS[regionOf(square)];
@@ -205,7 +206,7 @@ export function dressingOf(square: number): (PlacedProp & { scale: number })[] {
         [0, 0],
       ] as const) {
         const polygons = solidPolygons(kind, square, slot.x + jx, slot.y + jy, scale, yaw);
-        if (clearOfLanes(polygons, lanes)) {
+        if (clearOfLanes(polygons, lanes) && apart(polygons, SIGNPOST_SOLIDS)) {
           chosen = { index, x: slot.x + jx, y: slot.y + jy };
           break;
         }
@@ -420,10 +421,10 @@ function withinBlock(polygons: readonly Polygon[], square: number): boolean {
 }
 
 /**
- * The seed rule's props with every prop moved out of the walkways. A prop that stands clear stays; a doorway kind
- * (wall, palace) stays and lets the lane through its gap; any other prop that blocks a lane slides to the nearest spot on
- * its block that is clear of every lane, other props and the token field, quarter-turned when only that fits (long
- * crops). Square 144 is the coronation set's.
+ * The seed rule's props with every prop moved out of the walkways and off the stage signposts (T46.6). A prop that
+ * stands clear stays; a doorway kind (wall, palace) stays and lets the lane through its gap; any other prop that blocks
+ * a lane or touches a signpost slides to the nearest spot on its block that is clear of every lane, the signposts, other
+ * props and the token field, quarter-turned when only that fits (long crops). Square 144 is the coronation set's.
  */
 export const SCENERY_LAYOUT: readonly (readonly ScenicProp[])[] = (() => {
   const out: ScenicProp[][] = [[]];
@@ -450,8 +451,10 @@ export const SCENERY_LAYOUT: readonly (readonly ScenicProp[])[] = (() => {
         p.kind === 'janaka-palace' ? palaceYaw(p.x) : yawOf(p.kind, square) + turn,
       );
     const fixed = (p: ScenicProp): boolean =>
-      MANIFEST_KINDS[p.kind]?.landmark === true || hasDoorway(p.kind) || clearOfLanes(polygonsOf(p), lanes);
-    const standing: Polygon[] = placed.filter(fixed).flatMap((p) => polygonsOf(p));
+      MANIFEST_KINDS[p.kind]?.landmark === true ||
+      hasDoorway(p.kind) ||
+      (clearOfLanes(polygonsOf(p), lanes) && apart(polygonsOf(p), SIGNPOST_SOLIDS));
+    const standing: Polygon[] = [...SIGNPOST_SOLIDS, ...placed.filter(fixed).flatMap((p) => polygonsOf(p))];
     for (const prop of placed.filter((p) => !fixed(p))) {
       const turns = ROUND_KINDS.has(prop.kind) ? [0] : [0, Math.PI / 2];
       const found = FITS.some((fit) =>

@@ -17,7 +17,7 @@ import { Die, type DieHandle } from './Die';
 import type { DioramaView } from './DioramaView';
 import { Lighting, PlinthShadow } from './Lighting';
 import { BubbleAnchors, Jumps, Puffs, Tokens } from './Pieces';
-import { Plaques } from './Plaques';
+import { Signposts } from './Signposts';
 import { Snakes } from './Snake';
 import { PropsLayer } from './Props';
 
@@ -31,7 +31,7 @@ interface BoardCanvasProps {
   /** The die's clatter on each contact with the felt. */
   onDieContact?: () => void;
   reducedMotion: boolean;
-  /** The stage plaques are drawn in this language (T46.5). */
+  /** The stage signposts are painted in this language (T46.5, T46.6). */
   locale: Locale;
   /** The board has loaded and drawn its first frames (the game's first chapter card waits for it: T46.5). */
   onSceneReady?: () => void;
@@ -157,7 +157,7 @@ export function BoardCanvas({
       <Suspense fallback={null}>
         <Board view={view}>
           <PropsLayer revealed={view.revealedTerrain} blockTopY={blockTopY} />
-          <Plaques view={view} locale={locale} />
+          <Signposts view={view} locale={locale} />
         </Board>
         <PlinthShadow />
         <SceneReady onReady={onSceneReady} />
