@@ -25,17 +25,18 @@ export const PHONE_MAX_WIDTH = 900;
 /** The camera target may wander inside this box (spec 9.1). */
 export const PAN_BOX = new Box3(new Vector3(-5, -0.5, -5), new Vector3(5, 2.5, 5));
 
-export const FIT_TARGET: readonly [number, number, number] = [0.3, 0.2, 1.3];
+/** T45.1: aimed 0.8 u up, about the middle of the terraces' climb (T44: 0.2 on the flat board). */
+export const FIT_TARGET: readonly [number, number, number] = [0.3, 0.8, 1.3];
 export const FIT_POLAR = 52 * DEG;
 export const FIT_AZIMUTH = 22 * DEG;
 export const FOCUS_DISTANCE = 7;
 export const FOCUS_POLAR = 55 * DEG;
 export const FOCUS_LIFT = 0.5;
 
-/** The box Fit frames: the plinth with its tray ledge and the brass posts. */
+/** The box Fit frames: the plinth with its tray ledge, up to the top terrace's block tops (T45.1; T44: 0.3). */
 export const FIT_BOX = new Box3(
   new Vector3(-PLINTH_HALF, PLINTH_BOTTOM_Y, -PLINTH_HALF),
-  new Vector3(LEDGE.x1, 0.3, PLINTH_HALF),
+  new Vector3(LEDGE.x1, blockTopY(144), PLINTH_HALF),
 );
 /** Screen margins of the Fit pose, as a share of the half-viewport (NDC units). */
 const FIT_MARGIN = { top: 0.07, bottom: 0.03, side: 0.03 };

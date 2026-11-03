@@ -12,6 +12,7 @@ import {
   ABUTMENT_H,
   ABUTMENT_WIDTH,
   BRIDGE_PAIRS,
+  DECK_CLEARANCE,
   DECK_SAMPLES,
   DECK_WIDTH,
   FOOT_ABUTMENT_DEPTH,
@@ -126,6 +127,22 @@ describe('bridge pairs (T42 6.1 / 6.5)', () => {
       expect(deckHeightAt(bridge, 1), bridge.id).toBeCloseTo(blockTopY(bridge.to) + ABUTMENT_H);
       const mid = (bridge.baseFoot + bridge.baseTop) / 2 + bridge.h;
       expect(deckHeightAt(bridge, 0.5), bridge.id).toBeCloseTo(mid);
+    }
+  });
+
+  it('Deck_(OnTheTerraces)_Should_RampUpAndClearEveryBlockBetweenItsAbutments', () => {
+    // T45.1: every ladder climbs to a higher terrace; where the hump alone would cut into a higher row, the
+    // clearance lift raises it, and the lift is zero at both abutments
+    for (const bridge of bridges().values()) {
+      expect(bridge.baseTop, bridge.id).toBeGreaterThan(bridge.baseFoot);
+      expect(bridge.lift[0], bridge.id).toBe(0);
+      expect(bridge.lift[bridge.lift.length - 1], bridge.id).toBe(0);
+      const own = (p: { x: number; z: number }, square: number) => {
+        const [cx, cz] = squareCentre(square);
+        return Math.abs(p.x - cx) < 0.5 && Math.abs(p.z - cz) < 0.5;
+      };
+      for (const p of bridge.deck.filter((q) => !own(q, bridge.from) && !own(q, bridge.to)))
+        expect(p.y - p.ground, `${bridge.id} at x ${p.x.toFixed(2)}`).toBeGreaterThanOrEqual(DECK_CLEARANCE - 1e-9);
     }
   });
 
@@ -310,10 +327,13 @@ describe('deck surface and crossing path agree', () => {
       expect(rays.length, id).toBeGreaterThan(0);
       const errors = rays.map(([, formula, measured]) => measured - formula);
       // the abutment ends and a few interior spots carry ornaments (higher), a seam can read 12 mm low: never lower
-      // (the short, steep shabari hump bends 25 mm away from its flat flagstones; the others stay within 15)
+      // (the short, steep shabari hump bends 25 mm away from its flat flagstones; the others stay within 15). T45.1:
+      // guha climbs two terraces from the back of 49, so its start is steeper and its flat stepping slabs stand up to
+      // 33 mm proud there; its every-other-sample 12 mm slab tops then make the median (T44: 5 mm)
       expect(Math.min(...errors), id).toBeGreaterThan(-0.03);
       const sorted = errors.map(Math.abs).sort((a, b) => a - b);
-      if (id !== 'shabari') expect(sorted[Math.floor(sorted.length / 2)]!, `${id} median`).toBeLessThan(0.006);
+      const median = id === 'guha' ? 0.013 : 0.006;
+      if (id !== 'shabari') expect(sorted[Math.floor(sorted.length / 2)]!, `${id} median`).toBeLessThan(median);
     }
   });
 
