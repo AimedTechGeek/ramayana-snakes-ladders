@@ -7,6 +7,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useRef, type RefObject } from 'react';
 import { FloatType, HalfFloatType, Mesh, PCFSoftShadowMap, Texture, type Object3D, type Scene } from 'three';
+import type { Locale } from '../../i18n/i18n';
 import { bridge } from '../appHooks';
 import { Board } from './Board';
 import { TRAY_ANCHOR, blockTopY } from './boardLayout';
@@ -16,6 +17,7 @@ import { Die, type DieHandle } from './Die';
 import type { DioramaView } from './DioramaView';
 import { Lighting, PlinthShadow } from './Lighting';
 import { BubbleAnchors, Jumps, Puffs, Tokens } from './Pieces';
+import { Plaques } from './Plaques';
 import { Snakes } from './Snake';
 import { PropsLayer } from './Props';
 
@@ -29,6 +31,8 @@ interface BoardCanvasProps {
   /** The die's clatter on each contact with the felt. */
   onDieContact?: () => void;
   reducedMotion: boolean;
+  /** The stage plaques are drawn in this language (T46.5). */
+  locale: Locale;
 }
 
 /** DPR cap: 2 on desktop and tablet, 1.5 for phone-width canvases (spec 1.3). */
@@ -126,6 +130,7 @@ export function BoardCanvas({
   onDieTap,
   onDieContact,
   reducedMotion,
+  locale,
 }: BoardCanvasProps) {
   return (
     <Canvas
@@ -139,6 +144,7 @@ export function BoardCanvas({
       <Suspense fallback={null}>
         <Board view={view}>
           <PropsLayer revealed={view.revealedTerrain} blockTopY={blockTopY} />
+          <Plaques view={view} locale={locale} />
         </Board>
         <PlinthShadow />
       </Suspense>

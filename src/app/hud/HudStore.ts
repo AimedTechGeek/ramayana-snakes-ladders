@@ -1,5 +1,6 @@
 // The HudSink the controller writes to, as an external store React reads with useSyncExternalStore.
 
+import type { StageId } from '../../game/stages';
 import type { GameResult, HudSink, SeatInfo } from '../turn/ports';
 
 export interface DiceFace {
@@ -18,8 +19,21 @@ export interface HudState {
   dice: DiceFace;
   fast: boolean;
   muted: boolean;
+  /** The chapter card on screen (T46.5), or null. */
+  chapter: ChapterNotice | null;
   result: GameResult | null;
 }
+
+export interface ChapterNotice {
+  stage: StageId;
+  /** Bumped per card, so the view restarts its slide-in. */
+  seq: number;
+}
+
+/** A chapter card stays this long (T46: ~2.5 s; Fast 1 s); queued cards follow after a short breath. */
+export const CHAPTER_MS = 2500;
+export const CHAPTER_FAST_MS = 1000;
+const CHAPTER_GAP_MS = 250;
 
 const ROLL_MS = 600;
 /** The die's tumble clips: 1.0 s, Fast 0.14 s (T44 7, Fast since T44.14); a roll not settled by then + slack is let go. */
@@ -40,10 +54,14 @@ export class HudStore implements HudSink {
     dice: { value: 1, rolling: false, roll: 0 },
     fast: false,
     muted: false,
+    chapter: null,
     result: null,
   };
   private listeners = new Set<() => void>();
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private chapters: StageId[] = [];
+  private chapterTimer: ReturnType<typeof setTimeout> | null = null;
+  private chapterSeq = 0;
 
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
@@ -59,6 +77,7 @@ export class HudStore implements HudSink {
 
   dispose(): void {
     if (this.timer) clearTimeout(this.timer);
+    if (this.chapterTimer) clearTimeout(this.chapterTimer);
   }
 
   /** The Win screen was dismissed by Play On. */
@@ -114,6 +133,29 @@ export class HudStore implements HudSink {
 
   settings(settings: { fast: boolean; muted: boolean }): void {
     this.set(settings);
+  }
+
+  /** Shows the stage's card for CHAPTER_MS (Fast: CHAPTER_FAST_MS), or queues it behind the card on screen. */
+  chapter(stage: StageId): void {
+    this.chapters.push(stage);
+    if (!this.chapterTimer) this.nextChapter();
+  }
+
+  private nextChapter(): void {
+    const stage = this.chapters.shift();
+    if (stage === undefined) return;
+    this.chapterSeq++;
+    this.set({ chapter: { stage, seq: this.chapterSeq } });
+    this.chapterTimer = setTimeout(
+      () => {
+        this.set({ chapter: null });
+        this.chapterTimer = setTimeout(() => {
+          this.chapterTimer = null;
+          this.nextChapter();
+        }, CHAPTER_GAP_MS);
+      },
+      this.state.fast ? CHAPTER_FAST_MS : CHAPTER_MS,
+    );
   }
 
   gameOver(result: GameResult): void {

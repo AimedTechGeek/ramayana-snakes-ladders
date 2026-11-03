@@ -1107,6 +1107,71 @@ h2 {
   }
 }
 
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---- Chapter card (T46.5): a stage's Kanda, name and one line, bottom left over the canvas, away from the banner,
+   the bubbles (over the heroes) and the toast (bottom centre). It never takes a pointer. */
+
+.chapter-card {
+  position: absolute;
+  left: var(--gutter);
+  bottom: var(--gutter);
+  z-index: 15;
+  max-width: min(360px, 36vw);
+  padding: 12px 22px 12px 18px;
+  pointer-events: none;
+  text-align: left;
+  animation: chapter-in 360ms var(--ease);
+}
+
+.chapter-card.leaving {
+  animation: chapter-out 150ms ease-in forwards;
+}
+
+.chapter-kanda {
+  font-weight: 500;
+  font-size: var(--fs-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.chapter-name {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: var(--fs-h2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.chapter-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: var(--fs-label);
+  line-height: 1.35;
+  color: var(--text-2);
+}
+
+@keyframes chapter-in {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+
+@keyframes chapter-out {
+  to {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
 /* Toast */
 
 .toast {
@@ -1384,6 +1449,11 @@ h2 {
   .pill {
     font-size: 14px;
     padding: 0 16px;
+  }
+
+  .chapter-card {
+    max-width: 240px;
+    padding: 8px 16px 8px 14px;
   }
 
   .progress-divider {
@@ -1670,8 +1740,14 @@ h2 {
   .bubble,
   .bubble.leaving,
   .dialog,
-  .toast {
+  .toast,
+  .chapter-card {
     animation: fade-in 120ms linear;
+  }
+
+  /* the chapter card fades out instead of sliding (T46.5) */
+  .chapter-card.leaving {
+    animation: fade-out 120ms linear forwards;
   }
 
   /* the bite's dim is the one fade reduced motion keeps (an opacity change, no movement: T45.4) */

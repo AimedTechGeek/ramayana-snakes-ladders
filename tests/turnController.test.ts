@@ -23,6 +23,7 @@ import type { Dice } from '../src/core/dice';
 import type { GameConfig, GameState, Jump, PlayerConfig } from '../src/core/types';
 import { gaitFor, type Gait } from '../src/game/iso/locomotion';
 import type { RevealChange, RevealState } from '../src/game/reveal';
+import type { StageId } from '../src/game/stages';
 import { setLocale } from '../src/i18n/i18n';
 
 // The easy board (src/core/boards.ts): ladder 4 -> 25, snake 37 -> 19.
@@ -101,6 +102,7 @@ class Recorder implements BoardView, HudSink {
     cue('gulp');
     arrive(jump.to);
     cue('pop');
+    this.log.push('view.bite done');
   }
   bounce(player: number): void {
     this.log.push(`view.bounce ${player}`);
@@ -145,6 +147,9 @@ class Recorder implements BoardView, HudSink {
   }
   settings(settings: { fast: boolean; muted: boolean }): void {
     this.settingsSeen.push(settings);
+  }
+  chapter(stage: StageId): void {
+    this.log.push(`hud.chapter ${stage}`);
   }
   gameOver(result: GameResult): void {
     this.result = result;
@@ -209,10 +214,10 @@ class InstantClock implements Clock {
 }
 
 class MemorySave implements SaveSink {
-  saves: { state: GameState; reveal: RevealState }[] = [];
+  saves: { state: GameState; reveal: RevealState; stages: StageId[] }[] = [];
   cleared = 0;
-  save(state: GameState, reveal: RevealState): void {
-    this.saves.push({ state: structuredClone(state), reveal: structuredClone(reveal) });
+  save(state: GameState, reveal: RevealState, stages: readonly StageId[]): void {
+    this.saves.push({ state: structuredClone(state), reveal: structuredClone(reveal), stages: [...stages] });
   }
   clear(): void {
     this.cleared++;
@@ -271,6 +276,13 @@ function midGame(players: PlayerConfig[], positions: number[], current = 0): Gam
   };
 }
 
+/** The stages whose chapter card the HUD was asked to show, in order. */
+function chapters(view: Recorder): string[] {
+  return view.log
+    .filter((entry) => entry.startsWith('hud.chapter '))
+    .map((entry) => entry.slice('hud.chapter '.length));
+}
+
 function indexOf(log: string[], entry: string): number {
   const index = log.indexOf(entry);
   if (index < 0) throw new Error(`"${entry}" not in log:\n${log.join('\n')}`);
@@ -284,7 +296,12 @@ describe('TurnController', () => {
     const { controller, view, saves } = rig(newGame([human('Asha'), bot('Bot')]), []);
     await controller.start();
 
-    expect(view.log.slice(0, 3)).toEqual(['view.init', "hud.turn 0 Asha's turn", 'view.turnStarted 0']);
+    expect(view.log.slice(0, 4)).toEqual([
+      'view.init',
+      'hud.chapter start',
+      "hud.turn 0 Asha's turn",
+      'view.turnStarted 0',
+    ]);
     expect(view.setup?.reveal.terrain.sort((a, b) => a - b)).toEqual([1, 144]);
     expect(view.diceOn).toBe(true);
     expect(view.hintText).toBe('Tap the dice or press Space');
@@ -464,7 +481,9 @@ describe('TurnController', () => {
 
   it('Bitten_Should_PlayStrikeGulpAndPopOnTheViewsCuesWithTheFastFlag', async () => {
     const state = midGame([human('Asha'), human('Ravi')], [33, 0]);
-    const { controller, audio } = rig({ state, reveal: { terrain: [1, 33, 144], jumps: [] } }, [4], { fast: true });
+    const { controller, audio } = rig({ state, reveal: { terrain: [1, 33, 144], jumps: [] } }, [4], {
+      fast: true,
+    });
     await controller.start();
     await controller.requestRoll(); // 33 + 4 = 37: manthara's head
 
@@ -578,5 +597,104 @@ describe('TurnController', () => {
     await vi.waitFor(() => expect(view.result).not.toBeNull(), { timeout: 5000 });
     expect(view.result?.state.over).toBe(true);
     expect(view.result?.state.players.some((p) => p.rank === 1)).toBe(true);
+  });
+  it('NewGame_Should_ShowTheAyodhyaGateCardOnce_AndSaveItAsShown', async () => {
+    const { controller, view, saves } = rig(newGame([human('Asha'), human('Ravi')]), [2, 3]);
+    await controller.start();
+    await controller.requestRoll();
+    await controller.requestRoll();
+
+    expect(chapters(view)).toEqual(['start', 'mithila']);
+    expect(saves.saves.at(-1)?.stages).toEqual(['start', 'mithila']);
+  });
+
+  it('EnteringAStage_Should_ShowItsCardOnlyForTheFirstHero', async () => {
+    const state = midGame([human('Asha'), human('Ravi')], [35, 35]);
+    const { controller, view } = rig(
+      { state, reveal: { terrain: [1, 35, 144], jumps: [] }, stages: ['start', 'mithila'] },
+      [3, 3],
+    );
+    await controller.start();
+    await controller.requestRoll(); // Asha walks 36, 37, 38 (passing Manthara's head)
+    await controller.requestRoll(); // Ravi walks into Ayodhya too
+
+    expect(chapters(view)).toEqual(['ayodhya']);
+    expect(view.log.indexOf('hud.chapter ayodhya')).toBeLessThan(view.log.indexOf('arrive 38'));
+  });
+
+  it('Resume_WithSavedStages_Should_NotRepeatTheirCards', async () => {
+    const state = midGame([human('Asha'), human('Ravi')], [30, 12]);
+    const { controller, view } = rig(
+      { state, reveal: { terrain: [1, 12, 30, 144], jumps: [] }, stages: ['start', 'mithila'] },
+      [2],
+    );
+    await controller.start();
+    await controller.requestRoll();
+
+    expect(chapters(view)).toEqual([]);
+  });
+
+  it('Resume_FromASaveWithoutStages_Should_SeedThemFromThePositions_NotShowTheGateAgain', async () => {
+    const state = midGame([human('Asha'), human('Ravi')], [40, 12]);
+    const { controller, view, saves } = rig({ state, reveal: { terrain: [1, 12, 40, 144], jumps: [] } }, [2]);
+    await controller.start();
+    await controller.requestRoll();
+
+    expect(chapters(view)).toEqual([]);
+    expect(saves.saves.at(-1)?.stages).toEqual(['start', 'mithila', 'ayodhya']);
+  });
+
+  it('ACardEarnedAtASnakesTail_Should_WaitForTheBiteToFinish', async () => {
+    // Ayodhya was skipped on the wedding bridge (26 -> 52); Shurpanakha's snake 64 -> 47 drops Asha into it
+    const state = midGame([human('Asha'), human('Ravi')], [62, 12]);
+    const start: TurnStart = {
+      state,
+      reveal: { terrain: [1, 12, 62, 144], jumps: [] },
+      stages: ['start', 'mithila', 'dandaka'],
+    };
+    const { controller, view } = rig(start, [2]);
+    await controller.start();
+    await controller.requestRoll();
+
+    expect(chapters(view)).toEqual(['ayodhya']);
+    expect(indexOf(view.log, 'view.bite done')).toBeLessThan(indexOf(view.log, 'hud.chapter ayodhya'));
+  });
+
+  it('AStageSkippedOnABridge_Should_ShowNoCard_AndTheBridgesTopStageShowsItsOwn', async () => {
+    const state = midGame([human('Asha'), human('Ravi')], [24, 12]);
+    const { controller, view } = rig(
+      { state, reveal: { terrain: [1, 12, 24, 144], jumps: [] }, stages: ['start', 'mithila'] },
+      [2],
+    );
+    await controller.start();
+    await controller.requestRoll(); // 25, 26: the wedding bridge to 52
+
+    expect(chapters(view)).toEqual(['dandaka']);
+  });
+
+  it('ReachingTheThrone_Should_ShowTheCoronationCard_ButABounceOffItShouldNot', async () => {
+    const won = rig(
+      {
+        state: midGame([human('Asha'), human('Ravi')], [140, 50]),
+        reveal: { terrain: [1, 140, 144], jumps: [] },
+        stages: ['start', 'mithila', 'ayodhya', 'dandaka', 'kishkindha', 'sea', 'lanka'],
+      },
+      [4],
+    );
+    await won.controller.start();
+    await won.controller.requestRoll();
+    expect(chapters(won.view)).toEqual(['throne']);
+
+    const bounced = rig(
+      {
+        state: midGame([human('Asha'), human('Ravi')], [142, 0]),
+        reveal: { terrain: [1, 142, 144], jumps: [] },
+        stages: ['start', 'mithila', 'ayodhya', 'dandaka', 'kishkindha', 'sea', 'lanka'],
+      },
+      [4],
+    );
+    await bounced.controller.start();
+    await bounced.controller.requestRoll();
+    expect(chapters(bounced.view)).toEqual([]);
   });
 });

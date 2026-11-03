@@ -13,6 +13,7 @@ import {
 } from 'three';
 import { BLOCK_H0 } from './boardLayout';
 import { ATLAS_GRID } from './chips';
+import { PLAQUE_ATLAS_SIZE, PLAQUE_CELL_HEIGHT, PLAQUE_HEIGHT, PLAQUE_WIDTH } from './plaqueLayout';
 
 /** Time uniform shared by the animated materials; Board.tsx advances it every frame. */
 export const sharedTime = { value: 0 };
@@ -267,6 +268,50 @@ export function chipMaterial(atlas: Texture): ShaderMaterial {
         vec4 texel = texture2D(uAtlas, vUv);
         if (texel.a < 0.02) discard;
         gl_FragColor = texel;
+        #include <colorspace_fragment>
+      }
+    `,
+  });
+}
+
+/**
+ * Stage plaque billboards (T46.5): the chip shader's distance scale, but the quad is pinned by the edge `aAlign`
+ * names (x: -1 left edge, 0 centre, 1 right edge; y: -1 bottom, 1 top) so a plate hangs outward from the board's
+ * edge, and `aDim` greys and thins the plate of a stage no token has reached yet (still readable: not a spoiler).
+ */
+export function plaqueMaterial(atlas: Texture): ShaderMaterial {
+  const cellV = (PLAQUE_CELL_HEIGHT / PLAQUE_ATLAS_SIZE).toFixed(6);
+  return new ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: DoubleSide,
+    uniforms: { uAtlas: { value: atlas } },
+    vertexShader: /* glsl */ `
+      attribute vec2 aOrigin;
+      attribute vec2 aAlign;
+      attribute float aDim;
+      varying vec2 vUv;
+      varying float vDim;
+      void main() {
+        vec4 centre = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+        float scale = clamp(-centre.z / 10.0, 1.0, 2.5);
+        vec2 local = position.xy - aAlign * vec2(${PLAQUE_WIDTH.toFixed(3)}, ${PLAQUE_HEIGHT.toFixed(3)}) * 0.5;
+        centre.xy += local * scale;
+        vUv = aOrigin + uv * vec2(1.0, ${cellV});
+        vDim = aDim;
+        gl_Position = projectionMatrix * centre;
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D uAtlas;
+      varying vec2 vUv;
+      varying float vDim;
+      void main() {
+        vec4 texel = texture2D(uAtlas, vUv);
+        if (texel.a < 0.02) discard;
+        float luma = dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+        vec3 rgb = mix(texel.rgb, vec3(luma) * 0.85 + 0.06, 0.6 * vDim);
+        gl_FragColor = vec4(rgb, texel.a * (1.0 - 0.35 * vDim));
         #include <colorspace_fragment>
       }
     `,

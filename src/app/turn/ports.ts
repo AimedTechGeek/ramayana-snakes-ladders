@@ -6,6 +6,7 @@ import type { StoryBoard } from '../../core/boards';
 import type { Controller, GameState, Hero, Jump } from '../../core/types';
 import type { Gait } from '../../game/iso/locomotion';
 import type { RevealChange, RevealState } from '../../game/reveal';
+import type { StageId } from '../../game/stages';
 
 /** How an animation should play: Fast halves or shortens it; reduced motion glides or places without flourish. */
 export interface MotionOptions {
@@ -99,6 +100,8 @@ export interface HudSink {
   rollDice(value: number, fast: boolean): Promise<void>;
   /** Fast and Mute chip state. */
   settings(settings: { fast: boolean; muted: boolean }): void;
+  /** A hero entered `stage` for the first time this game: show its chapter card (T46.5; queued behind one showing). */
+  chapter(stage: StageId): void;
   /** The game is over: show the Win screen. */
   gameOver(result: GameResult): void;
 }
@@ -127,6 +130,7 @@ export interface Clock {
 }
 
 export interface SaveSink {
-  save(state: GameState, reveal: RevealState): void;
+  /** `stages`: the stages whose chapter card has shown this game, so a resumed game does not repeat them. */
+  save(state: GameState, reveal: RevealState, stages: readonly StageId[]): void;
   clear(): void;
 }

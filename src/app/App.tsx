@@ -102,7 +102,7 @@ export function App() {
         <BootScreen
           saved={saved}
           onPlay={() => setScreen('setup')}
-          onResume={(game) => openGame({ state: game.state, reveal: game.reveal })}
+          onResume={(game) => openGame({ state: game.state, reveal: game.reveal, stages: game.stages })}
           muted={muted}
           onMute={toggleMute}
           onToggleLanguage={toggleLanguage}

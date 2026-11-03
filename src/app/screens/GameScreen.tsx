@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import type { GameConfig } from '../../core/types';
 import { getAudio } from '../../game/audio';
 import { clearSave } from '../../game/save';
-import { t } from '../../i18n/i18n';
+import { getLocale, t } from '../../i18n/i18n';
 import { bridge, controllerStarted } from '../appHooks';
 import { BoardCanvas } from '../board3d/BoardCanvas';
 import type { DieHandle } from '../board3d/Die';
@@ -139,6 +139,7 @@ export function GameScreen({
         dieIdle={hud.diceEnabled && !result}
         onDieTap={roll}
         reducedMotion={reducedMotion}
+        locale={getLocale()}
       />
       {/* the board dims round a close-up bite (T45.4); under the HUD, over the canvas, never catching a pointer */}
       <div className="bite-vignette" data-on={view.cinema || undefined} aria-hidden="true" />
