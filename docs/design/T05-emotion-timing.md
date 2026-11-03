@@ -54,7 +54,7 @@ Fast mode: `stepMs -> fastStepMs`, every `durationMs` halved, `faceHoldMs` halve
 | `tween` | `none, bounce, leap, somersault, cower, shake, slump, nod, clap, stomp, fidget, bless, salute, sigh` |
 | `durationMs` | Total tween time, integer milliseconds |
 
-All 4 heroes x 2 roles x 12 events = 96 entries are present.
+All 6 heroes x 2 roles x 12 events = 144 entries are present (Bharata and Shatrughna added in T46; `tests/reactions.test.ts` checks coverage and section 5).
 
 ## 4. Tween catalogue
 
@@ -87,7 +87,8 @@ on the ground and shrinks to 70% during airborne frames.
 | Rama | `somersault, slump, cower, stomp, fidget, shake` | Composed and dignified at every moment |
 | Sita | `somersault, slump, cower, stomp, fidget, shake` | Calm; her sorrow is a sigh, never a collapse |
 | Both | `scared` face | They show concern via `sad` at low intensity or `idle` |
-| Lakshmana, Hanuman | — | Full catalogue allowed; they carry the comedy |
+| Bharata (T46) | `somersault, slump, cower, stomp, fidget, shake`, `scared` face | Restrained like Rama; the padukas stay calm in both hands |
+| Lakshmana, Shatrughna, Hanuman | — | Full catalogue allowed; they carry the comedy |
 
 `reactions.json` is checked against this table by `scripts/check-reactions` (to be added
 with the implementation); until then the author verified it by script before commit.

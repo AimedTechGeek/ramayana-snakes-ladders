@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import en from '../src/i18n/en.json';
 import hi from '../src/i18n/hi.json';
+import { HERO_ORDER } from '../src/game/heroes';
 import { registerLocale, setLocale, speech, t, type LocaleTable } from '../src/i18n/i18n';
 
 const enTable: LocaleTable = en;
@@ -11,7 +12,8 @@ function placeholdersOf(value: string | string[]): string[] {
   return [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
 }
 
-const HEROES = ['rama', 'sita', 'lakshmana', 'hanuman'];
+const HEROES = HERO_ORDER;
+const BROTHERS = ['rama', 'lakshmana', 'bharata', 'shatrughna'];
 const ROLES = ['self', 'other'] as const;
 const EVENTS = [
   'roll6',
@@ -71,6 +73,46 @@ describe('i18n', () => {
           ).not.toBeNull();
         }
       }
+    }
+  });
+
+  it('HeroNames_(EveryHero)_Should_ExistInBothLanguages', () => {
+    for (const hero of HEROES) {
+      expect(enTable[`hero.${hero}`], hero).toBeDefined();
+      expect(hiTable[`hero.${hero}`], hero).toBeDefined();
+    }
+  });
+
+  it('Speech_(BrotherReactsToBrother)_Should_AddThePairLinesToTheBystanderPool', () => {
+    const pair = en['bharata.to.rama.win'] as string[];
+    const generic = en['bharata.other.win'] as string[];
+    const pool = Array.from({ length: 50 }, (_, i) => speech('bharata', 'other', 'win', () => i / 50, 'rama'));
+    expect(new Set(pool)).toEqual(new Set([...pair, ...generic]));
+  });
+
+  it('Speech_(NoPairPool)_Should_UseOnlyTheGenericLines', () => {
+    const generic = en['bharata.other.win'] as string[];
+    for (const target of ['sita', 'hanuman', undefined]) {
+      const pool = Array.from({ length: 30 }, (_, i) => speech('bharata', 'other', 'win', () => i / 30, target));
+      expect(new Set(pool), String(target)).toEqual(new Set(generic));
+    }
+  });
+
+  it('Speech_(SelfRole)_Should_NeverUsePairLines', () => {
+    const own = en['bharata.self.win'] as string[];
+    expect(own).toContain(speech('bharata', 'self', 'win', () => 0.999, 'rama'));
+  });
+
+  it('PairKeys_Should_OnlyJoinTwoDifferentBrothersOnAKnownEvent', () => {
+    const pairs = Object.keys(enTable).filter((key) => key.includes('.to.'));
+    expect(pairs.length).toBeGreaterThan(0);
+    for (const key of pairs) {
+      const [speaker, to, target, event] = key.split('.');
+      expect(to, key).toBe('to');
+      expect(BROTHERS, key).toContain(speaker);
+      expect(BROTHERS, key).toContain(target);
+      expect(target, key).not.toBe(speaker);
+      expect(EVENTS, key).toContain(event);
     }
   });
 

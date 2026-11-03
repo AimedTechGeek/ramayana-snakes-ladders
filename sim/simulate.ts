@@ -18,9 +18,9 @@ const TARGETS: Record<Level, { mean: number; tolerance: number }> = {
 
 const PLAYERS: PlayerConfig[] = [
   { hero: 'rama', controller: 'bot', name: 'P0' },
-  { hero: 'sita', controller: 'bot', name: 'P1' },
-  { hero: 'lakshmana', controller: 'bot', name: 'P2' },
-  { hero: 'hanuman', controller: 'bot', name: 'P3' },
+  { hero: 'lakshmana', controller: 'bot', name: 'P1' },
+  { hero: 'bharata', controller: 'bot', name: 'P2' },
+  { hero: 'shatrughna', controller: 'bot', name: 'P3' },
 ];
 
 interface SoloResult {

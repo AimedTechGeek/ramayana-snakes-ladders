@@ -70,7 +70,8 @@ async function runSmoke(page, errors) {
     errors.push(`game did not report ready within ${READY_TIMEOUT_MS} ms (window.__app.ready)`);
   }
 
-  // Through Boot and Setup to the 3D board: the default seats are a human and a bot, so the game waits for a roll.
+  // Through Boot and Setup to the 3D board: the default seats are the four brothers (Rama human, three bots; Bharata
+  // and Shatrughna stay pegs while their GLBs are missing), so the game waits for Rama's roll.
   await page.click('[data-testid=play]');
   await page.click('[data-testid=start]');
   await page.waitForFunction(

@@ -25,6 +25,7 @@ import { gaitFor, type Gait } from '../src/game/iso/locomotion';
 import type { RevealChange, RevealState } from '../src/game/reveal';
 import type { StageId } from '../src/game/stages';
 import { setLocale } from '../src/i18n/i18n';
+import en from '../src/i18n/en.json';
 
 // The easy board (src/core/boards.ts): ladder 4 -> 25, snake 37 -> 19.
 
@@ -235,7 +236,7 @@ interface Rig {
 function rig(
   start: TurnStart,
   rolls: number[],
-  options: { fast?: boolean; muted?: boolean; reducedMotion?: boolean } = {},
+  options: { fast?: boolean; muted?: boolean; reducedMotion?: boolean; random?: () => number } = {},
 ): Rig {
   const view = new Recorder();
   const audio = new FakeAudio();
@@ -250,7 +251,7 @@ function rig(
       clock,
       save: saves,
       dice: scripted(...rolls),
-      random: () => 0.5,
+      random: options.random ?? (() => 0.5),
       reducedMotion: () => options.reducedMotion ?? false,
     },
     { fast: options.fast ?? false, muted: options.muted ?? false },
@@ -598,6 +599,7 @@ describe('TurnController', () => {
     expect(view.result?.state.over).toBe(true);
     expect(view.result?.state.players.some((p) => p.rank === 1)).toBe(true);
   });
+
   it('NewGame_Should_ShowTheAyodhyaGateCardOnce_AndSaveItAsShown', async () => {
     const { controller, view, saves } = rig(newGame([human('Asha'), human('Ravi')]), [2, 3]);
     await controller.start();
@@ -696,5 +698,23 @@ describe('TurnController', () => {
     await bounced.controller.start();
     await bounced.controller.requestRoll();
     expect(chapters(bounced.view)).toEqual([]);
+  });
+
+  it('BrotherBystander_(RamaWatchesBharataClimbBig)_Should_SpeakALineFromThePairPool', async () => {
+    const brothers: PlayerConfig[] = [
+      { hero: 'bharata', controller: 'human', name: 'Bharata' },
+      { hero: 'rama', controller: 'human', name: 'Rama' },
+      { hero: 'lakshmana', controller: 'human', name: 'Lakshmana' },
+      { hero: 'shatrughna', controller: 'human', name: 'Shatrughna' },
+    ];
+    const state = midGame(brothers, [24, 0, 0, 0]);
+    const reveal: RevealState = { terrain: [1, 24, 144], jumps: [] };
+    // random 0.1: Rama (seat 1) is the bystander, and the line comes from the front of the pool (the pair lines)
+    const { controller, view } = rig({ state, reveal }, [2], { random: () => 0.1 });
+    await controller.start();
+    await controller.requestRoll();
+
+    const pair = en['rama.to.bharata.ladderBig'] as string[];
+    expect(view.lines.filter((l) => l.seat === 1).some((l) => pair.includes(l.line))).toBe(true);
   });
 });

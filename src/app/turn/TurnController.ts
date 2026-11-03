@@ -2,7 +2,7 @@
 // HudSink, lifts fog as tokens arrive, starts the heroes' reactions, autosaves, and rolls for bots.
 // Renderer-free: no React, three or Phaser imports.
 
-import { orderedDelay, pickSpeakers, reactionsFor, type Cue } from '../../characters/reactionMapper';
+import { orderedDelay, pickSpeakers, reactionsFor, targetOf, type Cue } from '../../characters/reactionMapper';
 import { reactionFor, scaled, TIMING } from '../../characters/reactions';
 import { boardFor, type StoryBoard } from '../../core/boards';
 import { createRandomDice, type Dice } from '../../core/dice';
@@ -450,9 +450,10 @@ export class TurnController {
       if (!hero) return Promise.resolve();
       const reaction = scaled(reactionFor(hero, cue.role, cue.event), fast);
       const speaks = speakers.includes(cue);
+      const target = players[targetOf(cue, cues) ?? -1]?.hero;
       const begin = (): Promise<void> => {
         if (this.disposed) return Promise.resolve();
-        if (speaks) this.showLine(cue, hero, reaction.intensity, fast);
+        if (speaks) this.showLine(cue, hero, reaction.intensity, fast, target);
         return this.view.react(cue.seat, reaction, fast);
       };
       return delay === 0 ? begin() : this.clock.wait(delay).then(begin);
@@ -468,11 +469,12 @@ export class TurnController {
     return Promise.race([Promise.all(runs).then(() => undefined), timeout]);
   }
 
-  private showLine(cue: Cue, hero: string, intensity: number, fast: boolean): void {
+  /** `target` is the hero a bystander reacts to, for the brothers' pair lines. */
+  private showLine(cue: Cue, hero: string, intensity: number, fast: boolean, target?: string): void {
     const key = `${hero}.${cue.role}.${cue.event}`;
-    let line = speech(hero, cue.role, cue.event, this.random);
+    let line = speech(hero, cue.role, cue.event, this.random, target);
     if (line !== null && line === this.lastLines.get(key))
-      line = speech(hero, cue.role, cue.event, this.random);
+      line = speech(hero, cue.role, cue.event, this.random, target);
     if (line === null) return;
     this.lastLines.set(key, line);
     this.view.speak(cue.seat, line, intensity, fast);

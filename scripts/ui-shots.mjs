@@ -150,7 +150,6 @@ async function main() {
 
         await page.click('[data-testid=play]');
         await page.waitForSelector('[data-testid=setup]');
-        await page.click('[data-testid=seat-2-bot]');
         await shoot(page, `${tag}-setup`, `${tag} setup`);
 
         // Keyboard flow: Tab reaches Start, which can be activated with Enter.

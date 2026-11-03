@@ -1,4 +1,4 @@
-// Builds every hero script in this folder (hanuman.py, rama.py, sita.py, lakshmana.py), then prunes rest-pose channels:
+// Builds every hero script in this folder (hanuman.py, rama.py, sita.py, lakshmana.py, shatrughna.py), then prunes rest-pose channels:
 //   node scripts/blender/heroes/build.mjs [name ...]      ->  public/models/heroes/<name>.glb
 // common.py and motion.py are shared modules, not heroes.
 import { spawnSync } from 'node:child_process';

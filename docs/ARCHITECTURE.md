@@ -246,7 +246,9 @@ Single source of truth:
 - **Rest-pose channels**: heroes and snakes export with static channels kept (so held poses survive), then
   `prune-anim.mjs` removes only the channels that sit at the rest pose.
 
-Loading: GLBs load with drei's `useGLTF` (meshopt decoder; no Draco files are used). Heroes load only for seated heroes;
+Loading: GLBs load with drei's `useGLTF` (meshopt decoder; no Draco files are used). Heroes load only for seated heroes,
+and only when their GLB is in `public/models/heroes` (`vite.config.ts` lists them at build time as `__HERO_MODELS__`;
+`Pieces.tsx` draws a hero without one as a peg and never requests it);
 snakes and bridges load lazily on first reveal and are preloaded in `requestIdleCallback` time.
 
 ## 8. Performance budgets

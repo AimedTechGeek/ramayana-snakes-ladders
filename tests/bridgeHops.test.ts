@@ -18,7 +18,7 @@ import {
 } from '../src/app/board3d/bridgeHops';
 import { HALF, UNIT } from '../src/app/board3d/coords';
 
-const HEROES: Hero[] = ['hanuman', 'rama', 'lakshmana', 'sita'];
+const HEROES: Hero[] = ['hanuman', 'rama', 'lakshmana', 'sita', 'bharata', 'shatrughna'];
 
 function risenOn(level: (typeof LEVELS)[number]): Bridge[] {
   return boardFor(level).ladders.flatMap((ladder) => bridgeById(ladder.id) ?? []);

@@ -1,6 +1,6 @@
 # T01 — Hero Personality Bible
 
-Scope: the four playable heroes of _Ramayana Snakes & Ladders_, how they speak, how they
+Scope: the six playable heroes of _Ramayana Snakes & Ladders_ (Bharata and Shatrughna added in T46), how they speak, how they
 react, and what they are never allowed to do. Companion data file: `speech.en.json`
 (all bubble lines and UI strings). Reaction mechanics (face + tween per event) live in
 `T05-emotion-timing.md` / `reactions.json`.
@@ -14,7 +14,7 @@ react, and what they are never allowed to do. Companion data file: `speech.en.js
 | Line pool               | `speech.en.json` key `"<hero>.<role>.<event>"` holds 2-3 lines; pick one at random, avoid repeating the last line shown for that key.                                                                                                              |
 | Length                  | Aim for <= 40 characters; the hard limit is 48 (enforced by tests for English and Hindi). The bubble shrinks its font to keep one line.                                                                                                            |
 | Tone                    | Family-friendly, no sarcasm aimed at a real person, no violence beyond cartoon "I'll cut that snake in half".                                                                                                                                      |
-| Respect rules (binding) | Rama and Sita are never humiliated: no pratfalls, no crying fits, no gloating at them. Their "sad" is quiet disappointment. Comedy comes from Hanuman (lead) and Lakshmana (support). Snakes are Ravana's forces or story setbacks, never a deity. |
+| Respect rules (binding) | Rama and Sita are never humiliated: no pratfalls, no crying fits, no gloating at them. Their "sad" is quiet disappointment; Bharata keeps the same restraint. Comedy comes from Hanuman (lead), Lakshmana and Shatrughna (support). Snakes are Ravana's forces or story setbacks, never a deity. |
 
 Event vocabulary (fixed): `roll6, ladder, ladderBig, snake, snakeBig, overtake, overtaken,
 nearMiss, waiting, tripleSix, win, lose`.
@@ -101,7 +101,39 @@ Sample `self` lines: "Who put this snake here?!" / "Rematch. Right now."
 
 Sample `self` lines: "I'm FLYING! Look at me!" / "Phew! Tail still attached!"
 
-## 6. Cross-hero relationships (for bystander lines)
+## 6. Bharata
+
+| Aspect           | Detail |
+| ---------------- | ------ |
+| Role in the cast | The devoted regent. Rama's brother who refused the throne and ruled Ayodhya in Rama's name for fourteen years, Rama's padukas on the throne. The quiet conscience of the cast. |
+| Core traits      | Gentle, humble, steadfast, deeply loyal. Restrained like Rama, but softer: where Rama is serene, Bharata is reverent. |
+| Voice            | Soft, humble sentences; speaks of serving, waiting and keeping faith. Calls Rama "brother" in his own and pair lines; his generic bystander lines say "friend", as Rama's do. Allusions: the padukas, Nandigram, the fourteen-year vigil. |
+| On winning       | Gives the win away: "I have kept the throne for Rama." / "This joy is my brother's." |
+| On losing        | Rejoices for the winner first, like Rama. |
+| On a snake       | Patient endurance ("Fourteen years I waited. I can wait."). Never anger, never panic. |
+| Humour           | None of his own; a warm smile at the others. |
+| DO               | Nod, bless, salute (hand to heart), sigh, clap for others. Hold the padukas with both hands, always. |
+| DON'T            | Somersault, slump, cower, stomp, fidget, shake; no `scared` face. No exclamation marks except in congratulations and praise. The padukas are never joked about, dropped or swung. |
+
+Sample `self` lines: "The throne is Rama's, not mine." / "The padukas are home at last."
+
+## 7. Shatrughna
+
+| Aspect           | Detail |
+| ---------------- | ------ |
+| Role in the cast | The youngest brother, Bharata's faithful companion. Eager and warm; the little brother who wants to keep up with everyone. |
+| Core traits      | Loyal, enthusiastic, warm-hearted, a little impulsive. Like Lakshmana he flares up, but his heat turns to cheering rather than grumbling. |
+| Voice            | Quick exclamations, repetition ("Come on, come on!", "Go, go, go!"), "Whoa!", "Hooray!". Calls the elder brothers "brother". Proud to be the youngest. |
+| On winning       | Delighted: "The youngest wins! Ha!" / "Brothers, I made it!" |
+| On losing        | Sporting at once, then asks to play again. |
+| On a snake       | Indignant at the snake ("That snake is Ravana's spy!"), climbs straight back. |
+| Humour           | Eagerness and impatience, never cruelty. His teasing, like Lakshmana's, targets dice and snakes only. |
+| DO               | Bounce, leap, clap, fidget, stomp, salute. Comic face set allowed. |
+| DON'T            | Mock anyone, sulk, or say anything about Rama, Sita or the padukas that is not respectful. |
+
+Sample `self` lines: "Climbing! Bharata, look!" / "The youngest wins! Ha!"
+
+## 8. Cross-hero relationships (for bystander lines)
 
 | Pair                | Flavour                                         |
 | ------------------- | ----------------------------------------------- |
@@ -109,15 +141,45 @@ Sample `self` lines: "I'm FLYING! Look at me!" / "Phew! Tail still attached!"
 | Sita -> anyone      | Gentle encouragement, "take heart".             |
 | Lakshmana -> anyone | Competitive grumble; secretly rooting for them. |
 | Hanuman -> anyone   | Cheerleader. Loud even for opponents' ladders.  |
+| Bharata -> anyone   | Humble blessing, "take heart, friend".          |
+| Shatrughna -> anyone | Eager cheering, "Go, go, go!" for everyone.    |
 
 Because bystander lines are per-hero, not per-pair, lines are written to be safe toward any
-target, including Rama and Sita. Nothing a bystander says can read as mocking Rama or Sita.
+target, including Rama and Sita. Nothing a bystander says can read as mocking Rama or Sita. The
+generic `other` pools of Bharata and Shatrughna name nobody and use no kinship word, since the
+mover can be any hero.
 
-## 7. Writing checklist for new lines
+**Between the brothers (T46).** A bystander reacting to a brother on `ladderBig`, `snakeBig` or
+`win` also draws from `<speaker>.to.<mover>.<event>` (2 lines each, mixed into the speaker's
+`other` pool: `speech(..., target)` in `src/i18n/i18n.ts`, the mover from `targetOf` in
+`src/characters/reactionMapper.ts`). Pairs: Bharata and Shatrughna toward each other brother,
+Rama and Lakshmana toward Bharata and Shatrughna.
+
+| Pair                    | Flavour |
+| ----------------------- | ------- |
+| Bharata -> Rama         | Reverent younger brother: "Brother, your padukas wait for you." |
+| Bharata -> Lakshmana    | Calm elder; praises his loyalty, steadies his temper: "Steady, Lakshmana. No anger." |
+| Bharata -> Shatrughna   | Tender elder: "Take my hand, Shatrughna." |
+| Shatrughna -> Rama      | Adoring youngest: "Brother Rama is king again!" |
+| Shatrughna -> Lakshmana | Playful rival: "Race you to the top, brother!" |
+| Shatrughna -> Bharata   | Loyal companion who guards the padukas: "The padukas are safe, brother!" |
+| Rama -> Bharata         | Loving elder: "No one deserves it more, brother!" |
+| Rama -> Shatrughna      | Gentle elder: "Well done, youngest brother." |
+| Lakshmana -> Bharata    | Grudging respect turned warm: "Hmph. Well climbed, Bharata." |
+| Lakshmana -> Shatrughna | Big-brother teasing: "Ha! That's my little brother!" |
+
+**Hindi (T46): needs a native-speaker check.** The Bharata and Shatrughna lines and all pair
+lines in `hi.json` were written without a native speaker. They use आप toward others
+(Shatrughna is the youngest, so his lines may land on elders), भैया for elder brothers and
+पादुकाएँ for the padukas. Add them to the next native-speaker pass (T44 R11).
+
+## 9. Writing checklist for new lines
 
 1. Aim for <= 40 characters (hard limit 48), one sentence or two very short ones.
 2. Reads correctly in the hero's voice table above.
-3. Rama / Sita: no exclamation-mark panic, no complaint, no gloat.
-4. Lakshmana / Hanuman: teasing targets dice, snakes, the situation — never a person.
+3. Rama / Sita / Bharata: no exclamation-mark panic, no complaint, no gloat.
+4. Lakshmana / Shatrughna / Hanuman: teasing targets dice, snakes, the situation — never a person.
 5. No deity is blamed; snakes are "Ravana's doing", "treachery", "the forest".
 6. Family-friendly; no mocking of losing players.
+7. The padukas are spoken of only with reverence; nobody teases about them.
+8. Generic `other` lines name nobody and use no kinship word; brother lines go in `self` or the pair pools.
