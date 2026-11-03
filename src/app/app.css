@@ -1113,14 +1113,15 @@ h2 {
   }
 }
 
-/* ---- Chapter card (T46.5): a stage's Kanda, name and one line, bottom left over the canvas, away from the banner,
-   the bubbles (over the heroes) and the toast (bottom centre). It never takes a pointer. */
+/* ---- Chapter card (T46.5): a stage's Kanda, name and one line, bottom left over the canvas, away from the banner and
+   the toast (bottom centre); under the speech bubbles (a bubble that drifts over it stays readable) and the dialogs.
+   It never takes a pointer. */
 
 .chapter-card {
   position: absolute;
   left: var(--gutter);
   bottom: var(--gutter);
-  z-index: 15;
+  z-index: 1;
   max-width: min(420px, 40vw);
   padding: 12px 22px 12px 18px;
   pointer-events: none;

@@ -77,8 +77,7 @@ function textureMb(root: Scene): number {
     for (const m of Array.isArray(material) ? material : [material]) {
       for (const value of Object.values(m)) if (value instanceof Texture) seen.add(value);
       const uniforms = (m as { uniforms?: Record<string, { value?: unknown }> }).uniforms ?? {};
-      for (const uniform of Object.values(uniforms))
-        if (uniform?.value instanceof Texture) seen.add(uniform.value);
+      for (const uniform of Object.values(uniforms)) if (uniform?.value instanceof Texture) seen.add(uniform.value);
     }
   });
   let bytes = 0;

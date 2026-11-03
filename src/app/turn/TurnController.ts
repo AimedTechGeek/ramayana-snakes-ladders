@@ -100,7 +100,7 @@ export class TurnController {
   private dieSettled: Promise<void> = Promise.resolve();
   /** Stages whose chapter card has shown this game (T46.5): once per stage, saved with the game. */
   private readonly seenStages: Set<StageId>;
-  /** Cards earned during a bite wait for it to finish. */
+  /** Cards earned during a bite, or on the walk onto the snake's head, wait for the bite to finish. */
   private pendingChapters: StageId[] = [];
   private inBite = false;
 
@@ -272,9 +272,11 @@ export class TurnController {
   }
 
   private async play(events: readonly GameEvent[]): Promise<void> {
-    for (const event of events) {
+    for (const [index, event] of events.entries()) {
       if (this.disposed) return;
       this.latest = event;
+      // a walk that ends on a snake's head keeps its chapter card for after the bite (and its close-up)
+      if (event.type === 'Moved' && events[index + 1]?.type === 'Bitten') this.inBite = true;
       const changes = applyEvent(this.reveal, event);
       this.pendingTerrain = new Set(changes.flatMap((c) => (c.kind === 'terrain' ? [c.square] : [])));
       this.hud.seats(seatsOf(this.engine.snapshot()));

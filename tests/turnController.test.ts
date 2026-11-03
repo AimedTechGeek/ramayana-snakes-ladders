@@ -662,6 +662,22 @@ describe('TurnController', () => {
     expect(indexOf(view.log, 'view.bite done')).toBeLessThan(indexOf(view.log, 'hud.chapter ayodhya'));
   });
 
+  it('ACardEarnedOnTheWalkOntoASnakesHead_Should_WaitForTheBite', async () => {
+    // Asha walks 36, 37 into Ayodhya and lands on Manthara's head (37 -> 19)
+    const state = midGame([human('Asha'), human('Ravi')], [35, 12]);
+    const start: TurnStart = {
+      state,
+      reveal: { terrain: [1, 12, 35, 144], jumps: [] },
+      stages: ['start', 'mithila'],
+    };
+    const { controller, view } = rig(start, [2]);
+    await controller.start();
+    await controller.requestRoll();
+
+    expect(chapters(view)).toEqual(['ayodhya']);
+    expect(indexOf(view.log, 'view.bite done')).toBeLessThan(indexOf(view.log, 'hud.chapter ayodhya'));
+  });
+
   it('AStageSkippedOnABridge_Should_ShowNoCard_AndTheBridgesTopStageShowsItsOwn', async () => {
     const state = midGame([human('Asha'), human('Ravi')], [24, 12]);
     const { controller, view } = rig(

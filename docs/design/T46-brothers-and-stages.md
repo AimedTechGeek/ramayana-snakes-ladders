@@ -47,7 +47,7 @@ Each region of the board is a stage of the Ramayana (verify region boundaries in
 
 ### As built (T46.5)
 
-The Kanda mapping above matches the board's story order (`regionOf` and T03): no correction was needed. Stage table in `src/game/stages.ts` (strings `ui.stage.<id>.name|kanda|line`; tests in `tests/stages.test.ts`):
+The Kanda per stage above matches the board's story order (`regionOf` and T03), so no stage moved. Two one-liners were corrected to their Kanda (Valmiki's division): Guha's boat and the Ganga crossing belong to Ayodhya Kanda, and Rama Setu to Yuddha Kanda, so Dandaka reads "The forest years, Panchavati, Sita taken" and the sea "Hanuman's leap to Lanka, Sita found". (The board itself still shows the Ganga inside the forest rows and the Setu bridge in the sea row; that is the art's story map, not the card text.) Stage table in `src/game/stages.ts` (strings `ui.stage.<id>.name|kanda|line`; tests in `tests/stages.test.ts`):
 
 | Stage id | Squares | Regions (`regionOf`) | Rows | Plaque |
 |---|---|---|---|---|

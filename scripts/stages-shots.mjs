@@ -14,7 +14,7 @@ const BROTHERS = [
   { hero: 'shatrughna', controller: 'human', name: 'Shatrughna' },
 ];
 
-/** A save with Rama on 36 (Mithila's last square), so a roll of 2 walks into Ayodhya past Manthara's head on 37 (no stages recorded: seeded). */
+/** A save with Rama on 36 (Mithila's last square), so a roll of 1 enters Ayodhya on Manthara's head (no stages saved: seeded). */
 const SAVE_AT_36 = {
   version: 2,
   state: {
@@ -60,13 +60,20 @@ async function fitScenes(browser) {
     await switchLanguage(app.page);
     await shot(app.page, OUT, `fit-${name}-hi`);
     await switchLanguage(app.page);
+    // Rama steps onto 2, beside the gate's plate: the plate must not cover him
+    await app.page.evaluate(() => window.__queue.push(2));
+    await app.page.evaluate(() => void window.__app.requestRoll());
+    await settle(app.page);
+    await app.page.evaluate(() => window.__app.camera.fit());
+    await app.page.waitForTimeout(1500);
+    await shot(app.page, OUT, `fit-${name}-hero-on-2`);
     problems.push(...app.problems);
     await app.context.close();
   }
   return problems;
 }
 
-/** A plaque up close (Mithila's, beside row 1), both languages, and the Ayodhya plaque at the right edge. */
+/** Plaques up close: the gate's on the plinth ledge (both languages), Mithila's at row 1's right end, Ayodhya's. */
 async function closeUps(browser) {
   const { page, problems, context } = await openApp(browser, BASE);
   await startGame(page, { level: 'easy', players: BROTHERS });
@@ -74,10 +81,15 @@ async function closeUps(browser) {
     window.__app.camera.set({ azimuth: 0.55, polar: 1.05, distance: 6.5, target: [-5.4, -0.2, 6.2] }),
   );
   await page.waitForTimeout(1000);
+  await shot(page, OUT, 'plaque-close-gate-en');
+  await switchLanguage(page);
+  await shot(page, OUT, 'plaque-close-gate-hi');
+  await switchLanguage(page);
+  await page.evaluate(() =>
+    window.__app.camera.set({ azimuth: -0.3, polar: 1.0, distance: 6.5, target: [5.6, 0.2, 5.2] }),
+  );
+  await page.waitForTimeout(1000);
   await shot(page, OUT, 'plaque-close-mithila-en');
-  await switchLanguage(page);
-  await shot(page, OUT, 'plaque-close-mithila-hi');
-  await switchLanguage(page);
   await page.evaluate(() =>
     window.__app.camera.set({ azimuth: -0.4, polar: 1.0, distance: 7, target: [5.6, 0.6, 2.4] }),
   );
@@ -87,7 +99,7 @@ async function closeUps(browser) {
   return problems;
 }
 
-/** Resume a save with Rama on 36 and roll 2: the Ayodhya card slides in as he steps on 37 (en, then hi). */
+/** Resume a save with Rama on 36 and roll 1: he steps into Ayodhya onto Manthara's head; the card waits for the bite. */
 async function ayodhyaCard(browser, { reducedMotion = false, suffix = '' } = {}) {
   const problems = [];
   for (const locale of ['en', 'hi']) {
@@ -132,9 +144,9 @@ async function ayodhyaCard(browser, { reducedMotion = false, suffix = '' } = {})
     // no card on resume: the seeded stages (start, Mithila) are not repeated
     const before = await page.$('[data-testid=chapter-card]');
     if (before) problems.push('a chapter card showed on resume');
-    await page.evaluate((v) => window.__queue.push(v), 2);
+    await page.evaluate((v) => window.__queue.push(v), 1);
     await page.evaluate(() => void window.__app.requestRoll());
-    await page.waitForSelector('[data-testid=chapter-card][data-stage=ayodhya]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid=chapter-card][data-stage=ayodhya]', { timeout: 20000 });
     await page.waitForTimeout(reducedMotion ? 200 : 500);
     await shot(page, OUT, `card-ayodhya-${locale}${suffix}`);
     await settle(page);
@@ -143,10 +155,31 @@ async function ayodhyaCard(browser, { reducedMotion = false, suffix = '' } = {})
   return problems;
 }
 
+/** The game-start card in Hindi (the language chosen before the game). */
+async function startCardHindi(browser) {
+  const context = await browser.newContext({ viewport: DESKTOP, deviceScaleFactor: 1 });
+  await context.addInitScript(() => localStorage.setItem('rsl.locale', 'hi'));
+  const page = await context.newPage();
+  const problems = [];
+  page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+  await page.goto(BASE);
+  await page.waitForFunction(() => window.__app?.ready === true, null, { timeout: 30000 });
+  await page.evaluate(
+    (players) => window.__app.startGame({ level: 'easy', playOn: false, players }),
+    BROTHERS,
+  );
+  await page.waitForSelector('[data-testid=chapter-card]', { timeout: 10000 });
+  await page.waitForTimeout(700);
+  await shot(page, OUT, 'card-start-desktop-hi');
+  await context.close();
+  return problems;
+}
+
 const browser = await launch();
 const problems = [
   ...(await fitScenes(browser)),
   ...(await closeUps(browser)),
+  ...(await startCardHindi(browser)),
   ...(await ayodhyaCard(browser)),
   ...(await ayodhyaCard(browser, { reducedMotion: true, suffix: '-reduced' })),
 ];
