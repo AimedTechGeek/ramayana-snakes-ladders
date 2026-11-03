@@ -1,6 +1,6 @@
 // Captures of the named stages (T46.5, T46.6): the signposts at Fit on desktop and phone, signpost close-ups (the start
-// signpost at Focus with a hero beside it, Ayodhya's and Lanka's, one in Hindi), the chapter card at game start and on
-// entering Ayodhya, in English and (switched live) Hindi, and the card under reduced motion.
+// signpost at Focus with a hero beside it, four heroes on square 1, the others up close, one in Hindi), the chapter card
+// at game start and on entering Ayodhya, in English and (switched live) Hindi, and the card under reduced motion.
 // Usage: node scripts/stages-shots.mjs <outDir> [baseUrl]   (default baseUrl http://localhost:5184: `npx vite --port 5184`)
 import { DESKTOP, PHONE, launch, openApp, roll, settle, shot, startGame } from './review/lib.mjs';
 
@@ -112,6 +112,19 @@ async function closeUps(browser) {
   return problems;
 }
 
+/** All four brothers on square 1 (the four-token fan): the back slots stand just in front of the start signpost. */
+async function crowdOnStart(browser) {
+  const { page, problems, context } = await openApp(browser, BASE);
+  await startGame(page, { level: 'easy', players: BROTHERS });
+  await page.waitForTimeout(3500);
+  for (let seat = 0; seat < 4; seat++) await roll(page, 1);
+  await page.evaluate((pose) => window.__app.camera.set(pose), near([-5.4, 0.5, 5.3], 3.6));
+  await page.waitForTimeout(1200);
+  await shot(page, OUT, 'sign-crowd-start-en');
+  await context.close();
+  return problems;
+}
+
 /** Resume a save with Rama on 36 and roll 1: he steps into Ayodhya onto Manthara's head; the card waits for the bite. */
 async function ayodhyaCard(browser, { reducedMotion = false, suffix = '' } = {}) {
   const problems = [];
@@ -192,6 +205,7 @@ const browser = await launch();
 const problems = [
   ...(await fitScenes(browser)),
   ...(await closeUps(browser)),
+  ...(await crowdOnStart(browser)),
   ...(await startCardHindi(browser)),
   ...(await ayodhyaCard(browser)),
   ...(await ayodhyaCard(browser, { reducedMotion: true, suffix: '-reduced' })),

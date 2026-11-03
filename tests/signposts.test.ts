@@ -1,6 +1,7 @@
 // Stage signposts (T46.6): one small wooden signpost per stage on the stage's first block, at a prop's scale, out of
 // every walking lane and fan slot, clear of coils, bridges and landmarks, and hiding no number chip and not the throne
-// from the default camera.
+// from the default camera at Fit on desktop and phone.
+import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { STORY_JUMPS } from '../src/core/boards';
 import {
@@ -13,7 +14,7 @@ import {
   rowOf,
 } from '../src/app/board3d/boardLayout';
 import { bridges, DECK_WIDTH, PARAPET_WIDTH } from '../src/app/board3d/bridgeGeometry';
-import { FIT_AZIMUTH, FIT_POLAR } from '../src/app/board3d/cameraConfig';
+import { FIT_AZIMUTH, fitPose } from '../src/app/board3d/cameraConfig';
 import { CHIP_HEIGHT, CHIP_WIDTH } from '../src/app/board3d/chips';
 import { HERO_SCALE } from '../src/app/board3d/figureScale';
 import {
@@ -29,6 +30,7 @@ import {
 } from '../src/app/board3d/propLayout';
 import {
   SIGN_BOARD_BOTTOM,
+  SIGN_BOARD_HEIGHT,
   SIGN_BOARD_WIDTH,
   SIGN_FOOT,
   SIGN_HEIGHT,
@@ -60,67 +62,81 @@ function overlap(a: Polygon, b: Polygon, gap = 0): boolean {
   return !(u.x1 + gap < v.x0 || v.x1 + gap < u.x0 || u.z1 + gap < v.z0 || v.z1 + gap < u.z0);
 }
 
-// The default camera's view (Fit): an orthographic projection along its direction is close enough at Fit distance.
-const right = [Math.cos(FIT_AZIMUTH), 0, -Math.sin(FIT_AZIMUTH)] as const;
-const into = [
-  -Math.sin(FIT_POLAR) * Math.sin(FIT_AZIMUTH),
-  -Math.cos(FIT_POLAR),
-  -Math.sin(FIT_POLAR) * Math.cos(FIT_AZIMUTH),
-] as const;
-const up = [
-  right[1] * into[2] - right[2] * into[1],
-  right[2] * into[0] - right[0] * into[2],
-  right[0] * into[1] - right[1] * into[0],
-].map((c, _, all) => (all[1]! > 0 ? c : -c));
-const dot = (p: readonly number[], q: readonly number[]): number =>
-  p[0]! * q[0]! + p[1]! * q[1]! + p[2]! * q[2]!;
+// The default camera at Fit on desktop and on a phone (fitPose, no HUD boxes), projected in perspective.
+interface View {
+  name: string;
+  eye: Vector3;
+  forward: Vector3;
+  right: Vector3;
+  up: Vector3;
+}
+
+function viewAt(name: string, width: number, height: number): View {
+  const { position, target } = fitPose(width, height);
+  const forward = target.clone().sub(position).normalize();
+  const right = forward
+    .clone()
+    .cross(new Vector3(0, 1, 0))
+    .normalize();
+  return { name, eye: position, forward, right, up: right.clone().cross(forward) };
+}
+
+const VIEWS: readonly View[] = [viewAt('desktop', 1280, 720), viewAt('phone', 844, 390)];
 
 interface ScreenBox {
   x0: number;
   x1: number;
   y0: number;
   y1: number;
-  /** Nearest depth along the view (smaller is nearer the camera). */
-  near: number;
-  far: number;
 }
 
-function screenBox(points: readonly (readonly number[])[]): ScreenBox {
-  const xs = points.map((p) => dot(p, right));
-  const ys = points.map((p) => dot(p, up));
-  const ds = points.map((p) => dot(p, into));
+/** Screen position (tangent units) and view depth of a three-space point. */
+function project(view: View, [x, y, z]: readonly number[]): { sx: number; sy: number; depth: number } {
+  const v = new Vector3(x, y, z).sub(view.eye);
+  const depth = v.dot(view.forward);
+  return { sx: v.dot(view.right) / depth, sy: v.dot(view.up) / depth, depth };
+}
+
+function screenBox(view: View, points: readonly (readonly number[])[]): ScreenBox {
+  const projected = points.map((p) => project(view, p));
   return {
-    x0: Math.min(...xs),
-    x1: Math.max(...xs),
-    y0: Math.min(...ys),
-    y1: Math.max(...ys),
-    near: Math.min(...ds),
-    far: Math.max(...ds),
+    x0: Math.min(...projected.map((p) => p.sx)),
+    x1: Math.max(...projected.map((p) => p.sx)),
+    y0: Math.min(...projected.map((p) => p.sy)),
+    y1: Math.max(...projected.map((p) => p.sy)),
   };
 }
 
-const crosses = (a: ScreenBox, b: ScreenBox): boolean =>
-  a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
-
-/** The sign board as the default camera sees it. */
-function boardOnScreen(spot: (typeof SPOTS)[number]): ScreenBox {
-  const board = signpostPolygons(spot)[1]!;
-  const foot = signpostFootY(spot.square, DAIS_HEIGHT);
-  return screenBox(
-    board.flatMap(([x, z]) => [foot + SIGN_BOARD_BOTTOM, foot + SIGN_HEIGHT].map((y) => [x, y, z])),
-  );
+/** Share of box `b` that box `a` covers on screen. */
+function covered(a: ScreenBox, b: ScreenBox): number {
+  const w = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0));
+  const h = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+  return (w * h) / ((b.x1 - b.x0) * (b.y1 - b.y0));
 }
 
-/** A number chip at Fit: the billboard grows with distance (chipMaterial: up to x2.5; ~x1.8 at desktop Fit). */
-const FIT_CHIP_SCALE = 1.8;
-function chipOnScreen(square: number): ScreenBox {
-  const [x, y, z] = chipAnchor(square);
-  const sx = dot([x, y, z], right);
-  const sy = dot([x, y, z], up);
-  const d = dot([x, y, z], into);
-  const hw = (CHIP_WIDTH * FIT_CHIP_SCALE) / 2;
-  const hh = (CHIP_HEIGHT * FIT_CHIP_SCALE) / 2;
-  return { x0: sx - hw, x1: sx + hw, y0: sy - hh, y1: sy + hh, near: d, far: d };
+/** A board may graze the edge of a chip or of the throne (its box on screen is a little larger than it), no more. */
+const MAX_COVER = 0.15;
+
+/** The sign board's corners (as a box on screen: a little larger than the turned board itself). */
+function boardCorners(spot: (typeof SPOTS)[number]): number[][] {
+  const board = signpostPolygons(spot)[1]!;
+  const bottom = signpostFootY(spot.square, DAIS_HEIGHT) + SIGN_BOARD_BOTTOM;
+  return board.flatMap(([x, z]) => [bottom, bottom + SIGN_BOARD_HEIGHT].map((y) => [x, y, z]));
+}
+
+/** True when a point lies behind the board's face (the face looks along its yaw, toward the camera). */
+function behindBoard(spot: (typeof SPOTS)[number], [x, , z]: readonly number[]): boolean {
+  const normal = [Math.sin(spot.yaw), Math.cos(spot.yaw)];
+  return (x! - spot.at[0]) * normal[0]! + (z! - spot.at[1]) * normal[1]! < 0;
+}
+
+/** A number chip on screen: the billboard grows with its view depth (chipMaterial: depth / 10, clamped 1..2.5). */
+function chipOnScreen(view: View, square: number): ScreenBox {
+  const { sx, sy, depth } = project(view, chipAnchor(square));
+  const scale = Math.min(2.5, Math.max(1, depth / 10));
+  const hw = (CHIP_WIDTH * scale) / 2 / depth;
+  const hh = (CHIP_HEIGHT * scale) / 2 / depth;
+  return { x0: sx - hw, x1: sx + hw, y0: sy - hh, y1: sy + hh };
 }
 
 describe('signposts', () => {
@@ -204,8 +220,14 @@ describe('signposts', () => {
           `${spot.id} vs ${jump.id}`,
         ).toBe(false);
       }
-      for (const bridge of decks.filter((b) => b.from === spot.square || b.to === spot.square))
+      // every bridge that starts, ends or passes over the sign's block: its deck runs clear beside or above the sign
+      const top = signpostFootY(spot.square, DAIS_HEIGHT) + SIGN_HEIGHT;
+      const near = decks.filter(
+        (b) => b.from === spot.square || b.to === spot.square || b.crossed.includes(spot.square),
+      );
+      for (const bridge of near)
         for (let i = 0; i + 1 < bridge.deck.length; i++) {
+          if (Math.min(bridge.deck[i]!.y, bridge.deck[i + 1]!.y) > top + 0.05) continue;
           const a: Point = [bridge.deck[i]!.x, bridge.deck[i]!.z];
           const b: Point = [bridge.deck[i + 1]!.x, bridge.deck[i + 1]!.z];
           for (const part of sign)
@@ -235,29 +257,31 @@ describe('signposts', () => {
     expect(clashes).toEqual([]);
   });
 
-  it('ASignpost_FromTheDefaultCamera_Should_HideNoNumberChip', () => {
+  it('ASignpost_AtFitOnDesktopAndPhone_Should_HideNoNumberChip', () => {
     const hidden: string[] = [];
-    for (const spot of SPOTS) {
-      const board = boardOnScreen(spot);
-      for (let square = 1; square <= FINAL_SQUARE; square++) {
-        const chip = chipOnScreen(square);
-        if (chip.near > board.near && crosses(board, chip)) hidden.push(`${spot.id} hides ${square}`);
+    for (const view of VIEWS)
+      for (const spot of SPOTS) {
+        const board = screenBox(view, boardCorners(spot));
+        for (let square = 1; square <= FINAL_SQUARE; square++)
+          if (behindBoard(spot, chipAnchor(square)) && covered(board, chipOnScreen(view, square)) > MAX_COVER)
+            hidden.push(`${view.name}: ${spot.id} hides ${square}`);
       }
-    }
     expect(hidden).toEqual([]);
   });
 
-  it('TheThronesSignpost_FromTheDefaultCamera_Should_LeaveTheThroneInView', () => {
+  it('TheThronesSignpost_AtFitOnDesktopAndPhone_Should_LeaveTheThroneInView', () => {
     const spot = SPOTS.find((s) => s.id === 'throne')!;
-    const [tx, ty, tz] = coronationSpots(blockTopY(FINAL_SQUARE)).throne;
-    const seat = (landmarkSolids().find((s) => s.name === 'throne')!.polygons[0] ?? []).map(([x, z]) => [
-      x,
-      z,
-    ]);
+    const [, ty] = coronationSpots(blockTopY(FINAL_SQUARE)).throne;
+    const seat = landmarkSolids().find((s) => s.name === 'throne')!.polygons[0] ?? [];
     expect(seat.length).toBe(4);
-    const throne = screenBox(seat.flatMap(([x, z]) => [ty, ty + 0.45].map((y) => [x!, y, z!])));
-    expect(Math.hypot(tx - spot.at[0], tz - spot.at[1])).toBeGreaterThan(0.3);
-    expect(crosses(boardOnScreen(spot), throne)).toBe(false);
+    // the empty throne stands 0.45 u tall (25.4 px) on the dais
+    const throne = seat.flatMap(([x, z]) => [ty, ty + 0.45].map((y) => [x, y, z]));
+    expect(throne.every((corner) => behindBoard(spot, corner))).toBe(true);
+    for (const view of VIEWS)
+      expect(
+        covered(screenBox(view, boardCorners(spot)), screenBox(view, throne)),
+        view.name,
+      ).toBeLessThanOrEqual(MAX_COVER);
   });
 
   it('EveryBoard_Should_ReadItsOwnAtlasCell', () => {
