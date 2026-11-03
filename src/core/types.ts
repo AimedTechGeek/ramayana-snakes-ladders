@@ -1,5 +1,5 @@
 export type Level = 'easy' | 'medium' | 'hard';
-export type Hero = 'rama' | 'sita' | 'lakshmana' | 'hanuman';
+export type Hero = 'rama' | 'sita' | 'lakshmana' | 'bharata' | 'shatrughna' | 'hanuman';
 export type Controller = 'human' | 'bot';
 
 export const FINAL_SQUARE = 144;

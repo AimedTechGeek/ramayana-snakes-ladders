@@ -26,6 +26,8 @@ future AI-art upgrade can re-skin without touching geometry.
 | `ramaAccent` | `#3F6FC2` | Rama's skin (sky-blue) and seat colour |
 | `sitaAccent` | `#D15587` | Sita's sari (rose) and seat colour |
 | `lakshmanaAccent` | `#2E9E6B` | Lakshmana's dhoti/sash (emerald) and seat colour |
+| `bharataAccent` | `#6E4BB5` | Bharata's seat colour (violet, T46) |
+| `shatrughnaAccent` | `#1F9E95` | Shatrughna's seat colour (teal, T46) |
 | `hanumanAccent` | `#E4572E` | Hanuman's sindoor-orange fur trim/loincloth and seat colour |
 
 Derived tones (compute, do not hand-pick):

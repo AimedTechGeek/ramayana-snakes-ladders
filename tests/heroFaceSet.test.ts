@@ -35,3 +35,10 @@ describe('Face sets (T44 4.4 R2)', () => {
     expect(faceSpec('comic', 'scared').browLift).toBeGreaterThan(faceSpec('comic', 'idle').browLift);
   });
 });
+
+describe('Face sets of the new brothers (T46)', () => {
+  it('FaceSet_(Bharata)_ShouldBeRestrainedLikeRamaAndShatrughnaComicLikeLakshmana', () => {
+    expect(faceSetOf('bharata')).toBe('restrained');
+    expect(faceSetOf('shatrughna')).toBe('comic');
+  });
+});

@@ -56,14 +56,19 @@ export function t(key: string, params?: Record<string, string | number>): string
   );
 }
 
-/** One random line for `${hero}.${role}.${event}`, or null when no line exists. */
+/**
+ * One random line for `${hero}.${role}.${event}`, or null when no line exists. A bystander reacting to the hero
+ * `target` also draws from `${hero}.to.${target}.${event}` when that pool exists (the brothers' lines, T46).
+ */
 export function speech(
   hero: string,
   role: 'self' | 'other',
   event: string,
   random: () => number = Math.random,
+  target?: string,
 ): string | null {
-  const lines = linesFor(`${hero}.${role}.${event}`);
+  const pair = role === 'other' && target ? linesFor(`${hero}.to.${target}.${event}`) : [];
+  const lines = [...pair, ...linesFor(`${hero}.${role}.${event}`)];
   if (lines.length === 0) return null;
   const index = Math.min(lines.length - 1, Math.floor(random() * lines.length));
   return lines[index] ?? null;

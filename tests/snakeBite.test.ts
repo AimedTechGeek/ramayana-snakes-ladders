@@ -16,7 +16,7 @@ import { BITE_GROW, CINEMA_FADE_MS, biteTimeline, mouthPoint } from '../src/app/
 import { SNAKE_SCALE } from '../src/app/board3d/figureScale';
 import { toWorld } from '../src/app/board3d/coords';
 
-const HEROES: Hero[] = ['rama', 'sita', 'lakshmana', 'hanuman'];
+const HEROES: Hero[] = ['rama', 'sita', 'lakshmana', 'bharata', 'shatrughna', 'hanuman'];
 const board = boardFor('hard');
 const SNAKE = board.snakes.find((s) => s.id === 'manthara')!; // 37 -> 19
 

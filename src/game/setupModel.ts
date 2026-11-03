@@ -15,12 +15,13 @@ function makeSeat(controller: SeatController, hero: Hero): SeatModel {
   return { controller, hero, name: heroName(hero) };
 }
 
+/** The default game is the four brothers (T46): Rama for the player, Lakshmana, Bharata and Shatrughna as bots. */
 export function defaultSeats(): SeatModel[] {
   return [
     makeSeat('human', 'rama'),
-    makeSeat('bot', 'hanuman'),
-    makeSeat('empty', 'lakshmana'),
-    makeSeat('empty', 'sita'),
+    makeSeat('bot', 'lakshmana'),
+    makeSeat('bot', 'bharata'),
+    makeSeat('bot', 'shatrughna'),
   ];
 }
 

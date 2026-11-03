@@ -1,4 +1,4 @@
-// Pieces on the board: Hanuman, Rama, Lakshmana and Sita (the rigged clay heroes), clay peg figures for the heroes whose models are still to come,
+// Pieces on the board: the rigged clay heroes (all six; Bharata and Shatrughna once their GLBs land), clay peg figures for the heroes whose models are still to come,
 // placeholder bridges and snakes that rise when revealed, bounce puffs, and the head anchors of the speech bubbles.
 
 import { useFrame, useThree } from '@react-three/fiber';
@@ -40,10 +40,16 @@ function useTokenPlacement(view: DioramaView, player: number) {
 }
 
 /** Heroes with a rigged clay GLB (the others are pegs until their models land). */
-const RIGGED: readonly Hero[] = ['hanuman', 'rama', 'lakshmana', 'sita'];
-const isRigged = (hero: Hero): hero is Hero & HeroId => RIGGED.includes(hero);
+const RIGGED: readonly Hero[] = ['hanuman', 'rama', 'lakshmana', 'sita', 'bharata', 'shatrughna'];
+/**
+ * The hero GLBs actually in `public/models/heroes`, listed by vite.config.ts at build time. A rigged hero whose GLB
+ * has not landed yet stays a peg and is never requested, so a missing model makes no 404 and no loader error.
+ */
+declare const __HERO_MODELS__: readonly string[];
+const SHIPPED_MODELS: readonly string[] = __HERO_MODELS__;
+const isRigged = (hero: Hero): hero is HeroId => RIGGED.includes(hero) && SHIPPED_MODELS.includes(hero);
 
-/** A rigged clay hero (Hanuman, Rama, Lakshmana, Sita), driven by the view through heroDirector (useHeroActor). */
+/** A rigged clay hero, driven by the view through heroDirector (useHeroActor). */
 function RiggedToken({
   view,
   player,
@@ -71,13 +77,20 @@ const PEG_SKIN: Record<Hero, string> = {
   rama: '#E8B58C',
   sita: '#F2C29B',
   lakshmana: '#F0B57C',
+  bharata: '#E6B088',
+  shatrughna: '#EEB680',
   hanuman: '#F0A96B',
 };
-/** The circlet each hero wears: Rama's gold crown band, Sita's thin tiara, Lakshmana's saffron headband. */
+/**
+ * The circlet each hero wears: Rama's gold crown band, Sita's thin tiara, Lakshmana's saffron headband, Bharata's
+ * gold regent's band, Shatrughna's gold headband.
+ */
 const PEG_BAND: Record<Hero, { color: string; tube: number }> = {
   rama: { color: '#E9C12F', tube: 0.035 },
   sita: { color: '#E9C12F', tube: 0.016 },
   lakshmana: { color: '#F39C2B', tube: 0.028 },
+  bharata: { color: '#E9C12F', tube: 0.032 },
+  shatrughna: { color: '#E9C12F', tube: 0.024 },
   hanuman: { color: '#E9C12F', tube: 0.03 },
 };
 const PEG_HEAD_Y = 0.98;

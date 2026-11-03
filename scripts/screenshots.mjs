@@ -160,7 +160,6 @@ const SCENES = {
   async setup(browser) {
     const { context, page, problems } = await open(browser);
     await page.click('[data-testid=play]');
-    await page.click('[data-testid=seat-2-bot]');
     await snap(page, '02-setup');
     await context.close();
     return problems;
