@@ -107,7 +107,7 @@ Sample `self` lines: "I'm FLYING! Look at me!" / "Phew! Tail still attached!"
 | ---------------- | ------ |
 | Role in the cast | The devoted regent. Rama's brother who refused the throne and ruled Ayodhya in Rama's name for fourteen years, Rama's padukas on the throne. The quiet conscience of the cast. |
 | Core traits      | Gentle, humble, steadfast, deeply loyal. Restrained like Rama, but softer: where Rama is serene, Bharata is reverent. |
-| Voice            | Soft, humble sentences; speaks of serving, waiting and keeping faith. Calls Rama "brother", others "friend". Allusions: the padukas, Nandigram, the fourteen-year vigil. |
+| Voice            | Soft, humble sentences; speaks of serving, waiting and keeping faith. Calls Rama "brother" in his own and pair lines; his generic bystander lines say "friend", as Rama's do. Allusions: the padukas, Nandigram, the fourteen-year vigil. |
 | On winning       | Gives the win away: "I have kept the throne for Rama." / "This joy is my brother's." |
 | On losing        | Rejoices for the winner first, like Rama. |
 | On a snake       | Patient endurance ("Fourteen years I waited. I can wait."). Never anger, never panic. |
