@@ -79,6 +79,15 @@ function pickOne<T>(items: readonly T[], random: () => number): T | undefined {
 }
 
 /**
+ * The seat a bystander's cue reacts to: the first `self` cue of the same event (the mover, the hero who was passed,
+ * or a loser). Undefined for a `self` cue. Picks the brothers' pair lines (T46).
+ */
+export function targetOf(cue: Cue, cues: readonly Cue[]): number | undefined {
+  if (cue.role === 'self') return undefined;
+  return cues.find((c) => c.role === 'self' && c.event === cue.event)?.seat;
+}
+
+/**
  * Who shows a speech bubble: the mover (first self cue) plus one random bystander. When every self
  * cue is a loser (GameOver) one random loser speaks, and the winner answers as the bystander.
  */

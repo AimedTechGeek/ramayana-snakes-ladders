@@ -18,12 +18,12 @@ type Ctx = CanvasRenderingContext2D;
 type Look = 'idle' | 'blink' | 'happy' | 'excited' | 'scared' | 'sad';
 
 /**
- * Two face sets over the same atlas layout. 'restrained' is for Rama and Sita (T44 4.4 R2): `scared` keeps the idle
- * brows (concern, not fright), no sweat drop, no tear, no sparkles, `excited` is a calm raised-brow smile. The other
- * heroes keep the comic set (Lakshmana and Hanuman, R4).
+ * Two face sets over the same atlas layout. 'restrained' is for Rama, Sita and Bharata (T44 4.4 R2, T46): `scared`
+ * keeps the idle brows (concern, not fright), no sweat drop, no tear, no sparkles, `excited` is a calm raised-brow
+ * smile. The other heroes keep the comic set (Lakshmana, Shatrughna and Hanuman, R4).
  */
 export type FaceSet = 'comic' | 'restrained';
-export const RESTRAINED_HEROES: readonly string[] = ['rama', 'sita'];
+export const RESTRAINED_HEROES: readonly string[] = ['rama', 'sita', 'bharata'];
 export function faceSetOf(hero: string): FaceSet {
   return RESTRAINED_HEROES.includes(hero) ? 'restrained' : 'comic';
 }

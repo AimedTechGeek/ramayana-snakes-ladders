@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pickSpeakers, reactionsFor, type Cue } from '../src/characters/reactionMapper';
-import { orderedDelay } from '../src/characters/reactionMapper';
+import { orderedDelay, targetOf } from '../src/characters/reactionMapper';
 import type { GameEvent } from '../src/core/events';
 
 const PLAYERS = [
@@ -153,5 +153,24 @@ describe('orderedDelay', () => {
     orderedDelay(starts, 0, 120, 1000);
     expect(orderedDelay(starts, 2, 90, 1000)).toBe(90);
     expect(orderedDelay(starts, 0, 90, 5000)).toBe(90); // long after: no carry-over
+  });
+});
+
+describe('targetOf (brothers pair lines, T46)', () => {
+  it('TargetOf_(BystanderOfALadder)_Should_BeTheMover', () => {
+    const cues = cuesOf({ type: 'Laddered', player: 2, jump: JUMP, big: true });
+    const bystander = cues.find((c) => c.seat === 0)!;
+    expect(targetOf(bystander, cues)).toBe(2);
+  });
+
+  it('TargetOf_(BystanderComfortingThePassed)_Should_BeTheOvertakenSeat', () => {
+    const cues = cuesOf({ type: 'Overtook', player: 0, overtaken: [1] }, () => 0.8);
+    const comfort = cues.find((c) => c.role === 'other' && c.event === 'overtaken')!;
+    expect(targetOf(comfort, cues)).toBe(1);
+  });
+
+  it('TargetOf_(SelfCue)_Should_BeUndefined', () => {
+    const cues = cuesOf({ type: 'Won', player: 3, rank: 1 });
+    expect(targetOf(cues[0]!, cues)).toBeUndefined();
   });
 });
