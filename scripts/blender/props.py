@@ -140,8 +140,8 @@ def crenels(k, n, z, colour, x0, span, size=(3.2, 2.6, 1.8), along="y"):
 
 
 # T45.2 walkways: a wall's doorway sits at its middle, on the heroes' lane (the wall stands on the lane's line).
-# The clear gap is 18 px = 0.45 u after the 1.4 render scale (a lane is 0.22 u; walkers starting on a fan slot sweep wider); the wall is 32 px long along Y.
-WALL_LEN = 32.0
+# The clear gap is 18 px = 0.45 u after the 1.4 render scale (a lane is 0.22 u; walkers starting on a fan slot sweep wider); the wall is 36 px long along Y.
+WALL_LEN = 36.0
 DOOR = 18.0
 HALF_LEN = (WALL_LEN - DOOR) / 2   # each half of the wall
 JAMB = 3.2
