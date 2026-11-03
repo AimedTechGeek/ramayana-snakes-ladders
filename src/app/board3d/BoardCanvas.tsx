@@ -33,6 +33,18 @@ interface BoardCanvasProps {
   reducedMotion: boolean;
   /** The stage plaques are drawn in this language (T46.5). */
   locale: Locale;
+  /** The board has loaded and drawn its first frames (the game's first chapter card waits for it: T46.5). */
+  onSceneReady?: () => void;
+}
+
+/** Calls `onReady` once, a few frames after the board's Suspense has resolved (so it is on screen, not just mounted). */
+function SceneReady({ onReady }: { onReady?: () => void }) {
+  const frames = useRef(0);
+  useFrame(() => {
+    if (frames.current > 3) return;
+    if (++frames.current === 3) onReady?.();
+  });
+  return null;
 }
 
 /** DPR cap: 2 on desktop and tablet, 1.5 for phone-width canvases (spec 1.3). */
@@ -65,7 +77,8 @@ function textureMb(root: Scene): number {
     for (const m of Array.isArray(material) ? material : [material]) {
       for (const value of Object.values(m)) if (value instanceof Texture) seen.add(value);
       const uniforms = (m as { uniforms?: Record<string, { value?: unknown }> }).uniforms ?? {};
-      for (const uniform of Object.values(uniforms)) if (uniform?.value instanceof Texture) seen.add(uniform.value);
+      for (const uniform of Object.values(uniforms))
+        if (uniform?.value instanceof Texture) seen.add(uniform.value);
     }
   });
   let bytes = 0;
@@ -131,6 +144,7 @@ export function BoardCanvas({
   onDieContact,
   reducedMotion,
   locale,
+  onSceneReady,
 }: BoardCanvasProps) {
   return (
     <Canvas
@@ -147,6 +161,7 @@ export function BoardCanvas({
           <Plaques view={view} locale={locale} />
         </Board>
         <PlinthShadow />
+        <SceneReady onReady={onSceneReady} />
       </Suspense>
       <Die
         position={[TRAY_ANCHOR[0], TRAY_ANCHOR[1], TRAY_ANCHOR[2]]}

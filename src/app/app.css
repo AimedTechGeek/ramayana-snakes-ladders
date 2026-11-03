@@ -1121,7 +1121,7 @@ h2 {
   left: var(--gutter);
   bottom: var(--gutter);
   z-index: 15;
-  max-width: min(360px, 36vw);
+  max-width: min(420px, 40vw);
   padding: 12px 22px 12px 18px;
   pointer-events: none;
   text-align: left;

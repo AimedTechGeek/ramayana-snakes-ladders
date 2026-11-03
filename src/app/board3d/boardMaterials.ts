@@ -277,7 +277,7 @@ export function chipMaterial(atlas: Texture): ShaderMaterial {
 /**
  * Stage plaque billboards (T46.5): the chip shader's distance scale, but the quad is pinned by the edge `aAlign`
  * names (x: -1 left edge, 0 centre, 1 right edge; y: -1 bottom, 1 top) so a plate hangs outward from the board's
- * edge, and `aDim` greys and thins the plate of a stage no token has reached yet (still readable: not a spoiler).
+ * edge, and `aDim` tarnishes the plate of a stage no token has reached yet (still readable: not a spoiler).
  */
 export function plaqueMaterial(atlas: Texture): ShaderMaterial {
   const cellV = (PLAQUE_CELL_HEIGHT / PLAQUE_ATLAS_SIZE).toFixed(6);
@@ -294,9 +294,15 @@ export function plaqueMaterial(atlas: Texture): ShaderMaterial {
       varying float vDim;
       void main() {
         vec4 centre = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
-        float scale = clamp(-centre.z / 10.0, 1.0, 2.5);
+        // grows faster with distance than a chip, so a name still reads at Fit on a phone
+        float scale = clamp(-centre.z / 6.5, 1.0, 4.2);
         vec2 local = position.xy - aAlign * vec2(${PLAQUE_WIDTH.toFixed(3)}, ${PLAQUE_HEIGHT.toFixed(3)}) * 0.5;
-        centre.xy += local * scale;
+        // pulled 1.6 units toward the eye along its sight line (same place and size on screen), so the slab edge the
+        // plate hangs beside never cuts it; a hero standing in front of it still does
+        float dist = length(centre.xyz);
+        float pulled = 1.0 - min(1.6, 0.3 * dist) / dist;
+        centre.xyz *= pulled;
+        centre.xy += local * scale * pulled;
         vUv = aOrigin + uv * vec2(1.0, ${cellV});
         vDim = aDim;
         gl_Position = projectionMatrix * centre;
@@ -309,9 +315,10 @@ export function plaqueMaterial(atlas: Texture): ShaderMaterial {
       void main() {
         vec4 texel = texture2D(uAtlas, vUv);
         if (texel.a < 0.02) discard;
+        // an unreached stage: the brass tarnished (less gold, a little darker), the lettering as crisp as ever
         float luma = dot(texel.rgb, vec3(0.299, 0.587, 0.114));
-        vec3 rgb = mix(texel.rgb, vec3(luma) * 0.85 + 0.06, 0.6 * vDim);
-        gl_FragColor = vec4(rgb, texel.a * (1.0 - 0.35 * vDim));
+        vec3 rgb = mix(texel.rgb, vec3(luma), 0.45 * vDim) * (1.0 - 0.18 * vDim);
+        gl_FragColor = vec4(rgb, texel.a);
         #include <colorspace_fragment>
       }
     `,

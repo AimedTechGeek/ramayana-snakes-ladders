@@ -42,11 +42,15 @@ export function Plaques({ view, locale }: { view: DioramaView; locale: Locale })
   const mesh = useRef<InstancedMesh>(null);
   const spots = useMemo(plaqueSpots, []);
   const texture = useMemo(() => {
-    const map = new CanvasTexture(document.createElement('canvas'));
+    // sized and drawn before the texture exists: a GPU texture keeps the size of its first upload (a later resize
+    // left the plaques blank whenever the first frame came before the draw)
+    const canvas = document.createElement('canvas');
+    drawPlaqueAtlas(canvas, labelsFor(spots));
+    const map = new CanvasTexture(canvas);
     map.colorSpace = SRGBColorSpace;
     map.anisotropy = 4;
     return map;
-  }, []);
+  }, [spots]);
   // Draw for the language now, and again once Eczar's two weights are in (fonts.ready alone does not fetch a weight
   // no element uses yet).
   useEffect(() => {

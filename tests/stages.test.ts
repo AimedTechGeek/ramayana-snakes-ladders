@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHAPTER_FAST_MS, CHAPTER_MS, HudStore } from '../src/app/hud/HudStore';
 import { plaqueSpots } from '../src/app/board3d/plaqueLayout';
-import { RIM_HALF, SLAB_HALF, blockTopY } from '../src/app/board3d/boardLayout';
+import { PLINTH_HALF, RIM_HALF, SLAB_HALF, blockTopY } from '../src/app/board3d/boardLayout';
 import type { GameState } from '../src/core/types';
 import { FINAL_SQUARE, regionOf } from '../src/game/board/blockRules';
 import { STAGES, STAGE_IDS, seedStages, stageKey, stageOf } from '../src/game/stages';
@@ -102,7 +102,11 @@ describe('plaques', () => {
     expect(spots.map((spot) => spot.id)).toEqual([...STAGE_IDS]);
     for (const spot of spots) {
       const [x, y, z] = spot.position;
-      const onEdge = Math.abs(Math.abs(x) - RIM_HALF) < 1e-6 || [RIM_HALF, SLAB_HALF].includes(Math.abs(z));
+      // a row's plate on the left or right rim, the throne's on the back rim, the gate's on the plinth ledge before the slab
+      const onEdge =
+        Math.abs(Math.abs(x) - RIM_HALF) < 1e-6 ||
+        Math.abs(z) === RIM_HALF ||
+        (z > SLAB_HALF && z < PLINTH_HALF && spot.id === 'start');
       expect(onEdge, spot.id).toBe(true);
       const stage = STAGES.find((candidate) => candidate.id === spot.id)!;
       if (spot.id !== 'start') expect(y, spot.id).toBeGreaterThanOrEqual(blockTopY(stage.from));
@@ -134,6 +138,16 @@ describe('chapter card timing', () => {
     vi.advanceTimersByTime(1);
     expect(hud.getSnapshot().chapter).toBeNull();
     expect(CHAPTER_FAST_MS).toBe(1000);
+  });
+
+  it('TheFirstCard_WhileTheBoardLoads_Should_WaitUntilItStands', () => {
+    const hud = new HudStore();
+    hud.holdChapters(true);
+    hud.chapter('start');
+    vi.advanceTimersByTime(5000);
+    expect(hud.getSnapshot().chapter).toBeNull();
+    hud.holdChapters(false);
+    expect(hud.getSnapshot().chapter?.stage).toBe('start');
   });
 
   it('TwoCards_Should_ShowOneAfterTheOther_NeverTogether', () => {

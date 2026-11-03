@@ -62,6 +62,7 @@ export class HudStore implements HudSink {
   private chapters: StageId[] = [];
   private chapterTimer: ReturnType<typeof setTimeout> | null = null;
   private chapterSeq = 0;
+  private chaptersHeld = false;
 
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
@@ -141,7 +142,14 @@ export class HudStore implements HudSink {
     if (!this.chapterTimer) this.nextChapter();
   }
 
+  /** While held (the board still loading), cards wait in the queue; the game's first card shows once it stands. */
+  holdChapters(held: boolean): void {
+    this.chaptersHeld = held;
+    if (!held && !this.chapterTimer) this.nextChapter();
+  }
+
   private nextChapter(): void {
+    if (this.chaptersHeld) return;
     const stage = this.chapters.shift();
     if (stage === undefined) return;
     this.chapterSeq++;

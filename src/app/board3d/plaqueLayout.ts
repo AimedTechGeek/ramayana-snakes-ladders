@@ -5,7 +5,15 @@
 
 import { gridOf } from '../../game/layout';
 import { STAGES, type StageId } from '../../game/stages';
-import { RIM_HALF, SLAB_HALF, blockTopY, rowOf, squareCentre, terraceY } from './boardLayout';
+import {
+  PLINTH_HALF,
+  PLINTH_TOP_Y,
+  RIM_HALF,
+  SLAB_HALF,
+  blockTopY,
+  rowOf,
+  squareCentre,
+} from './boardLayout';
 
 /** World size of a plaque quad at scale 1 (the atlas cell's 8:1 aspect); the plate inside is as wide as its text. */
 export const PLAQUE_WIDTH = 2.4;
@@ -13,10 +21,12 @@ export const PLAQUE_HEIGHT = 0.3;
 export const PLAQUE_ATLAS_SIZE = 1024;
 /** One cell per stage, stacked top to bottom. */
 export const PLAQUE_CELL_HEIGHT = PLAQUE_ATLAS_SIZE / 8;
-export const PLAQUE_NAME_FONT = '600 58px Eczar';
-export const PLAQUE_SUB_FONT = '500 28px Eczar';
+export const PLAQUE_NAME_FONT = '600 56px Eczar';
+export const PLAQUE_SUB_FONT = '500 34px Eczar';
 /** A plaque stands this far above the block tops of its row, so the row's first block never hides its foot. */
 const LIFT = 0.02;
+/** The gate's plate stands on the plinth's ledge in front of the slab (between the slab face and the plinth edge). */
+const GATE_LEDGE_Z = (SLAB_HALF + PLINTH_HALF) / 2;
 
 /** -1: the plate's left edge sits on the anchor (it hangs to the right); 0: its centre; 1: its right edge. */
 export type Align = -1 | 0 | 1;
@@ -37,29 +47,33 @@ export interface PlaqueLabel {
   alignX: Align;
 }
 
+const RIGHT_HAND: ReadonlySet<StageId> = new Set(['dandaka']);
+const HANGING: ReadonlySet<StageId> = new Set(['lanka', 'ayodhya']);
+
 /**
  * Where the plaques hang. A row stage's plate stands on the rim beside its first row, on the side the row begins
  * (the boustrophedon's entry side), hanging outward over the plinth so it never covers the row's first block. The
- * start block's plate hangs down the slab's front face below the gate; the throne's stands behind the back row,
- * beside 144 and clear of the chhatra.
+ * start block's plate stands on the plinth's ledge below the gate; the throne's stands on the back rim behind 144 and
+ * reaches outward past the corner (clear of the chhatra and of the turn banner's hint above the board), so Lanka's
+ * plate, on the same corner one row down, hangs down the slab's side instead of standing up. Dandaka's row begins on
+ * the left, but at Fit on desktop a plate there sits under the seat cards: it stands at the row's right end, and
+ * Ayodhya's, one row down on that side, hangs.
  */
 export function plaqueSpots(): PlaqueSpot[] {
   return STAGES.map((stage) => {
     const first = stage.from;
     const [x, z] = squareCentre(first);
     if (stage.id === 'start')
-      return { id: stage.id, position: [x, terraceY(0), SLAB_HALF], alignX: 0, alignY: 1 };
-    if (stage.id === 'throne') {
-      const [bx] = squareCentre(first - 1);
-      return { id: stage.id, position: [bx, blockTopY(first) + LIFT, -RIM_HALF], alignX: 0, alignY: -1 };
-    }
-    const left = gridOf(first).column === 0;
+      return { id: stage.id, position: [x, PLINTH_TOP_Y, GATE_LEDGE_Z], alignX: 0, alignY: -1 };
+    if (stage.id === 'throne')
+      return { id: stage.id, position: [x, blockTopY(first) + LIFT, -RIM_HALF], alignX: 1, alignY: -1 };
+    const left = gridOf(first).column === 0 && !RIGHT_HAND.has(stage.id);
     const y = blockTopY(first) + LIFT;
     return {
       id: stage.id,
       position: [left ? -RIM_HALF : RIM_HALF, y, z],
       alignX: left ? 1 : -1,
-      alignY: -1,
+      alignY: HANGING.has(stage.id) ? 1 : -1,
     };
   });
 }

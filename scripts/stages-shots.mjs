@@ -6,7 +6,15 @@ import { DESKTOP, PHONE, launch, openApp, settle, shot, startGame } from './revi
 const OUT = process.argv[2] ?? 'screenshots-tmp/t46-stages';
 const BASE = process.argv[3] ?? 'http://localhost:5184';
 
-/** A save with Rama on 36 (Mithila's last square), so a roll of 1 enters Ayodhya; no stages recorded (seeded). */
+/** The default game (T46.4): the four brothers. */
+const BROTHERS = [
+  { hero: 'rama', controller: 'human', name: 'Rama' },
+  { hero: 'lakshmana', controller: 'human', name: 'Lakshmana' },
+  { hero: 'bharata', controller: 'human', name: 'Bharata' },
+  { hero: 'shatrughna', controller: 'human', name: 'Shatrughna' },
+];
+
+/** A save with Rama on 36 (Mithila's last square), so a roll of 2 walks into Ayodhya past Manthara's head on 37 (no stages recorded: seeded). */
 const SAVE_AT_36 = {
   version: 2,
   state: {
@@ -14,7 +22,7 @@ const SAVE_AT_36 = {
     playOn: false,
     players: [
       { hero: 'rama', controller: 'human', name: 'Rama', position: 36, rank: null },
-      { hero: 'hanuman', controller: 'human', name: 'Hanuman', position: 9, rank: null },
+      { hero: 'bharata', controller: 'human', name: 'Bharata', position: 9, rank: null },
     ],
     current: 0,
     sixesThisTurn: 0,
@@ -40,12 +48,7 @@ async function fitScenes(browser) {
     await app.page.evaluate((config) => window.__app.startGame(config), {
       level: 'easy',
       playOn: false,
-      players: [
-        { hero: 'rama', controller: 'human', name: 'Rama' },
-        { hero: 'hanuman', controller: 'human', name: 'Hanuman' },
-        { hero: 'lakshmana', controller: 'human', name: 'Lakshmana' },
-        { hero: 'sita', controller: 'human', name: 'Sita' },
-      ],
+      players: BROTHERS,
     });
     await app.page.waitForSelector('[data-testid=chapter-card]', { timeout: 10000 });
     await app.page.waitForTimeout(700);
@@ -66,9 +69,9 @@ async function fitScenes(browser) {
 /** A plaque up close (Mithila's, beside row 1), both languages, and the Ayodhya plaque at the right edge. */
 async function closeUps(browser) {
   const { page, problems, context } = await openApp(browser, BASE);
-  await startGame(page, { level: 'easy' });
+  await startGame(page, { level: 'easy', players: BROTHERS });
   await page.evaluate(() =>
-    window.__app.camera.set({ azimuth: 0.55, polar: 1.05, distance: 6.5, target: [-6.2, 0.4, 5.2] }),
+    window.__app.camera.set({ azimuth: 0.55, polar: 1.05, distance: 6.5, target: [-5.4, -0.2, 6.2] }),
   );
   await page.waitForTimeout(1000);
   await shot(page, OUT, 'plaque-close-mithila-en');
@@ -84,7 +87,7 @@ async function closeUps(browser) {
   return problems;
 }
 
-/** Resume a save with Rama on 36 and roll 1: the Ayodhya card slides in as he steps on 37 (en, then hi). */
+/** Resume a save with Rama on 36 and roll 2: the Ayodhya card slides in as he steps on 37 (en, then hi). */
 async function ayodhyaCard(browser, { reducedMotion = false, suffix = '' } = {}) {
   const problems = [];
   for (const locale of ['en', 'hi']) {
@@ -129,7 +132,7 @@ async function ayodhyaCard(browser, { reducedMotion = false, suffix = '' } = {})
     // no card on resume: the seeded stages (start, Mithila) are not repeated
     const before = await page.$('[data-testid=chapter-card]');
     if (before) problems.push('a chapter card showed on resume');
-    await page.evaluate((v) => window.__queue.push(v), 1);
+    await page.evaluate((v) => window.__queue.push(v), 2);
     await page.evaluate(() => void window.__app.requestRoll());
     await page.waitForSelector('[data-testid=chapter-card][data-stage=ayodhya]', { timeout: 10000 });
     await page.waitForTimeout(reducedMotion ? 200 : 500);
