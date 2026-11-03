@@ -4,6 +4,9 @@ import { toThree, waitingSpot } from '../src/app/board3d/coords';
 import {
   LEDGE,
   PLINTH_TOP_Y,
+  ROW_END_STAIRS,
+  SEA_BED,
+  STAIR_HALF_WIDTH,
   TRAY_ANCHOR,
   TRAY_BASE,
   VARIANT_NAMES,
@@ -12,8 +15,10 @@ import {
   blockTopY,
   chipAnchor,
   groundHeightAt,
+  rowOf,
   squareCentre,
   squaresByVariant,
+  terraceY,
   variantOf,
 } from '../src/app/board3d/boardLayout';
 import { regionOf } from '../src/game/board/blockRules';
@@ -28,7 +33,11 @@ describe('block heights (spec 2.3)', () => {
   it('AyodhyaBlocks_Should_StandAt026', () =>
     heightsOf('ayodhya').forEach((h) => expect(h).toBeCloseTo(0.26)));
   it('GangaBlocks_Should_StandAt016', () => heightsOf('ganga').forEach((h) => expect(h).toBeCloseTo(0.16)));
-  it('SeaBlocks_Should_StandAt014', () => heightsOf('sea').forEach((h) => expect(h).toBeCloseTo(0.14)));
+  // T45.1: the sea bed rose from 0.14 so the sea row, one terrace up, clears Kishkindha's highest block in front of it
+  it('SeaBlocks_Should_StandAt022AboveTheirTerrace', () => {
+    expect(SEA_BED).toBe(0.22);
+    heightsOf('sea').forEach((h) => expect(h).toBeCloseTo(SEA_BED));
+  });
   it('DandakaBlocks_Should_VaryWithinPlusMinus002', () => {
     heightsOf('dandaka').forEach((h) => expect(Math.abs(h - 0.22)).toBeLessThanOrEqual(0.02 + 1e-9));
     expect(new Set(heightsOf('dandaka').map((h) => h.toFixed(2))).size).toBeGreaterThan(1);
@@ -44,9 +53,77 @@ describe('block heights (spec 2.3)', () => {
     expect(blockHeight(140)).toBeCloseTo(0.38);
   });
   it('WaterBlocks_Should_CarryTheirSurfaceOneHundredthAboveTheBed', () => {
-    expect(blockTopY(49)).toBeCloseTo(0.16 + WATER_LIFT);
-    expect(blockTopY(112)).toBeCloseTo(0.14 + WATER_LIFT);
+    expect(blockTopY(49)).toBeCloseTo(terraceY(4) + 0.16 + WATER_LIFT);
+    expect(blockTopY(112)).toBeCloseTo(terraceY(9) + SEA_BED + WATER_LIFT);
     expect(blockTopY(5)).toBeCloseTo(0.22);
+  });
+});
+
+describe('terraces (T45.1)', () => {
+  const rows = Array.from({ length: 12 }, (_, row) => squares.filter((s) => rowOf(s) === row).map(blockTopY));
+
+  it('TheFrontRow_Should_StandOnTheFieldPlate', () => expect(terraceY(0)).toBe(0));
+  it('EveryRow_Should_RiseBetween012And015AboveTheRowInFront', () => {
+    for (let row = 1; row < 12; row++) {
+      const rise = terraceY(row) - terraceY(row - 1);
+      expect(rise, `row ${row}`).toBeGreaterThanOrEqual(0.12);
+      expect(rise, `row ${row}`).toBeLessThanOrEqual(0.15);
+    }
+  });
+  it('EveryRowsLowestBlock_Should_StandAboveThePreviousRowsHighest', () => {
+    for (let row = 1; row < 12; row++)
+      expect(Math.min(...rows[row]!), `row ${row}`).toBeGreaterThan(Math.max(...rows[row - 1]!));
+  });
+  it('TheThrone_Should_StandAtTheTopOfTheClimb', () => {
+    expect(Math.max(...squares.map(blockTopY))).toBe(blockTopY(144));
+  });
+});
+
+describe('row-end stairs (T45.1)', () => {
+  it('EveryRowTurn_Should_HaveAStairOnTheColumnItTurnsOn', () => {
+    expect(ROW_END_STAIRS.map((s) => [s.lower, s.upper])).toEqual(
+      Array.from({ length: 11 }, (_, r) => [(r + 1) * 12, (r + 1) * 12 + 1]),
+    );
+    ROW_END_STAIRS.forEach((s, r) => {
+      expect(s.x, `${s.lower}`).toBe(squareCentre(s.lower)[0]);
+      expect(s.x, 'boustrophedon: right end, then left').toBe(r % 2 === 0 ? 5.5 : -5.5);
+    });
+  });
+  it('AStair_Should_ClimbFromTheLowerBlockTopToTheUpperInStepsOfAtMostSixHundredths', () => {
+    for (const s of ROW_END_STAIRS) {
+      expect(s.yLow).toBe(blockTopY(s.lower));
+      expect(s.yHigh).toBe(blockTopY(s.upper));
+      expect(s.steps).toBeGreaterThanOrEqual(2);
+      expect((s.yHigh - s.yLow) / s.steps, `${s.lower}`).toBeLessThanOrEqual(0.06);
+    }
+  });
+  it('TheGround_(OnAStairTread)_Should_BeTheTreadHeight', () => {
+    for (const s of ROW_END_STAIRS) {
+      const depth = (s.zBottom - s.zTop) / s.steps;
+      const rise = (s.yHigh - s.yLow) / s.steps;
+      for (let k = 1; k <= s.steps; k++) {
+        const z = s.zBottom - (k - 0.6) * depth; // past the riser blend, on the tread
+        expect(groundHeightAt(s.x, z), `${s.lower} tread ${k}`).toBeCloseTo(s.yLow + k * rise, 6);
+        expect(groundHeightAt(s.x + STAIR_HALF_WIDTH * 0.9, z)).toBeCloseTo(s.yLow + k * rise, 6);
+      }
+    }
+  });
+  it('AWalk_(EverySquareToTheNext)_Should_KeepTheFeetOnTheGroundWithoutAJumpAndClimbTheStairsSteadily', () => {
+    // centre to centre, as pathOf walks it; 1 cm samples: a riser is crossed in a short step-up of at most one tread
+    for (let square = 1; square < 144; square++) {
+      const [ax, , az] = toThree(fieldCentre(square));
+      const [bx, , bz] = toThree(fieldCentre(square + 1));
+      const n = Math.ceil(Math.hypot(bx - ax, bz - az) / 0.01);
+      const stair = ROW_END_STAIRS.some((s) => s.lower === square);
+      let last = groundHeightAt(ax, az);
+      for (let i = 1; i <= n; i++) {
+        const y = groundHeightAt(ax + ((bx - ax) * i) / n, az + ((bz - az) * i) / n);
+        expect(Math.abs(y - last), `${square} -> ${square + 1} at ${i}`).toBeLessThanOrEqual(0.06); // one tread
+        if (stair) expect(y, `${square} -> ${square + 1} climbs`).toBeGreaterThanOrEqual(last - 1e-9);
+        last = y;
+      }
+      expect(last).toBeCloseTo(blockTopY(square + 1), 6);
+    }
   });
 });
 
@@ -95,18 +172,25 @@ describe('tokens stand on block tops (coords.ts)', () => {
 
 describe('groundHeightAt', () => {
   it('AcrossAGroove_Should_RampSmoothlyBetweenNeighbouringBlockTops', () => {
-    // 36 is the last mithila square (0.22) and 37 the first ayodhya square (0.26), one row behind it.
-    const [x37, z37] = squareCentre(37);
-    const [x36, z36] = squareCentre(36);
-    expect(x37).toBeCloseTo(x36);
-    expect(z37).toBeCloseTo(z36 - 1);
-    expect(groundHeightAt(x37, z37)).toBeCloseTo(0.26);
-    expect(groundHeightAt(x36, z36)).toBeCloseTo(0.22);
-    const edge = groundHeightAt(x37, z37 + 0.5);
-    expect(edge).toBeGreaterThan(0.22);
-    expect(edge).toBeLessThan(0.26);
+    // 35 is a mithila square (0.22) on row 3 and 38 the ayodhya square (0.26) one row behind it, a terrace higher
+    // (T45.1; the T44 pair 36 / 37 is a row turn now and climbs a stair, see above)
+    const [x38, z38] = squareCentre(38);
+    const [x35, z35] = squareCentre(35);
+    expect(x38).toBeCloseTo(x35);
+    expect(z38).toBeCloseTo(z35 - 1);
+    expect(groundHeightAt(x38, z38)).toBeCloseTo(terraceY(3) + 0.26);
+    expect(groundHeightAt(x35, z35)).toBeCloseTo(terraceY(2) + 0.22);
+    const edge = groundHeightAt(x38, z38 + 0.5);
+    expect(edge).toBeGreaterThan(terraceY(2) + 0.22);
+    expect(edge).toBeLessThan(terraceY(3) + 0.26);
   });
-  it('OnTheRimStrip_Should_BeFieldLevel', () => expect(groundHeightAt(0, 6.15)).toBe(0));
+  it('OnTheFrontRimStrip_Should_BeFieldLevel', () => expect(groundHeightAt(0, 6.15)).toBe(0));
+  it('OnTheSideAndBackRimStrips_Should_BeTheirRowsTerrace', () => {
+    expect(groundHeightAt(6.15, 5.5)).toBe(0);
+    expect(groundHeightAt(-6.15, 0.5)).toBe(terraceY(5));
+    expect(groundHeightAt(6.15, -5.5)).toBe(terraceY(11));
+    expect(groundHeightAt(0, -6.15)).toBe(terraceY(11));
+  });
   it('BeyondTheSlab_Should_BeThePlinthTop', () => expect(groundHeightAt(7.5, 5.8)).toBe(PLINTH_TOP_Y));
 });
 

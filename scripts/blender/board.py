@@ -1,6 +1,6 @@
 """T44.3 board diorama: oak plinth, soil-strata slab, brass rail/posts, and the 14 block variants -> one GLB.
 
-Run (headless):  node scripts/blender/run.mjs scripts/blender/board.py public/models/board/board.glb
+Run (headless):  npm run blender:board  (scripts/blender/board-build.mjs writes the layout JSON and runs this)
 
 Everything is authored in THREE axes (x right, y up, z toward the viewer; 1 unit = one block pitch) and mapped to
 Blender's Z-up at vertex creation (a pure rotation, so winding is kept). Colours are flat per face (corner-domain
@@ -12,7 +12,10 @@ Layout (matches src/app/board3d/boardLayout.ts):
   Block meshes are built with their top at BLOCK_H0 and their base at 0; the vertex shader slides the top region by
   (height - BLOCK_H0) per instance, so one mesh serves every height.
 
-Objects exported: Plinth, Slab, Brass, Block_<region>_<a|b> (14 blocks, 2 per region).
+T45.1: rows 1..11 stand on terraces (heights, row-end stairs, the sea lip and the waterfall sheets come from
+boardLayout.ts through board-build.mjs's scratch JSON, --layout); the terraces, stairs and lip are part of Slab.
+
+Objects exported: Plinth, Slab, Brass, Waterfall, Block_<region>_<a|b> (14 blocks, 2 per region).
 """
 import json
 import math
@@ -354,7 +357,13 @@ def build_slab():
         return (0.018 * prof + 0.034 * (vnoise(s * 1.7, bkey * 3.1) - 0.5)
                 + 0.012 * (vnoise(s * 6.0, bkey) - 0.5) + 0.01)
 
+    def covered(side, pz):
+        """T45.1: the terraces of rows 1..11 stand on the slab top, so its sides there carry no grass and no lens."""
+        return side == "N" or (side in ("E", "W") and pz < 5.0)
+
     def in_lens(side, px, pz):
+        if covered(side, pz):
+            return False
         along = pz if side in ("E", "W") else px
         return any(lo + 0.02 < along < hi - 0.02 for lo, hi in water[side])
 
@@ -362,9 +371,9 @@ def build_slab():
         px, pz, nx, nz = loop[k]
         side = side_of(nx, nz)
         name = BANDS[bi][0]
+        if name == "grass" and covered(side, pz):
+            name = "topsoil"
         hexv = STRATA[name][side]
-        if name == "grass" and side == "N" and px < -2.3:
-            hexv = "#6F6A66"  # scorched near the throne corner
         if in_lens(side, px, pz):
             if yv > -0.12:
                 hexv = LENS_WATER
@@ -432,7 +441,160 @@ def build_slab():
         part.blob((along, (stone_top + stone_bot) / 2 + (i - 1) * 0.04, -(SLAB_HALF + 0.003)),
                   (0.03, 0.03, 0.012), "#F39C2B", subdiv=0, jitter=0.0, ao_bottom=1.0)
 
+    build_terraces(part, LAYOUT)
+    build_stairs(part, LAYOUT)
+    build_sea_lip(part, LAYOUT)
     return part.finish(attr_material("clay"))
+
+
+# ---------------------------------------------------------------- terraces (T45.1)
+
+LAYOUT = None  # board-build.mjs's scratch JSON (terraces, stairs, sea lip, falls), read in main()
+
+# horizontal strata of the hill the terraces are cut from (absolute y, so the bands run on across the steps)
+HILL_BANDS = [(0.0, "#A97C50"), (0.24, "#C29563"), (0.46, "#A3774D"), (0.72, "#BD9062"), (0.98, "#9F744B"),
+              (1.24, "#B88B5E"), (1.5, "#9A7049"), (1.76, "#B3875B")]
+CAP_GRASS = "#78B85C"
+CAP_SCORCHED = "#6F6A66"
+CAP_SOIL = "#5E4230"
+CAP_LENS = "#78BBD2"
+
+
+def hill_colour(y):
+    hexv = HILL_BANDS[0][1]
+    for y0, h in HILL_BANDS:
+        if y >= y0:
+            hexv = h
+    return hexv
+
+
+def side_bands(top, scorched, lens):
+    """(y0, y1, hex) bands of a terrace side face from the slab top (0) to its tread `top`."""
+    cap = [(top - 0.04, top, CAP_LENS if lens else (CAP_SCORCHED if scorched else CAP_GRASS)),
+           (top - 0.12, top - 0.04, LENS_SAND if lens else CAP_SOIL)]
+    cuts = sorted({0.0, *[y0 for y0, _ in HILL_BANDS if 0.0 < y0 < top - 0.12], top - 0.12})
+    bands = []
+    for a, b in zip(cuts, cuts[1:]):
+        if b - a > 1e-4:
+            bands.append((a, b, hill_colour(a + 1e-4)))
+    return bands + cap
+
+
+def quad(part, pts, hex_, hint, jitter=0.04, ao=1.0):
+    part.face([part.v(*p) for p in pts], hex_lin(hex_, jitter, ao), hint, smooth=False)
+
+
+def build_terraces(part, layout):
+    """Rows 1..11 each stand on a soil terrace TERRACE_RISE above the row in front: a stone tread under the blocks,
+    grass rims at the sides (and at the back of the top row), a front riser between the rows, and a staircase soil
+    cross-section on the east, west and back faces."""
+    terraces = layout["terraces"]
+    lens = {(w["row"], w["side"]) for w in layout["edgeWater"]}
+    xs = SLAB_HALF
+    inner = 6.0
+    plate = "#8F8062"
+    for row in range(1, 12):
+        top = terraces[row]
+        below = terraces[row - 1]
+        zf = 6.0 - row
+        zb = -SLAB_HALF if row == 11 else 5.0 - row
+        scorched = row >= 10
+        rim_hex = CAP_SCORCHED if scorched else "#8CC46A"
+        # tread: the stone plate under the blocks and the grass rims at the sides
+        quad(part, [(-inner, top, zf), (inner, top, zf), (inner, top, max(zb, -inner)), (-inner, top, max(zb, -inner))],
+             plate, (0, 1, 0), 0.02, 0.9)
+        for sx in (-1, 1):
+            wet = (row, "E" if sx > 0 else "W") in lens
+            quad(part, [(sx * inner, top, zf), (sx * xs, top, zf), (sx * xs, top, zb), (sx * inner, top, zb)],
+                 LENS_SAND if wet else rim_hex, (0, 1, 0))
+        if row == 11:
+            quad(part, [(-inner, top, -inner), (inner, top, -inner), (inner, top, zb), (-inner, top, zb)],
+                 rim_hex, (0, 1, 0))
+        # front riser between this row and the one in front
+        for y0, y1, hexv in side_bands(top, scorched, False):
+            if y1 <= below + 1e-4:
+                continue
+            quad(part, [(-xs, max(y0, below), zf), (xs, max(y0, below), zf), (xs, y1, zf), (-xs, y1, zf)],
+                 hexv if y1 > top - 0.13 else CAP_SOIL, (0, 0, 1), 0.03, 0.92)
+        # the cross-section: east and west faces, and the back of the top row
+        for sx in (-1, 1):
+            wet = (row, "E" if sx > 0 else "W") in lens
+            for y0, y1, hexv in side_bands(top, scorched, wet):
+                ao = 0.84 + 0.16 * clamp01((y0 + SLAB_H) / (SLAB_H + 2.0))
+                quad(part, [(sx * xs, y0, zf), (sx * xs, y0, zb), (sx * xs, y1, zb), (sx * xs, y1, zf)],
+                     hexv, (sx, 0, 0), 0.05, ao)
+        if row == 11:
+            for y0, y1, hexv in side_bands(top, scorched, False):
+                quad(part, [(-xs, y0, zb), (xs, y0, zb), (xs, y1, zb), (-xs, y1, zb)], hexv, (0, 0, -1), 0.05, 0.9)
+
+
+STAIR_STONE = {  # tread, riser by the region the flight climbs into
+    "mithila": ("#E2D2B0", "#C2AC86"), "ayodhya": ("#EAD9AE", "#C9B07A"), "dandaka": ("#B9B49A", "#8F8B72"),
+    "ganga": ("#C9C2A6", "#9E977C"), "kishkindha": ("#D6B48A", "#AE8762"), "sea": ("#C9C2A6", "#9E977C"),
+    "lanka": ("#6A6FA6", "#4A4E80"),
+}
+
+
+def build_stairs(part, layout):
+    """The row-end flights (boardLayout.ROW_END_STAIRS): tread k at yLow + k * rise, from the first riser on the
+    lower block's back up to the upper block's front edge; cheeks reach down to the groove floor."""
+    for s in layout["stairs"]:
+        tread_hex, riser_hex = STAIR_STONE[s["region"]]
+        n = s["steps"]
+        x0, x1 = s["x"] - s["halfWidth"], s["x"] + s["halfWidth"]
+        zb, zt = s["zBottom"], s["zTop"]
+        depth = (zb - zt) / n
+        rise = (s["yHigh"] - s["yLow"]) / n
+        base = s["base"]
+        for k in range(1, n + 1):
+            za = zb - (k - 1) * depth
+            zc = zt if k == n else zb - k * depth
+            y = s["yLow"] + k * rise
+            yprev = s["yLow"] - 0.02 if k == 1 else s["yLow"] + (k - 1) * rise
+            quad(part, [(x0, y, za), (x1, y, za), (x1, y, zc), (x0, y, zc)], tread_hex, (0, 1, 0), 0.03)
+            quad(part, [(x0, yprev, za), (x1, yprev, za), (x1, y, za), (x0, y, za)], riser_hex, (0, 0, 1), 0.03, 0.9)
+            for xx, sx in ((x0, -1), (x1, 1)):
+                quad(part, [(xx, base, za), (xx, base, zc), (xx, y, zc), (xx, y, za)], riser_hex, (sx, 0, 0), 0.03, 0.85)
+
+
+def build_sea_lip(part, layout):
+    """The sea row is a channel set into its terrace: a low stone dam in the groove in front of it, open where the
+    108 -> 109 stair climbs in."""
+    lip = layout["seaLip"]
+    z, y0, y1 = lip["z"], lip["y0"], lip["y1"]
+    gaps = sorted(lip["gaps"])
+    spans, start = [], -SLAB_HALF
+    for g0, g1 in gaps:
+        spans.append((start, g0))
+        start = g1
+    spans.append((start, SLAB_HALF))
+    for a, b in spans:
+        if b - a > 0.02:
+            part.box(((a + b) / 2, (y0 + y1) / 2, z), (b - a, y1 - y0, 0.07), "#9C9688", jitter=0.04)
+            part.box(((a + b) / 2, y1 + 0.006, z), (b - a, 0.012, 0.075), "#B7B1A2", jitter=0.03)
+
+
+def build_falls(layout):
+    """Waterfalls (T45.1): sheets down the Ganga risers and over the board's sides at the sea channel's ends. Vertex
+    colour runs light at the lip to foam at the foot; Board.tsx draws them with the animated waterfall shader."""
+    part = Part("Waterfall")
+    across_seg = 6
+    for f in layout["falls"]:
+        prof = f["profile"]
+        rows = []
+        for i, (n, y) in enumerate(prof):
+            t = i / (len(prof) - 1)
+            hexv = "#A7D8EA" if t < 0.2 else ("#F4F4F8" if t > 0.85 else "#78BBD2")
+            row = []
+            for j in range(across_seg + 1):
+                a = f["a0"] + (f["a1"] - f["a0"]) * j / across_seg
+                x, z = (a, n) if f["across"] == "x" else (n, a)
+                row.append(part.v(x, y, z, colour=hex_lin(hexv, 0.0)))
+            rows.append(row)
+        for i in range(len(rows) - 1):
+            for j in range(across_seg):
+                part.face([rows[i][j], rows[i][j + 1], rows[i + 1][j + 1], rows[i + 1][j]], None, None)
+    return part.finish(attr_material("waterfall", rough=0.2))
 
 
 # ---------------------------------------------------------------- plinth
@@ -488,21 +650,34 @@ def build_plinth():
 
 # ---------------------------------------------------------------- brass
 
-def build_brass():
+def build_brass(layout):
     part = Part("Brass")
     brass = "#C9A24A"
     p = PLINTH_HALF - 0.25
+    terraces = layout["terraces"]
+    back = terraces[-1]
     for sx in (-1, 1):
         for sz in (-1, 1):
-            part.cyl((sx * p, PLINTH_TOP, sz * p), (sx * p, 0.5, sz * p), 0.05, brass, seg=10)
+            lift = back if sz < 0 else 0.0  # T45.1: the back posts stand clear of the top terrace
+            part.cyl((sx * p, PLINTH_TOP, sz * p), (sx * p, 0.5 + lift, sz * p), 0.05, brass, seg=10)
             part.cyl((sx * p, PLINTH_TOP, sz * p), (sx * p, PLINTH_TOP + 0.1, sz * p), 0.085, brass, seg=10)
-            part.blob((sx * p, 0.58, sz * p), (0.075, 0.075, 0.075), brass, subdiv=1, jitter=0.0, ao_bottom=1.0)
-    # rail around the slab top edge
+            part.blob((sx * p, 0.58 + lift, sz * p), (0.075, 0.075, 0.075), brass, subdiv=1, jitter=0.0, ao_bottom=1.0)
+    # rail around the slab top edge; T45.1: on the east and west sides it climbs the terraces like a banister
     r = SLAB_HALF - 0.04
-    pts = [(-r, 0.035, -r), (r, 0.035, -r), (r, 0.035, r), (-r, 0.035, r)]
-    for i in range(4):
-        part.cyl(pts[i], pts[(i + 1) % 4], 0.03, brass, seg=8)
-        part.blob(pts[i], (0.04, 0.04, 0.04), brass, subdiv=1, jitter=0.0, ao_bottom=1.0)
+    y = 0.035
+    runs = [[(-r, y, r), (r, y, r)], [(-r, back + y, -r), (r, back + y, -r)]]
+    for sx in (-1, 1):
+        pts = [(sx * r, y, r)]
+        for row in range(1, 12):
+            z = 6.0 - row + 0.03
+            pts += [(sx * r, terraces[row - 1] + y, z), (sx * r, terraces[row] + y, z)]
+        pts.append((sx * r, back + y, -r))
+        runs.append(pts)
+    for pts in runs:
+        for a, b in zip(pts, pts[1:]):
+            part.cyl(a, b, 0.03, brass, seg=8)
+        for q in pts:
+            part.blob(q, (0.04, 0.04, 0.04), brass, subdiv=0, jitter=0.0, ao_bottom=1.0)
     # maker's plate on the front face of the plinth (no text)
     part.box((0.0, (PLINTH_BOTTOM + -1.07) / 2 + 0.02, PLINTH_HALF + 0.012), (0.9, 0.2, 0.03), brass, jitter=0.0)
     return part.finish(attr_material("brass", rough=0.35, metal=0.9, tint=brass), bevel=(0.008, 2, math.radians(50)))
@@ -706,12 +881,15 @@ def build_block(region, pat):
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     if not argv:
-        print("usage: board.py <out.glb> [--metrics file.json]")
+        print("usage: board.py <out.glb> --layout layout.json [--metrics file.json]  (npm run blender:board)")
         sys.exit(2)
     out = argv[0]
     metrics = argv[argv.index("--metrics") + 1] if "--metrics" in argv else None
+    global LAYOUT
+    with open(argv[argv.index("--layout") + 1]) as fh:
+        LAYOUT = json.load(fh)
     lib.reset_scene()
-    objs = [build_plinth(), build_slab(), build_brass()]
+    objs = [build_plinth(), build_slab(), build_brass(LAYOUT), build_falls(LAYOUT)]
     for region in REGIONS:
         for pat in ("a", "b"):
             objs.append(build_block(region, pat))

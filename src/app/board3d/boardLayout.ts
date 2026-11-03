@@ -1,6 +1,7 @@
-// Pure layout of the diorama board (T44 spec 2): where every block stands, how tall it is, which of the 14 block
-// variants it uses, where its number chip is pinned, and the ground height anywhere on the board. Units: 1 u = one
-// block pitch; y up; the field plate top is y = 0; x right; z toward the viewer (row 1 is nearest). No three, no React.
+// Pure layout of the diorama board (T44 spec 2, T45.1 terraces): where every block stands, how tall it is, which of
+// the 14 block variants it uses, where its number chip is pinned, the row-end stairs, and the ground height anywhere on
+// the board. Units: 1 u = one block pitch; y up; the front field plate top is y = 0 and every row behind it is a
+// terrace TERRACE_RISE higher (`terraceY`); x right; z toward the viewer (row 1 is nearest). No three, no React.
 // Mount points for other parts: TRAY_ANCHOR (the die and its tray), PROPS_ORIGIN (props and landmarks live in this
 // same frame; `blockTopY(square)` is where something stands on a block).
 
@@ -19,6 +20,8 @@ export const PLINTH_TOP_Y = -0.9;
 export const PLINTH_BOTTOM_Y = -1.35;
 /** A water surface floats this far above its block. */
 export const WATER_LIFT = 0.01;
+/** The sea row's bed above its terrace (T45.1; T44 had 0.14 on a flat board). */
+export const SEA_BED = 0.22;
 /** The rim strip around the 12 x 12 grid is this wide (slab edge to the first block row). */
 export const RIM_HALF = 6.0;
 
@@ -51,7 +54,29 @@ export function squareAt(row: number, column: number): number {
   return row * COLUMNS + (row % 2 === 0 ? column : COLUMNS - 1 - column) + 1;
 }
 
-/** Height of a block's top face (spec 1.1 table); a water block's bed is that high, its surface WATER_LIFT above. */
+/**
+ * T45.1: each board row (12 squares) is a terrace this much above the row in front of it, so the board climbs from the
+ * gate (row 0, y = 0) to the throne (row 11). Tuned so Fit still frames the board, throne and tray on 1280 x 720 and
+ * 844 x 390, and so every row's lowest block top stays above the previous row's highest.
+ */
+export const TERRACE_RISE = 0.135;
+export const ROWS = 12;
+
+/** The board row (0 nearest the viewer .. 11) of a square. */
+export function rowOf(square: number): number {
+  return gridOf(square).row;
+}
+
+/** Top of row `row`'s terrace (the groove floor its blocks stand on); rows outside the grid clamp to 0 and 11. */
+export function terraceY(row: number): number {
+  return Math.min(ROWS - 1, Math.max(0, row)) * TERRACE_RISE;
+}
+
+/**
+ * Height of a block's top face above its terrace (spec 1.1 table; T45.1 raised the sea bed from 0.14 so the sea row
+ * clears Kishkindha's highest block); a water block's bed is that high, its surface WATER_LIFT above. This is the
+ * block mesh's own height: Board.tsx stands the block on `terraceY(row)`.
+ */
 export function blockHeight(square: number): number {
   const seed = seedOf(square);
   switch (regionOf(square)) {
@@ -66,7 +91,7 @@ export function blockHeight(square: number): number {
     case 'kishkindha':
       return 0.3 + (((seed >>> 5) % 5) - 2) * 0.02;
     case 'sea':
-      return 0.14;
+      return SEA_BED;
     case 'lanka':
       return gridOf(square).row + 1 === 11 ? 0.32 : 0.38;
   }
@@ -76,9 +101,9 @@ export function isWaterSquare(square: number): boolean {
   return WATER.has(regionOf(square));
 }
 
-/** The height a token or prop stands at on this block. */
+/** The height a token or prop stands at on this block: its terrace, the block and, on water, the surface lift. */
 export function blockTopY(square: number): number {
-  return blockHeight(square) + (isWaterSquare(square) ? WATER_LIFT : 0);
+  return terraceY(rowOf(square)) + blockHeight(square) + (isWaterSquare(square) ? WATER_LIFT : 0);
 }
 
 /** Which of the 14 block meshes a square uses: `<region>-<a|b>` (the T42 pattern rule, applied to every region). */
@@ -115,16 +140,89 @@ function axisBlend(f: number): [number, number] {
   return [0, 0];
 }
 
+/** Off the grid: the rim strip of that row's terrace (front rim 0, back rim the top terrace). */
 function cellHeight(row: number, column: number): number {
-  if (row < 0 || row >= COLUMNS || column < 0 || column >= COLUMNS) return 0;
+  if (row < 0 || row >= ROWS || column < 0 || column >= COLUMNS) return terraceY(row);
   return blockTopY(squareAt(row, column));
 }
 
-/** Ground height (y) at board position (x, z): block tops with a smooth ramp over each groove, 0 on the rim strip,
- *  the plinth top beyond the slab. Tokens, bridges and props stand at `groundHeightAt + lift`. */
+/** Row under a board z (row 0 spans z 5..6); clamped to the grid. */
+function rowAtZ(z: number): number {
+  return Math.min(ROWS - 1, Math.max(0, Math.floor(6 - z)));
+}
+
+/**
+ * A row-end stair (T45.1): where the boustrophedon path turns up to the next row (12 -> 13, 24 -> 25, ... 132 -> 133,
+ * alternating right and left ends), a short flight of stone steps stands on the back of the lower block and climbs
+ * to the front edge of the upper one, on the walking lane (the column centre line). `groundHeightAt` follows the
+ * treads, so feet land on every step; board.py builds the same steps from these numbers.
+ */
+export interface RowEndStair {
+  lower: number;
+  upper: number;
+  /** Lane centre line (the column centre), three units. */
+  x: number;
+  /** The first riser, on the lower block's back. */
+  zBottom: number;
+  /** The last tread meets the upper block's front edge here. */
+  zTop: number;
+  /** Groove line between the two rows. */
+  zGroove: number;
+  yLow: number;
+  yHigh: number;
+  steps: number;
+}
+
+export const STAIR_HALF_WIDTH = 0.2;
+/** The first riser stands this far in front of the groove line (the lower field centre is 0.34 in front of it). */
+export const STAIR_RUN = 0.28;
+/** A tread rises about this much; every flight has at least two. */
+const STAIR_STEP = 0.05;
+/** Share of a tread over which the foot rides up its riser (a short step-up, not a ramp). */
+const RISER_BLEND = 0.25;
+
+export const ROW_END_STAIRS: readonly RowEndStair[] = Array.from({ length: ROWS - 1 }, (_, row) => {
+  const lower = (row + 1) * COLUMNS;
+  const upper = lower + 1;
+  const [x, z] = squareCentre(lower);
+  const zGroove = z - 0.5;
+  const yLow = blockTopY(lower);
+  const yHigh = blockTopY(upper);
+  return {
+    lower,
+    upper,
+    x,
+    zBottom: zGroove + STAIR_RUN,
+    zTop: zGroove - (0.5 - BLOCK_HALF),
+    zGroove,
+    yLow,
+    yHigh,
+    steps: Math.max(2, Math.round((yHigh - yLow) / STAIR_STEP)),
+  };
+});
+
+/** Ground on a stair's footprint (tread k at yLow + k * rise), or null off every stair. */
+function stairHeightAt(x: number, z: number): number | null {
+  for (const stair of ROW_END_STAIRS) {
+    if (Math.abs(x - stair.x) > STAIR_HALF_WIDTH) continue;
+    if (z > stair.zBottom || z < stair.zGroove - EDGE_BLEND) continue;
+    if (z <= stair.zTop) return stair.yHigh;
+    const s = ((stair.zBottom - z) / (stair.zBottom - stair.zTop)) * stair.steps;
+    const k = Math.min(stair.steps - 1, Math.floor(s));
+    const rise = (stair.yHigh - stair.yLow) / stair.steps;
+    return stair.yLow + rise * (k + smooth((s - k) / RISER_BLEND));
+  }
+  return null;
+}
+
+/** Ground height (y) at board position (x, z): block tops with a smooth ramp over each groove, the treads of the
+ *  row-end stairs, the row's terrace on the rim strip (0 at the front), the plinth top beyond the slab. Tokens,
+ *  bridges and props stand at `groundHeightAt + lift`. */
 export function groundHeightAt(x: number, z: number): number {
   if (Math.abs(x) > SLAB_HALF || Math.abs(z) > SLAB_HALF) return PLINTH_TOP_Y;
-  if (Math.abs(x) >= RIM_HALF || Math.abs(z) >= RIM_HALF) return 0;
+  if (Math.abs(x) >= RIM_HALF || Math.abs(z) >= RIM_HALF) return terraceY(z >= RIM_HALF ? 0 : rowAtZ(z));
+  const stair = stairHeightAt(x, z);
+  if (stair !== null) return stair;
   const gx = x + 6;
   const gz = 6 - z;
   const column = Math.min(COLUMNS - 1, Math.floor(gx));

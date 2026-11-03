@@ -33,6 +33,14 @@ const BOW_OVERRIDE: Readonly<Record<string, number>> = { wedding: WEDDING_BOW };
 const HUMP_OVERRIDE: Readonly<Record<string, number>> = { wedding: WEDDING_HUMP };
 /** Deck samples per bridge; divisible by 1, 2, 3 and 4 so every pier falls on a sample. */
 export const DECK_SAMPLES = 120;
+/**
+ * T45.1 terraces: the walking surface stays at least this far above every block it passes over (the 0.045 deck core
+ * plus 3 cm), so a deck that climbs the terraces never cuts into a higher row. Where the sine hump alone is lower, a
+ * smooth lift (`BridgeLayout.lift`) raises it; the lift is zero at both abutments and wherever the hump clears.
+ */
+export const DECK_CLEARANCE = 0.075;
+/** Half-width (u along the route) of the smooth bump that lifts the deck over a terrace step. */
+const LIFT_REACH = 0.35;
 
 export interface DeckPoint {
   /** Position of the walking surface on the route centre line. */
@@ -58,6 +66,8 @@ export interface BridgeLayout {
   /** Walking surface at the abutments (block top + 0.054). */
   baseFoot: number;
   baseTop: number;
+  /** T45.1: clearance lift over the terrace steps at the DECK_SAMPLES + 1 route parameters (0 at both ends). */
+  lift: readonly number[];
 }
 
 export interface Bridge extends BridgeLayout {
@@ -75,6 +85,11 @@ export const BRIDGE_PAIRS: readonly { id: string; from: number; to: number }[] =
 ).map(({ id, from, to }) => ({ id, from, to }));
 
 export function bridgeLayout(id: string, from: number, to: number): BridgeLayout {
+  const plain = plainLayout(id, from, to);
+  return { ...plain, lift: clearanceLift(plain) };
+}
+
+function plainLayout(id: string, from: number, to: number): BridgeLayout {
   const [fx, fz] = squareCentre(from);
   const [tx, tz] = squareCentre(to);
   const foot: [number, number] = [fx, fz - FOOT_BACK];
@@ -92,7 +107,48 @@ export function bridgeLayout(id: string, from: number, to: number): BridgeLayout
     top,
     baseFoot: blockTopY(from) + ABUTMENT_H,
     baseTop: blockTopY(to) + ABUTMENT_H,
+    lift: [],
   };
+}
+
+function overSquare(x: number, z: number, square: number): boolean {
+  const [cx, cz] = squareCentre(square);
+  return Math.abs(x - cx) < 0.5 && Math.abs(z - cz) < 0.5;
+}
+
+/**
+ * The smallest smooth lift that keeps the deck DECK_CLEARANCE above the ground between its two own blocks: the upper
+ * envelope of one cosine bump per short sample, LIFT_REACH wide each side (cut to reach zero at the abutments).
+ */
+function clearanceLift(layout: BridgeLayout): number[] {
+  const n = DECK_SAMPLES;
+  const reach = LIFT_REACH / Math.max(layout.length, 1e-6);
+  const deficits = Array.from({ length: n + 1 }, (_, i) => {
+    const s = i / n;
+    const [x, z] = routeAt(layout, s);
+    if (overSquare(x, z, layout.from) || overSquare(x, z, layout.to)) return 0;
+    return Math.max(0, groundHeightAt(x, z) + DECK_CLEARANCE - deckHeightAt(layout, s));
+  });
+  return deficits.map((_, i) => {
+    const s = i / n;
+    let lift = 0;
+    deficits.forEach((deficit, j) => {
+      if (deficit === 0) return;
+      const sj = j / n;
+      const width = s < sj ? Math.min(reach, sj) : Math.min(reach, 1 - sj);
+      const d = Math.abs(s - sj);
+      if (width <= 0 || d >= width) return;
+      lift = Math.max(lift, deficit * Math.cos((Math.PI / 2) * (d / width)) ** 2);
+    });
+    return lift;
+  });
+}
+
+function liftAt(layout: BridgeLayout, s: number): number {
+  if (layout.lift.length === 0) return 0;
+  const f = Math.min(1, Math.max(0, s)) * (layout.lift.length - 1);
+  const i = Math.min(layout.lift.length - 2, Math.floor(f));
+  return layout.lift[i]! + (layout.lift[i + 1]! - layout.lift[i]!) * (f - i);
 }
 
 /** Horizontal position of the route at parameter s (0 foot .. 1 top), bow included. */
@@ -104,9 +160,12 @@ export function routeAt(layout: BridgeLayout, s: number): [number, number] {
   ];
 }
 
-/** Height of the walking surface at parameter s: abutment tops joined by a sine hump (spec 6.2). */
+/** Height of the walking surface at parameter s: abutment tops joined by a sine hump (spec 6.2), plus the T45.1
+ *  clearance lift over the terrace steps. */
 export function deckHeightAt(layout: BridgeLayout, s: number): number {
-  return layout.baseFoot + (layout.baseTop - layout.baseFoot) * s + layout.h * Math.sin(Math.PI * s);
+  return (
+    layout.baseFoot + (layout.baseTop - layout.baseFoot) * s + layout.h * Math.sin(Math.PI * s) + liftAt(layout, s)
+  );
 }
 
 export function deckPointAt(layout: BridgeLayout, s: number): DeckPoint {

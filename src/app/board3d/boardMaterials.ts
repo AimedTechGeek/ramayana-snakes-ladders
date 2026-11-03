@@ -199,6 +199,49 @@ export function waterMaterial(colors: WaterColors): ShaderMaterial {
   });
 }
 
+/**
+ * Waterfalls (T45.1): the board.glb sheets down the Ganga risers and over the sides at the sea channel's ends. The
+ * vertex colour runs light at the lip to foam at the foot; streaks slide down in world y, still under reduced motion.
+ */
+export function waterfallMaterial(): ShaderMaterial {
+  return new ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: DoubleSide,
+    vertexColors: true,
+    uniforms: { uTime: sharedTime, uStill: sharedStill, uFoam: { value: new Color('#F4F4F8') } },
+    vertexShader: /* glsl */ `
+      varying vec3 vColor;
+      varying vec3 vWorld;
+      void main() {
+        vColor = color.rgb;
+        vec4 world = modelMatrix * vec4(position, 1.0);
+        vWorld = world.xyz;
+        gl_Position = projectionMatrix * viewMatrix * world;
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform float uTime;
+      uniform float uStill;
+      uniform vec3 uFoam;
+      varying vec3 vColor;
+      varying vec3 vWorld;
+      void main() {
+        float t = uTime * (1.0 - uStill);
+        float across = (vWorld.x + vWorld.z) * 34.0;
+        float lane = fract(sin(floor(across) * 12.9898) * 43758.5453);
+        float line = 1.0 - abs(fract(across) - 0.5) * 2.0;
+        float flow = fract(vWorld.y * 2.2 + t * (0.7 + 0.6 * lane) + lane * 7.0);
+        float streak = smoothstep(0.35, 0.95, line) * smoothstep(0.0, 0.2, flow) * smoothstep(0.9, 0.4, flow);
+        vec3 col = mix(vColor, uFoam, streak * 0.5);
+        gl_FragColor = vec4(col, 0.82);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }
+    `,
+  });
+}
+
 /** Chip billboards: one quad per square, always facing the camera and upright, scaled with distance. */
 export function chipMaterial(atlas: Texture): ShaderMaterial {
   return new ShaderMaterial({

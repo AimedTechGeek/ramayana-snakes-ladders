@@ -1,5 +1,6 @@
 // The board as a diorama object (T44 spec 2): oak plinth, soil-strata slab, brass rail and posts, the 144 blocks as 14
-// instanced variants at their region heights, water shader for Ganga and the sea, and the fog of war (Fog.tsx).
+// instanced variants at their region heights on their row's terrace (T45.1; the terraces, row-end stairs and the sea
+// lip are part of the slab mesh), water shader for Ganga and the sea, the waterfalls, and the fog of war (Fog.tsx).
 // Meshes come from public/models/board/board.glb (scripts/blender/board.py). Props, landmarks and the die mount as
 // `children` inside this group, in board coordinates (see boardLayout.ts: PROPS_ORIGIN, TRAY_ANCHOR).
 
@@ -16,7 +17,7 @@ import {
   type Mesh,
 } from 'three';
 import { regionOf, tileTintOf } from '../../game/board/blockRules';
-import { BLOCK_HALF, blockHeight, blockTopY, squareCentre, squaresByVariant } from './boardLayout';
+import { BLOCK_HALF, blockHeight, blockTopY, rowOf, squareCentre, squaresByVariant, terraceY } from './boardLayout';
 import {
   addInstanceFloat,
   blockMaterial,
@@ -25,6 +26,7 @@ import {
   sharedStill,
   sharedTime,
   waterMaterial,
+  waterfallMaterial,
 } from './boardMaterials';
 import type { DioramaView } from './DioramaView';
 import { FogField } from './fogField';
@@ -77,7 +79,7 @@ function BlockSet({
     const heights = geometry.getAttribute('aHeight') as InstancedBufferAttribute;
     squares.forEach((square, i) => {
       const [x, z] = squareCentre(square);
-      dummy.position.set(x, 0, z);
+      dummy.position.set(x, terraceY(rowOf(square)), z); // T45.1: the block stands on its row's terrace
       dummy.updateMatrix();
       instanced.setMatrixAt(i, dummy.matrix);
       const grey = (tileTintOf(square) & 0xff) / 0xff;
@@ -173,7 +175,8 @@ export function Board({ view, children }: BoardProps) {
   const clay = useMemo(clayMaterial, []);
   const brass = useMemo(brassMaterial, []);
   const blocks = useMemo(blockMaterial, []);
-  useEffect(() => disposeOnUnmount(clay, brass, blocks), [clay, brass, blocks]);
+  const falls = useMemo(waterfallMaterial, []);
+  useEffect(() => disposeOnUnmount(clay, brass, blocks, falls), [clay, brass, blocks, falls]);
   const byVariant = useMemo(() => squaresByVariant(), []);
 
   const fog = useMemo<FogState>(() => ({ field: new FogField(), version: 0 }), []);
@@ -206,6 +209,7 @@ export function Board({ view, children }: BoardProps) {
       <mesh name="plinth" geometry={nodes.Plinth!.geometry} material={clay} receiveShadow castShadow />
       <mesh name="slab" geometry={nodes.Slab!.geometry} material={clay} receiveShadow />
       <mesh name="brass" geometry={nodes.Brass!.geometry} material={brass} receiveShadow castShadow />
+      <mesh name="waterfall" geometry={nodes.Waterfall!.geometry} material={falls} renderOrder={2} />
       {[...byVariant].map(([variant, squares]) => (
         <BlockSet
           key={variant}

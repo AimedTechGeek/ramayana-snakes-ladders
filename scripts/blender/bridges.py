@@ -178,7 +178,9 @@ def ellipse_pt(route, a_mid, rx, y_s, ry, theta, off):
 def arch(kit, route, a0, a1, stone, seed):
     """One opening between a0 and a1: voussoir ring springing from the ground, spandrel walls up to the deck."""
     am, rx = (a0 + a1) / 2, (a1 - a0) / 2
-    y_s = max(route.ground_at(a0), route.ground_at(a1), route.ground_at(am)) - 0.005
+    # T45.1: spring from the lower ground of the opening (on a terrace step the ring runs into the higher row's blocks
+    # instead of standing on them and poking up through the deck)
+    y_s = min(route.ground_at(a0), route.ground_at(a1), route.ground_at(am)) - 0.005
     crown = route.under(am) - 0.004
     ry = max(0.07, min(rx, crown - RING_T - y_s))
     n = max(7, min(9, int(round(rx * PI / 0.09)) | 1))

@@ -5,6 +5,8 @@ import { Box3, Matrix4, PerspectiveCamera, Vector3 } from 'three';
 import { HERO_SCALE } from './figureScale';
 import { BLOCK_HALF, LEDGE, PLINTH_BOTTOM_Y, PLINTH_HALF, TRAY_ANCHOR, blockTopY, squareCentre } from './boardLayout';
 import type { CameraPose } from './DioramaView';
+import { coronationSpots } from './propLayout';
+import manifest from './propsManifest.json';
 
 const DEG = Math.PI / 180;
 
@@ -28,7 +30,8 @@ export const PHONE_MAX_WIDTH = 900;
 /** The camera target may wander inside this box (spec 9.1). */
 export const PAN_BOX = new Box3(new Vector3(-5, -0.5, -5), new Vector3(5, 2.5, 5));
 
-export const FIT_TARGET: readonly [number, number, number] = [0.3, 0.2, 1.3];
+/** T45.1: aimed 0.8 u up, about the middle of the terraces' climb (T44: 0.2 on the flat board). */
+export const FIT_TARGET: readonly [number, number, number] = [0.3, 0.8, 1.3];
 export const FIT_POLAR = 52 * DEG;
 export const FIT_AZIMUTH = 22 * DEG;
 export const FOCUS_DISTANCE = 4.5;
@@ -36,10 +39,10 @@ export const FOCUS_POLAR = 55 * DEG;
 /** Focus looks at the hero's middle: 0.5 u up a 1.43 u hero at full size. */
 export const FOCUS_LIFT = 0.5 * HERO_SCALE;
 
-/** The box Fit frames: the plinth with its tray ledge and the brass posts. */
+/** The box Fit frames: the plinth with its tray ledge, up to the top terrace's block tops (T45.1; T44: 0.3). */
 export const FIT_BOX = new Box3(
   new Vector3(-PLINTH_HALF, PLINTH_BOTTOM_Y, -PLINTH_HALF),
-  new Vector3(LEDGE.x1, 0.3, PLINTH_HALF),
+  new Vector3(LEDGE.x1, blockTopY(144), PLINTH_HALF),
 );
 /** Screen margins of the Fit pose, as a share of the half-viewport (NDC units). */
 const FIT_MARGIN = { top: 0.07, bottom: 0.03, side: 0.03 };
@@ -58,8 +61,8 @@ export const HERO_HEIGHT = 1.43 * HERO_SCALE;
 
 /**
  * Points Fit keeps out from under the HUD (T44.14): the top corners of every edge square (the inner squares lie inside
- * them on screen), the gate south of square 1, the four waiting heroes on the front rim (feet and heads), and the
- * die tray's rim (it is tapped to roll).
+ * them on screen), the gate south of square 1, the throne's top (T45.1), the four waiting heroes on the front rim (feet
+ * and heads), and the die tray's rim (it is tapped to roll).
  */
 export const KEEP_CLEAR: readonly Vector3[] = (() => {
   const points: Vector3[] = [];
@@ -75,6 +78,10 @@ export const KEEP_CLEAR: readonly Vector3[] = (() => {
   const [gx, gz] = squareCentre(1);
   const rim = blockTopY(1);
   points.push(new Vector3(gx, rim, gz + 0.58), new Vector3(gx, rim + 1, gz + 0.58));
+  // T45.1: the throne on the top terrace now rises under the banner, so its top is kept clear too (the chhatra's tall
+  // canopy already sat under the banner on the flat T44 board and still may)
+  const { throne } = coronationSpots(blockTopY(144));
+  points.push(new Vector3(throne[0], throne[1] + manifest.landmarkMeshes.throne.height / 56, throne[2]));
   for (let seat = 0; seat < 4; seat++) {
     const x = -3 + seat * 0.5; // coords.waitingSpot
     points.push(new Vector3(x, rim, 6.15), new Vector3(x, rim + HERO_HEIGHT, 6.15));
