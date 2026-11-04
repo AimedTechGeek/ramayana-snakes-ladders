@@ -138,8 +138,9 @@ describe('scenery keeps out of the lanes', () => {
   });
 
   it('Dressing_(EveryPiece)_Should_BeRenderedAndStayOffTheLanes', () => {
+    const instances = layoutInstances(); // build the board's layout once, not once per square (CI timed out at 5 s)
     for (const square of SQUARES) {
-      const rendered = layoutInstances().filter((i) => i.square === square && i.dressing);
+      const rendered = instances.filter((i) => i.square === square && i.dressing);
       expect(rendered.length, `square ${square}`).toBe(dressingOf(square).length);
     }
   });
